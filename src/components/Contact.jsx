@@ -48,7 +48,7 @@ export default function Contact() {
             <p className="text-white/60 text-sm leading-relaxed mb-6 max-w-xs">
               Creative strategy, content, and storytelling for brands that want to connect with people.
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               {socialLinks.map(link => (
                 <a
                   key={link.label}
@@ -56,17 +56,19 @@ export default function Contact() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={link.label}
-                  className="w-9 h-9 rounded-lg bg-brand-mid border border-brand-border flex items-center justify-center text-white/60 hover:text-white hover:border-brand-accent transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-mid border border-brand-border text-white/60 hover:text-white hover:border-brand-accent transition-colors text-xs font-medium"
                 >
                   <link.Icon />
+                  {link.label}
                 </a>
               ))}
               <a
                 href="mailto:michael@deemcreative.com"
                 aria-label="Email Deem Creative"
-                className="w-9 h-9 rounded-lg bg-brand-mid border border-brand-border flex items-center justify-center text-white/60 hover:text-white hover:border-brand-accent transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-mid border border-brand-border text-white/60 hover:text-white hover:border-brand-accent transition-colors text-xs font-medium"
               >
-                <Mail size={16} aria-hidden="true" />
+                <Mail size={14} aria-hidden="true" />
+                Email
               </a>
             </div>
           </div>

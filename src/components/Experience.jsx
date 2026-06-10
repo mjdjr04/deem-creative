@@ -59,7 +59,7 @@ function ExperienceCard({ exp, index }) {
           <ul className="space-y-1.5">
             {previewHighlights.map((h, j) => (
               <li key={j} className="flex items-start gap-2 text-white/55 text-sm">
-                <span className="text-brand-accent mt-1 flex-shrink-0" aria-hidden="true">▸</span>
+                <span className="flex-shrink-0 flex items-center" style={{paddingTop:"0.15em"}} aria-hidden="true"><svg width="6" height="6" viewBox="0 0 6 6" fill="none"><circle cx="3" cy="3" r="3" fill="#2B5BA8"/></svg></span>
                 {h}
               </li>
             ))}
@@ -99,7 +99,7 @@ function ExperienceCard({ exp, index }) {
                   <ul className="space-y-1.5">
                     {extraHighlights.map((h, j) => (
                       <li key={j} className="flex items-start gap-2 text-white/55 text-sm">
-                        <span className="text-brand-accent mt-1 flex-shrink-0" aria-hidden="true">▸</span>
+                        <span className="flex-shrink-0 flex items-center" style={{paddingTop:"0.15em"}} aria-hidden="true"><svg width="6" height="6" viewBox="0 0 6 6" fill="none"><circle cx="3" cy="3" r="3" fill="#2B5BA8"/></svg></span>
                         {h}
                       </li>
                     ))}

@@ -103,7 +103,7 @@ export default function ContactPage() {
               transition={{ duration: 0.6 }}
             >
               <h2 className="text-2xl font-bold text-white mb-8">Contact</h2>
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {contactMethods.map((method, i) => {
                   const Icon = method.icon
                   const inner = (
@@ -173,7 +173,7 @@ export default function ContactPage() {
                     'Walk away with clear next steps — no pressure',
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-2 text-white/65 text-sm">
-                      <span className="text-brand-accent mt-0.5 flex-shrink-0" aria-hidden="true">▸</span>
+                      <span className="flex-shrink-0 flex items-center" style={{paddingTop:"0.2em"}} aria-hidden="true"><svg width="6" height="6" viewBox="0 0 6 6" fill="none"><circle cx="3" cy="3" r="3" fill="#2B5BA8"/></svg></span>
                       {item}
                     </li>
                   ))}

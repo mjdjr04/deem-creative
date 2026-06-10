@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ExternalLink } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useBooking } from '../context/BookingContext'
 
+const BOOKING_EMBED_SRC = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ2KiuMHhBfxKWeIO2PELmmSStH4pWLB3fxjgHZQpbIXewjduez9OlRPTp0WSh_zgoLDl_HCHVGc?gv=true'
 const BOOKING_URL = 'https://calendar.app.google/CVSNo86SEqFK16JB7'
 
 export default function BookingModal() {
@@ -44,47 +45,45 @@ export default function BookingModal() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="pointer-events-auto w-full max-w-2xl rounded-2xl bg-brand-mid border border-brand-border shadow-2xl overflow-hidden"
+              className="pointer-events-auto w-full max-w-2xl rounded-2xl bg-white border border-brand-border shadow-2xl overflow-hidden"
               role="dialog"
               aria-modal="true"
               aria-label="Book a Consultation"
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-brand-border">
+              <div className="flex items-center justify-between px-5 py-3 bg-brand-dark border-b border-brand-border">
                 <div>
-                  <h2 className="text-white font-semibold text-lg">Book a Consultation</h2>
-                  <p className="text-white/50 text-sm">Schedule time with Michael Deem Jr.</p>
+                  <h2 className="text-white font-semibold text-base">Book a Consultation</h2>
+                  <p className="text-white/50 text-xs">Schedule time with Michael Deem Jr.</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <a
                     href={BOOKING_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-brand-light text-xs hover:text-white transition-colors"
-                    title="Open in new tab"
+                    className="text-brand-light text-xs hover:text-white transition-colors"
                   >
-                    <ExternalLink size={14} /> Open in tab
+                    Open in tab ↗
                   </a>
                   <button
                     onClick={close}
                     className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-brand-surface transition-colors"
                     aria-label="Close booking modal"
                   >
-                    <X size={20} />
+                    <X size={18} />
                   </button>
                 </div>
               </div>
 
-              {/* Google Calendar iframe */}
-              <div className="w-full" style={{ height: '560px' }}>
+              {/* Google Calendar Appointment Scheduling embed */}
+              <div className="w-full bg-white">
                 <iframe
-                  src={BOOKING_URL}
+                  src={BOOKING_EMBED_SRC}
+                  style={{ border: 0 }}
                   width="100%"
-                  height="100%"
+                  height="600"
                   frameBorder="0"
                   title="Book a Consultation with Deem Creative"
-                  className="bg-white"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
                 />
               </div>
             </motion.div>

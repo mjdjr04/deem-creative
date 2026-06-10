@@ -78,7 +78,7 @@ export default function Hero() {
               to="/portfolio"
               className="flex items-center gap-2 px-8 py-3.5 rounded-lg border-2 border-white text-white font-semibold text-base hover:bg-white hover:text-brand-dark transition-all"
             >
-              Explore the Work <ArrowRight size={18} />
+              View the Portfolio <ArrowRight size={18} />
             </Link>
           </motion.div>
           <motion.button

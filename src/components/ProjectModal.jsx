@@ -15,10 +15,10 @@ function ModalMedia({ project, onClose }) {
           allowFullScreen
           style={{
             position: 'absolute',
-            top: '-5%',
+            top: 0,
             left: 0,
             width: '100%',
-            height: '115%',
+            height: '100%',
             border: 'none',
           }}
         />
@@ -147,7 +147,7 @@ export default function ProjectModal({ project, onClose }) {
                     <ul className="space-y-2">
                       {project.outcomes.map((outcome, i) => (
                         <li key={i} className="flex items-start gap-2 text-white/70 text-sm">
-                          <span className="text-brand-accent mt-0.5 flex-shrink-0" aria-hidden="true">▸</span>
+                          <span className="flex-shrink-0 flex items-center" style={{paddingTop:"0.2em"}} aria-hidden="true"><svg width="6" height="6" viewBox="0 0 6 6" fill="none"><circle cx="3" cy="3" r="3" fill="#2B5BA8"/></svg></span>
                           {outcome}
                         </li>
                       ))}

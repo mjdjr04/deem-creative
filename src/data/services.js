@@ -1,4 +1,4 @@
-export const BOOKING_URL = 'https://calendar.app.google/XDBrUssbTcWg4Yp79'
+export const BOOKING_URL = 'https://calendar.app.google/CVSNo86SEqFK16JB7'
 
 export const services = [
   {

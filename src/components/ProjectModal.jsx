@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Calendar, Wrench, CheckCircle } from 'lucide-react'
+import { X, Calendar, Wrench, CheckCircle, Paperclip } from 'lucide-react'
 import { DeemCreativeMark } from './DeemCreativeMark'
 import { useBooking } from '../context/BookingContext'
 
@@ -174,6 +174,21 @@ export default function ProjectModal({ project, onClose }) {
                   </div>
                 )}
 
+                {/* PDF attachment */}
+                {project.attachment && (
+                  <div className="mb-8">
+                    <a
+                      href={project.attachment}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-brand-border text-brand-light text-sm hover:border-brand-accent hover:text-white transition-colors"
+                    >
+                      <Paperclip size={14} aria-hidden="true" />
+                      {project.attachmentLabel || 'View Report (PDF)'}
+                    </a>
+                  </div>
+                )}
+
                 {/* Social / external links */}
                 {project.socialLinks && project.socialLinks.length > 0 && (
                   <div className="mb-8 flex flex-wrap gap-2">
@@ -197,7 +212,7 @@ export default function ProjectModal({ project, onClose }) {
                     Want to create something like this for your organization?
                   </p>
                   <motion.button
-                    onClick={openBooking}
+                    onClick={() => { onClose(); openBooking() }}
                     whileHover={{ scale: 1.04 }}
                     whileTap={{ scale: 0.97 }}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-navy border border-brand-accent text-white font-semibold text-sm hover:bg-brand-accent transition-colors cursor-pointer"

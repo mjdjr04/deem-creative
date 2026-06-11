@@ -11,6 +11,7 @@ export default function ConsultCTA() {
 
   return (
     <section className="relative overflow-hidden py-24 md:py-36 section-divider" style={{ background: 'linear-gradient(135deg, #0D3472 0%, #0A1628 60%, #112040 100%)' }}>
+      <div aria-hidden="true" className="absolute inset-0 bg-grid" />
       {/* Decorative orbs */}
       <div
         aria-hidden="true"
@@ -33,8 +34,8 @@ export default function ConsultCTA() {
             Let's Work Together
           </p>
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
-            Have a story, a project, or a messy content system?{' '}
-            <span className="text-gradient">Let's turn it into something clear.</span>
+            Your brand has something worth saying.{' '}
+            <span className="text-gradient">Let's make sure people hear it.</span>
           </h2>
           <p className="text-white/65 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
             Book a consultation to talk through your goals, current challenges, audience, and

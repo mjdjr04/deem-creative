@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar } from 'lucide-react'
 import { useBooking } from '../context/BookingContext'
@@ -6,6 +7,8 @@ import { useBooking } from '../context/BookingContext'
 export default function FloatingCTA() {
   const [isVisible, setIsVisible] = useState(false)
   const { open } = useBooking()
+  const location = useLocation()
+  const onBookingPage = location.pathname === '/booking'
 
   useEffect(() => {
     const onScroll = () => {
@@ -17,7 +20,7 @@ export default function FloatingCTA() {
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      {isVisible && !onBookingPage && (
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Calendar } from 'lucide-react'
+import { ArrowRight, Calendar, ChevronDown } from 'lucide-react'
 import { DeemCreativeLogoFull } from './DeemCreativeMark'
 import { useBooking } from '../context/BookingContext'
 
@@ -9,16 +9,30 @@ export default function Hero() {
 
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-hero-gradient">
-      {/* Decorative blurred orbs */}
-      <div
+      {/* Faint blueprint grid */}
+      <div aria-hidden="true" className="absolute inset-0 bg-grid" />
+
+      {/* Drifting gradient orbs */}
+      <motion.div
         aria-hidden="true"
-        className="absolute top-1/4 -right-32 w-96 h-96 rounded-full blur-3xl opacity-20"
+        animate={{ x: [0, -40, 0], y: [0, 30, 0] }}
+        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute top-1/4 -right-32 w-96 h-96 rounded-full blur-3xl opacity-25"
         style={{ background: '#0D3472' }}
       />
-      <div
+      <motion.div
         aria-hidden="true"
-        className="absolute bottom-1/4 -left-32 w-80 h-80 rounded-full blur-3xl opacity-15"
+        animate={{ x: [0, 50, 0], y: [0, -35, 0] }}
+        transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute bottom-1/4 -left-32 w-80 h-80 rounded-full blur-3xl opacity-20"
         style={{ background: '#2B5BA8' }}
+      />
+      <motion.div
+        aria-hidden="true"
+        animate={{ x: [0, -30, 0], y: [0, -25, 0] }}
+        transition={{ duration: 26, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute top-10 left-1/3 w-72 h-72 rounded-full blur-3xl opacity-10"
+        style={{ background: '#4A7EC7' }}
       />
 
       {/* Main content */}
@@ -78,7 +92,7 @@ export default function Hero() {
               to="/portfolio"
               className="flex items-center gap-2 px-8 py-3.5 rounded-lg border-2 border-white text-white font-semibold text-base hover:bg-white hover:text-brand-dark transition-all"
             >
-              View the Portfolio <ArrowRight size={18} />
+              View My Work <ArrowRight size={18} />
             </Link>
           </motion.div>
           <motion.button
@@ -106,6 +120,23 @@ export default function Hero() {
           ))}
         </motion.div>
       </div>
+
+      {/* Scroll cue */}
+      <motion.div
+        aria-hidden="true"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.4, duration: 0.8 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+      >
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+          className="text-white/30"
+        >
+          <ChevronDown size={26} />
+        </motion.div>
+      </motion.div>
 
       {/* Bottom fade */}
       <div

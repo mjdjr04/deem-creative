@@ -73,7 +73,7 @@ export default function ProjectCard({ project, onClick }) {
       whileHover={{ scale: 1.02, y: -4 }}
       whileTap={{ scale: 0.98 }}
       onClick={() => onClick(project)}
-      className="cursor-pointer rounded-2xl bg-card-gradient border border-brand-border overflow-hidden hover:border-brand-accent transition-colors group"
+      className="card-glow cursor-pointer rounded-2xl bg-card-gradient border border-brand-border overflow-hidden hover:border-brand-accent group flex flex-col h-full"
       tabIndex={0}
       role="button"
       aria-label={`View details for ${project.title}`}
@@ -82,7 +82,7 @@ export default function ProjectCard({ project, onClick }) {
       <CardMedia project={project} />
 
       {/* Card body */}
-      <div className="p-5">
+      <div className="p-5 flex flex-col flex-1">
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className="text-white font-semibold text-base leading-snug group-hover:text-brand-light transition-colors">
             {project.title}

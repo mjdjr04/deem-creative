@@ -15,10 +15,38 @@
   body {
     @apply bg-brand-dark text-white antialiased;
     overflow-x: hidden;
+    text-rendering: optimizeLegibility;
   }
 
   body.modal-open {
     overflow: hidden;
+  }
+
+  ::selection {
+    background: #2B5BA8;
+    color: #ffffff;
+  }
+
+  :focus-visible {
+    outline: 2px solid #4A7EC7;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Subtle branded scrollbar (WebKit) */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0A1628;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1E3A5F;
+    border-radius: 6px;
+    border: 2px solid #0A1628;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #2B5BA8;
   }
 }
 
@@ -40,5 +68,29 @@
 
   .section-divider {
     @apply border-t border-brand-border;
+  }
+
+  /* Faint blueprint grid for hero / CTA backgrounds */
+  .bg-grid {
+    background-image:
+      linear-gradient(rgba(74, 126, 199, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74, 126, 199, 0.05) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 100%);
+  }
+
+  /* Soft glow lift for cards on hover */
+  .card-glow {
+    transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+  }
+  .card-glow:hover {
+    box-shadow: 0 12px 40px -12px rgba(43, 91, 168, 0.45);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }

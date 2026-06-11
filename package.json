@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://mjdjr04.github.io/deem-creative/",
+  "homepage": "https://deemcreative.com/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

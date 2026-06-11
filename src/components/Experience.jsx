@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react'
-import { motion, AnimatePresence, useInView } from 'framer-motion'
-import { ChevronDown, ExternalLink, Paperclip } from 'lucide-react'
+import { useRef } from 'react'
+import { motion, useInView } from 'framer-motion'
+import { ExternalLink, Paperclip } from 'lucide-react'
 import { experiences } from '../data/experience'
 
 const typeLabel = {
@@ -9,15 +9,9 @@ const typeLabel = {
   education: { label: 'Education', color: 'text-purple-400 border-purple-400/30 bg-purple-400/10' },
 }
 
-// How many highlights to show in preview
-const PREVIEW_COUNT = 2
-
 function ExperienceCard({ exp, index }) {
-  const [expanded, setExpanded] = useState(false)
   const badge = typeLabel[exp.type] || typeLabel.past
-  const previewHighlights = exp.highlights.slice(0, PREVIEW_COUNT)
-  const extraHighlights = exp.highlights.slice(PREVIEW_COUNT)
-  const hasMore = extraHighlights.length > 0 || exp.photo || exp.attachment || exp.website
+  const allHighlights = exp.highlights || []
 
   return (
     <motion.div
@@ -37,7 +31,6 @@ function ExperienceCard({ exp, index }) {
 
       {/* Card */}
       <div className="rounded-xl bg-brand-mid border border-brand-border overflow-hidden hover:border-brand-accent/50 transition-colors">
-        {/* Always-visible header */}
         <div className="p-5">
           <div className="flex flex-wrap items-center gap-3 mb-2">
             <span className={`px-2.5 py-0.5 rounded-full border text-xs font-medium ${badge.color}`}>
@@ -53,11 +46,14 @@ function ExperienceCard({ exp, index }) {
           {exp.location && (
             <p className="text-white/35 text-xs mb-3">{exp.location}</p>
           )}
-          <p className="text-white/60 text-sm leading-relaxed mb-4">{exp.description}</p>
 
-          {/* Preview highlights */}
+          {/* All highlights including description as first bullet */}
           <ul className="space-y-1.5">
-            {previewHighlights.map((h, j) => (
+            <li className="flex items-start gap-2 text-white/55 text-sm">
+              <span className="flex-shrink-0 flex items-center" style={{paddingTop:"0.15em"}} aria-hidden="true"><svg width="6" height="6" viewBox="0 0 6 6" fill="none"><circle cx="3" cy="3" r="3" fill="#2B5BA8"/></svg></span>
+              {exp.description}
+            </li>
+            {allHighlights.map((h, j) => (
               <li key={j} className="flex items-start gap-2 text-white/55 text-sm">
                 <span className="flex-shrink-0 flex items-center" style={{paddingTop:"0.15em"}} aria-hidden="true"><svg width="6" height="6" viewBox="0 0 6 6" fill="none"><circle cx="3" cy="3" r="3" fill="#2B5BA8"/></svg></span>
                 {h}
@@ -65,87 +61,47 @@ function ExperienceCard({ exp, index }) {
             ))}
           </ul>
 
-          {/* Expand toggle */}
-          {hasMore && (
-            <button
-              onClick={() => setExpanded(v => !v)}
-              className="mt-4 flex items-center gap-1.5 text-brand-light text-xs font-semibold hover:text-white transition-colors"
-              aria-expanded={expanded}
-            >
-              <ChevronDown
-                size={14}
-                className={`transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
-                aria-hidden="true"
+          {/* Photo */}
+          {exp.photo && (
+            <div className="mt-4 rounded-lg overflow-hidden border border-brand-border">
+              <img
+                src={exp.photo}
+                alt={exp.photoAlt || exp.organization}
+                className="w-full h-48 object-cover"
               />
-              {expanded ? 'Show less' : `Show more`}
-            </button>
+            </div>
+          )}
+
+          {/* Website link */}
+          {exp.website && (
+            <div className="mt-4">
+              <a
+                href={exp.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-brand-light text-xs hover:text-white transition-colors"
+              >
+                <ExternalLink size={12} aria-hidden="true" />
+                {exp.websiteLabel || exp.website}
+              </a>
+            </div>
+          )}
+
+          {/* PDF attachment */}
+          {exp.attachment && (
+            <div className="mt-3">
+              <a
+                href={exp.attachment.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-border text-brand-light text-xs hover:border-brand-accent hover:text-white transition-colors"
+              >
+                <Paperclip size={12} aria-hidden="true" />
+                {exp.attachment.label}
+              </a>
+            </div>
           )}
         </div>
-
-        {/* Expanded content */}
-        <AnimatePresence>
-          {expanded && hasMore && (
-            <motion.div
-              key="extra"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="overflow-hidden"
-            >
-              <div className="px-5 pb-5 border-t border-brand-border pt-4 space-y-4">
-                {/* Extra highlights */}
-                {extraHighlights.length > 0 && (
-                  <ul className="space-y-1.5">
-                    {extraHighlights.map((h, j) => (
-                      <li key={j} className="flex items-start gap-2 text-white/55 text-sm">
-                        <span className="flex-shrink-0 flex items-center" style={{paddingTop:"0.15em"}} aria-hidden="true"><svg width="6" height="6" viewBox="0 0 6 6" fill="none"><circle cx="3" cy="3" r="3" fill="#2B5BA8"/></svg></span>
-                        {h}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                {/* Photo */}
-                {exp.photo && (
-                  <div className="rounded-lg overflow-hidden border border-brand-border">
-                    <img
-                      src={exp.photo}
-                      alt={exp.photoAlt || exp.organization}
-                      className="w-full h-48 object-cover"
-                    />
-                  </div>
-                )}
-
-                {/* Website link */}
-                {exp.website && (
-                  <a
-                    href={exp.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-brand-light text-xs hover:text-white transition-colors"
-                  >
-                    <ExternalLink size={12} aria-hidden="true" />
-                    {exp.websiteLabel || exp.website}
-                  </a>
-                )}
-
-                {/* PDF attachment */}
-                {exp.attachment && (
-                  <a
-                    href={exp.attachment.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-border text-brand-light text-xs hover:border-brand-accent hover:text-white transition-colors"
-                  >
-                    <Paperclip size={12} aria-hidden="true" />
-                    {exp.attachment.label}
-                  </a>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </motion.div>
   )

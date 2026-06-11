@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { Mail, Calendar, ExternalLink, MapPin } from 'lucide-react'
+import { Mail, Calendar, ExternalLink, MapPin, Phone } from 'lucide-react'
 import { useBooking } from '../context/BookingContext'
 
 const LINKEDIN_URL = 'https://linkedin.com/in/michael-deem-jr'
@@ -24,6 +24,13 @@ const contactMethods = [
     value: 'michael@deemcreative.com',
     href: 'mailto:michael@deemcreative.com',
     description: 'Best for project inquiries and questions',
+  },
+  {
+    icon: Phone,
+    label: 'Phone',
+    value: '(929) 831-7254',
+    href: 'tel:+19298317254',
+    description: 'Available by call or text',
   },
   {
     icon: LinkedInIcon,
@@ -103,12 +110,12 @@ export default function ContactPage() {
               transition={{ duration: 0.6 }}
             >
               <h2 className="text-2xl font-bold text-white mb-8">Contact</h2>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {contactMethods.map((method, i) => {
                   const Icon = method.icon
                   const inner = (
                     <div
-                      className={`flex items-start gap-4 p-5 rounded-xl bg-brand-mid border border-brand-border transition-colors ${method.href ? 'hover:border-brand-accent cursor-pointer' : ''}`}
+                      className={`card-glow flex items-start gap-4 p-5 rounded-xl bg-brand-mid border border-brand-border ${method.href ? 'hover:border-brand-accent cursor-pointer' : ''}`}
                     >
                       <div className="w-10 h-10 rounded-lg bg-brand-navy border border-brand-accent/30 flex items-center justify-center text-brand-light flex-shrink-0">
                         <Icon size={20} />

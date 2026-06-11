@@ -17,7 +17,7 @@ function ServiceCard({ service }) {
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.5 }}
       whileHover={!expanded ? { y: -2 } : {}}
-      className={`rounded-2xl bg-brand-mid border transition-colors overflow-hidden ${
+      className={`card-glow rounded-2xl bg-brand-mid border overflow-hidden ${
         expanded ? 'border-brand-accent' : 'border-brand-border hover:border-brand-accent/50'
       }`}
     >

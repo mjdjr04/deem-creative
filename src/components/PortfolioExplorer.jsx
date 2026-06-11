@@ -28,7 +28,7 @@ export default function PortfolioExplorer({ onProjectSelect }) {
             Portfolio
           </p>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Explore the Work
+            Featured Projects
           </h2>
           <p className="text-white/60 text-lg max-w-2xl">
             Click a category to filter work by creative area.
@@ -55,7 +55,7 @@ export default function PortfolioExplorer({ onProjectSelect }) {
         {/* Project grid */}
         <motion.div
           layout
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch"
         >
           <AnimatePresence mode="popLayout">
             {filtered.map(project => (

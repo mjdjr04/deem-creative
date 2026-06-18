@@ -1,8 +1,9 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import headshot from '../assets/headshot.jpeg'
-
-const LINKEDIN_URL = 'https://linkedin.com/in/michael-deem-jr'
+import { Link } from 'react-router-dom'
+import { ArrowRight } from 'lucide-react'
+import { useContent } from '../context/ContentContext'
+import defaultHeadshot from '../assets/headshot.jpeg'
 
 const LinkedInIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -11,6 +12,10 @@ const LinkedInIcon = () => (
 )
 
 export default function About() {
+  const about = useContent().about
+  const headshot = about.headshot || defaultHeadshot
+  const LINKEDIN_URL = about.linkedinUrl
+  const paragraphs = (about.paragraphs || []).map((p) => p.trim()).filter(Boolean)
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.2 })
 
@@ -66,37 +71,43 @@ export default function About() {
             animate={isInView ? 'show' : 'hidden'}
           >
             <p className="text-brand-light text-sm font-semibold tracking-widest uppercase mb-4">
-              About
+              {about.eyebrow}
             </p>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 leading-tight">
-              Creative production meets operational structure.
+              {about.heading}
             </h2>
-            <p className="text-white/70 text-lg leading-relaxed mb-6">
-              Deem Creative is a creative strategy and storytelling studio helping startups,
-              small businesses, nonprofits, and community-centered organizations create
-              stronger content, clearer digital systems, and stories that connect with real people.
-            </p>
-            <p className="text-white/70 text-lg leading-relaxed mb-8">
-              Founded by <span className="text-white font-medium">Michael Deem Jr.</span>,
-              Deem Creative combines experience in film and television, social media strategy,
-              nonprofit communications, post-production, and creative operations — bringing
-              polished execution and organized systems thinking to every engagement.
-            </p>
+            {paragraphs.map((para, i) => (
+              <p
+                key={i}
+                className={`text-white/70 text-lg leading-relaxed ${
+                  i === paragraphs.length - 1 ? 'mb-8' : 'mb-6'
+                }`}
+              >
+                {para}
+              </p>
+            ))}
 
-            {/* Founder card */}
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-brand-mid border border-brand-border mb-5">
+            {/* Founder card — links to the full profile page */}
+            <Link
+              to="/profile"
+              className="group flex items-center gap-4 p-4 rounded-xl bg-brand-mid border border-brand-border mb-5 hover:border-brand-accent transition-colors"
+            >
               <div className="w-12 h-12 rounded-full overflow-hidden border border-brand-accent/50 flex-shrink-0">
                 <img
                   src={headshot}
-                  alt="Michael Deem Jr."
+                  alt={about.founderName}
                   className="w-full h-full object-cover object-top"
                 />
               </div>
-              <div>
-                <p className="text-white font-semibold">Michael Deem Jr.</p>
-                <p className="text-brand-light text-sm">Founder / Creative Consultant</p>
+              <div className="flex-1">
+                <p className="text-white font-semibold">{about.founderName}</p>
+                <p className="text-brand-light text-sm">{about.founderTitle}</p>
               </div>
-            </div>
+              <span className="flex items-center gap-1 text-brand-light/70 text-xs font-medium group-hover:text-white transition-colors">
+                View profile
+                <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </Link>
 
             {/* LinkedIn CTA */}
             <motion.a

@@ -1,11 +1,7 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { projects, FEATURED_PROJECT_IDS } from '../data/projects'
+import { useContent } from '../context/ContentContext'
 import ProjectCard from './ProjectCard'
-
-const featured = FEATURED_PROJECT_IDS
-  .map(id => projects.find(p => p.id === id))
-  .filter(Boolean)
 
 const container = {
   hidden: {},
@@ -17,6 +13,10 @@ const item = {
 }
 
 export default function FeaturedWork({ onProjectSelect }) {
+  const content = useContent()
+  const projects = content.projects.items
+  // Homepage "Featured Work" = projects flagged featured, in list order.
+  const featured = projects.filter(p => p.featured)
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.1 })
 

@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { ChevronDown, Calendar } from 'lucide-react'
 import * as Icons from 'lucide-react'
-import { services } from '../data/services'
+import { useContent } from '../context/ContentContext'
 import { useBooking } from '../context/BookingContext'
 
 function ServiceCard({ service }) {
@@ -82,6 +82,7 @@ function ServiceCard({ service }) {
 }
 
 export default function Services() {
+  const services = useContent().services.items
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.1 })
 

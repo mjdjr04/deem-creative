@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { ExternalLink, Paperclip } from 'lucide-react'
-import { experiences } from '../data/experience'
+import { useContent } from '../context/ContentContext'
 
 const typeLabel = {
   current:   { label: 'Current',   color: 'text-green-400 border-green-400/30 bg-green-400/10' },
@@ -47,19 +47,22 @@ function ExperienceCard({ exp, index }) {
             <p className="text-white/35 text-xs mb-3">{exp.location}</p>
           )}
 
-          {/* All highlights including description as first bullet */}
-          <ul className="space-y-1.5">
-            <li className="flex items-start gap-2 text-white/55 text-sm">
-              <span className="flex-shrink-0 flex items-center" style={{paddingTop:"0.15em"}} aria-hidden="true"><svg width="6" height="6" viewBox="0 0 6 6" fill="none"><circle cx="3" cy="3" r="3" fill="#2B5BA8"/></svg></span>
-              {exp.description}
-            </li>
-            {allHighlights.map((h, j) => (
-              <li key={j} className="flex items-start gap-2 text-white/55 text-sm">
-                <span className="flex-shrink-0 flex items-center" style={{paddingTop:"0.15em"}} aria-hidden="true"><svg width="6" height="6" viewBox="0 0 6 6" fill="none"><circle cx="3" cy="3" r="3" fill="#2B5BA8"/></svg></span>
-                {h}
-              </li>
-            ))}
-          </ul>
+          {/* Description — plain text, no bullet */}
+          {exp.description && (
+            <p className="text-white/55 text-sm mb-2">{exp.description}</p>
+          )}
+
+          {/* Bullet points — dots vertically centered with their text */}
+          {allHighlights.length > 0 && (
+            <ul className="space-y-1.5">
+              {allHighlights.map((h, j) => (
+                <li key={j} className="flex items-center gap-2 text-white/55 text-sm">
+                  <span className="flex-shrink-0 flex items-center" aria-hidden="true"><svg width="6" height="6" viewBox="0 0 6 6" fill="none"><circle cx="3" cy="3" r="3" fill="#2B5BA8"/></svg></span>
+                  {h}
+                </li>
+              ))}
+            </ul>
+          )}
 
           {/* Photo */}
           {exp.photo && (
@@ -108,6 +111,7 @@ function ExperienceCard({ exp, index }) {
 }
 
 export default function Experience() {
+  const experiences = useContent().experience.items
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.1 })
 

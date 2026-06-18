@@ -1,9 +1,11 @@
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { Mail, Calendar } from 'lucide-react'
+import { Mail, Calendar, FileText } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DeemCreativeMark } from './DeemCreativeMark'
 import { useBooking } from '../context/BookingContext'
+import { useContent } from '../context/ContentContext'
+import VCardButton from './VCardButton'
 
 const navLinks = [
   { label: 'Home',      to: '/' },
@@ -23,12 +25,12 @@ const LinkedInIcon = () => (
   </svg>
 )
 
-const socialLinks = [
-  { label: 'Instagram', href: 'https://instagram.com/deemcreative', Icon: InstagramIcon },
-  { label: 'LinkedIn',  href: 'https://linkedin.com/in/michael-deem-jr', Icon: LinkedInIcon },
-]
-
 export default function Contact() {
+  const settings = useContent().settings
+  const socialLinks = [
+    { label: 'Instagram', href: settings.instagramUrl, Icon: InstagramIcon },
+    { label: 'LinkedIn',  href: settings.linkedinUrl,  Icon: LinkedInIcon },
+  ].filter(l => l.href)
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.2 })
   const { open } = useBooking()
@@ -46,7 +48,7 @@ export default function Contact() {
           <div>
             <DeemCreativeMark className="h-10 mb-5" />
             <p className="text-white/60 text-sm leading-relaxed mb-6 max-w-xs">
-              Creative strategy, content, and storytelling for brands that want to connect with people.
+              {settings.tagline}
             </p>
             <div className="flex gap-3 flex-wrap">
               {socialLinks.map(link => (
@@ -63,13 +65,26 @@ export default function Contact() {
                 </a>
               ))}
               <a
-                href="mailto:michael@deemcreative.com"
+                href={`mailto:${settings.email}`}
                 aria-label="Email Deem Creative"
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-mid border border-brand-border text-white/60 hover:text-white hover:border-brand-accent transition-colors text-xs font-medium"
               >
                 <Mail size={14} aria-hidden="true" />
                 Email
               </a>
+              {settings.resumeUrl && (
+                <a
+                  href={settings.resumeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={settings.resumeLabel || 'Resume'}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-mid border border-brand-border text-white/60 hover:text-white hover:border-brand-accent transition-colors text-xs font-medium"
+                >
+                  <FileText size={14} aria-hidden="true" />
+                  Resume
+                </a>
+              )}
+              <VCardButton />
             </div>
           </div>
 
@@ -110,7 +125,7 @@ export default function Contact() {
             </motion.button>
 
             <div className="mt-6 pt-6 border-t border-brand-border">
-              <p className="text-white/40 text-xs">michael@deemcreative.com</p>
+              <p className="text-white/40 text-xs">{settings.email}</p>
               <p className="text-white/40 text-xs mt-1">@deemcreative</p>
             </div>
           </div>

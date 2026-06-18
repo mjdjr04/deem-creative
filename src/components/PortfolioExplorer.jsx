@@ -1,16 +1,26 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
-import { projects, CATEGORIES } from '../data/projects'
+import { useContent } from '../context/ContentContext'
 import ProjectCard from './ProjectCard'
 
 export default function PortfolioExplorer({ onProjectSelect }) {
+  const content = useContent()
+  const projects = content.projects.items
+  const CATEGORIES = content.projects.categories
   const [activeCategory, setActiveCategory] = useState('All')
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.1 })
 
+  // Sort newest-first by the year field (most recent work leads).
+  const startYear = (p) => {
+    const m = /(\d{4})/.exec(p.year || '')
+    return m ? Number(m[1]) : 0
+  }
+  const sorted = [...projects].sort((a, b) => startYear(b) - startYear(a))
+
   const filtered = activeCategory === 'All'
-    ? projects
-    : projects.filter(p => p.category === activeCategory)
+    ? sorted
+    : sorted.filter(p => p.category === activeCategory)
 
   return (
     <section className="py-24 md:py-32 bg-section-gradient section-divider">

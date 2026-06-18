@@ -12,6 +12,24 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
+// Common zones offered in the manual picker (the visitor's own zone is added
+// automatically and pre-selected).
+const TIMEZONES = [
+  { value: 'America/New_York', label: 'Eastern — New York' },
+  { value: 'America/Chicago', label: 'Central — Chicago' },
+  { value: 'America/Denver', label: 'Mountain — Denver' },
+  { value: 'America/Phoenix', label: 'Mountain (no DST) — Phoenix' },
+  { value: 'America/Los_Angeles', label: 'Pacific — Los Angeles' },
+  { value: 'America/Anchorage', label: 'Alaska — Anchorage' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii — Honolulu' },
+  { value: 'Europe/London', label: 'London — GMT/BST' },
+]
+
+// YYYY-MM-DD for an ISO instant, as seen in a given time zone.
+const dateKeyInTz = (iso, tz) =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' })
+    .format(new Date(iso))
+
 const EMPTY_FORM = {
   firstName: '', lastName: '', email: '', phone: '',
   organization: '', projectOverview: '', materials: '', meetingType: '',
@@ -27,11 +45,10 @@ const fadeUp = {
   transition: { duration: 0.3, ease: 'easeOut' },
 }
 
-function SessionDetails({ timezone }) {
+function SessionDetails({ timezone, onTimezoneChange, tzOptions }) {
   const items = [
     { icon: Clock, text: `${SESSION.durationMinutes} minutes` },
     { icon: Video, text: 'Zoom or in person — your choice' },
-    { icon: Globe, text: timezone },
   ]
   return (
     <div>
@@ -40,7 +57,7 @@ function SessionDetails({ timezone }) {
       </p>
       <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">{SESSION.title}</h2>
       <p className="text-white/65 leading-relaxed mb-8">{SESSION.description}</p>
-      <ul className="space-y-3 mb-8">
+      <ul className="space-y-3 mb-5">
         {items.map(({ icon: Icon, text }) => (
           <li key={text} className="flex items-center gap-3 text-white/70 text-sm">
             <span className="w-9 h-9 rounded-lg bg-brand-navy border border-brand-accent/30 flex items-center justify-center text-brand-light flex-shrink-0">
@@ -49,7 +66,25 @@ function SessionDetails({ timezone }) {
             {text}
           </li>
         ))}
+        <li className="flex items-center gap-3 text-white/70 text-sm">
+          <span className="w-9 h-9 rounded-lg bg-brand-navy border border-brand-accent/30 flex items-center justify-center text-brand-light flex-shrink-0">
+            <Globe size={16} aria-hidden="true" />
+          </span>
+          <label className="flex-1">
+            <span className="sr-only">Time zone</span>
+            <select
+              value={timezone}
+              onChange={(e) => onTimezoneChange(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-brand-dark border border-brand-border text-white text-sm focus:border-brand-accent focus:outline-none cursor-pointer"
+            >
+              {tzOptions.map((tz) => (
+                <option key={tz.value} value={tz.value}>{tz.label}</option>
+              ))}
+            </select>
+          </label>
+        </li>
       </ul>
+      <p className="text-white/40 text-xs mb-8 pl-12 -mt-3">Times below are shown in this time zone — change it anytime.</p>
       <div className="p-5 rounded-xl bg-brand-mid border border-brand-border">
         <h3 className="text-white font-semibold text-sm mb-3">What to expect:</h3>
         <ul className="space-y-2.5">
@@ -184,7 +219,13 @@ export default function BookingPage() {
   const [submitError, setSubmitError] = useState(null)
   const [confirmation, setConfirmation] = useState(null)
 
-  const timezone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone, [])
+  const detectedTz = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone, [])
+  const [timezone, setTimezone] = useState(detectedTz)
+  const tzOptions = useMemo(() => {
+    const rest = TIMEZONES.filter(t => t.value !== detectedTz)
+    return [{ value: detectedTz, label: `Your time zone — ${detectedTz}` }, ...rest]
+  }, [detectedTz])
+  const changeTimezone = useCallback(tz => { setTimezone(tz); setSelectedDay(null) }, [])
 
   const loadAvailability = useCallback(async () => {
     if (!BOOKING_API_URL) return
@@ -209,21 +250,21 @@ export default function BookingPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadAvailability() }, [loadAvailability])
 
-  // Group ISO slots by the visitor's local calendar day
+  // Group ISO slots by calendar day in the selected time zone
   const slotsByDay = useMemo(() => {
     const grouped = {}
     for (const iso of slots) {
       const d = new Date(iso)
       if (d <= new Date()) continue
-      const key = dateKey(d)
+      const key = dateKeyInTz(iso, timezone)
       ;(grouped[key] ||= []).push(iso)
     }
     Object.values(grouped).forEach(list => list.sort())
     return grouped
-  }, [slots])
+  }, [slots, timezone])
 
   const formatTime = iso =>
-    new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: timezone })
 
   const formatDay = key => {
     const [y, m, d] = key.split('-').map(Number)
@@ -335,7 +376,7 @@ export default function BookingPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              <SessionDetails timezone={timezone} />
+              <SessionDetails timezone={timezone} onTimezoneChange={changeTimezone} tzOptions={tzOptions} />
             </motion.div>
 
             {/* Booking widget */}
@@ -381,7 +422,7 @@ export default function BookingPage() {
                     <h3 className="text-white font-bold text-2xl mb-2">You're booked!</h3>
                     <p className="text-white/65 mb-1">
                       {new Date(confirmation.start).toLocaleDateString([], {
-                        weekday: 'long', month: 'long', day: 'numeric',
+                        weekday: 'long', month: 'long', day: 'numeric', timeZone: timezone,
                       })}
                     </p>
                     <p className="text-white/65 mb-6">
@@ -453,7 +494,7 @@ export default function BookingPage() {
                     <div className="flex items-center gap-3 p-4 rounded-xl bg-brand-navy/40 border border-brand-accent/40 mb-6">
                       <Calendar size={18} className="text-brand-light flex-shrink-0" aria-hidden="true" />
                       <p className="text-white text-sm font-medium">
-                        {formatDay(dateKey(new Date(selectedSlot)))} · {formatTime(selectedSlot)} ({timezone})
+                        {formatDay(dateKeyInTz(selectedSlot, timezone))} · {formatTime(selectedSlot)} ({timezone})
                       </p>
                     </div>
 

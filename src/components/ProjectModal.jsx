@@ -6,22 +6,30 @@ import { useBooking } from '../context/BookingContext'
 
 function ModalMedia({ project, onClose }) {
   if (project.mediaType === 'video' && project.mediaUrl) {
+    // A directly-uploaded video file plays in a <video> tag; an embed link
+    // (YouTube, Vimeo, etc.) plays in an <iframe>.
+    const isFileVideo = /\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(project.mediaUrl)
+    const fill = {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      border: 'none',
+    }
     return (
       <div className="relative w-full overflow-hidden bg-black" style={{ paddingTop: '56.25%' }}>
-        <iframe
-          src={project.mediaUrl}
-          title={project.title}
-          allow="autoplay"
-          allowFullScreen
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            border: 'none',
-          }}
-        />
+        {isFileVideo ? (
+          <video src={project.mediaUrl} title={project.title} controls style={{ ...fill, objectFit: 'contain' }} />
+        ) : (
+          <iframe
+            src={project.mediaUrl}
+            title={project.title}
+            allow="autoplay"
+            allowFullScreen
+            style={fill}
+          />
+        )}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-full bg-brand-dark/70 text-white hover:bg-brand-dark transition-colors z-10"

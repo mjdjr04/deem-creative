@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Paste your deployed Apps Script Web App URL here (ends in /exec):
-export const BOOKING_API_URL = 'https://script.google.com/macros/s/AKfycbzx1UUQinu3Zc_jCBhFTuYcF7Z25k673KzXDZxYA_-XNUA5c7LLIVh0vInRWE71WzbQZg/exec'
+export const BOOKING_API_URL = 'https://script.google.com/macros/s/AKfycbxBc0HbJovSEwEiLefYEM25aFX2tTcaRQmIm6aQ53ZAxxI-rHP4KXJYCaxaMk5sohbmaw/exec'
 
 // Fallback: existing Google Calendar appointment schedule link
 export const GOOGLE_BOOKING_FALLBACK_URL = 'https://calendar.app.google/CVSNo86SEqFK16JB7'

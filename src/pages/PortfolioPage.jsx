@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import PortfolioExplorer from '../components/PortfolioExplorer'
+import Feed from '../components/Feed'
 
 export default function PortfolioPage({ onProjectSelect }) {
   const ref = useRef(null)
@@ -45,6 +46,7 @@ export default function PortfolioPage({ onProjectSelect }) {
       </section>
 
       <PortfolioExplorer onProjectSelect={onProjectSelect} />
+      <Feed />
     </>
   )
 }

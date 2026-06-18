@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { skillGroups, coreSkills } from '../data/skills'
+import { useContent } from '../context/ContentContext'
 
 const container = {
   hidden: {},
@@ -12,6 +12,7 @@ const tag = {
 }
 
 export default function Skills() {
+  const { groups: skillGroups, core: coreSkills } = useContent().skills
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.1 })
 

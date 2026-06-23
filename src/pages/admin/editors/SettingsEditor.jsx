@@ -47,7 +47,7 @@ export default function SettingsEditor() {
 
       <Card className="mb-6">
         <h3 className="text-white font-semibold mb-1">Contact Form</h3>
-        <p className="text-white/40 text-xs mb-4">The message form on your Contact page. Submissions appear under “Messages.”</p>
+        <p className="text-white/55 text-xs mb-4">The message form on your Contact page. Submissions appear under “Messages.”</p>
         {(() => {
           const c = value.contact || {}
           const setC = (key, v) => set('contact', { ...c, [key]: v })
@@ -65,7 +65,7 @@ export default function SettingsEditor() {
 
       <Card className="mb-6">
         <h3 className="text-white font-semibold mb-1">Contact Card (vCard)</h3>
-        <p className="text-white/40 text-xs mb-4">Powers the “Save Contact” button. Fill in at least a name and a phone or email.</p>
+        <p className="text-white/55 text-xs mb-4">Powers the “Save Contact” button. Fill in at least a name and a phone or email.</p>
         {(() => {
           const vc = value.vcard || {}
           const setVc = (key, v) => set('vcard', { ...vc, [key]: v })

@@ -80,7 +80,7 @@ export default function ServicesPage() {
             >
               <Calendar size={22} /> Book a Free Consultation
             </motion.button>
-            <p className="mt-5 text-white/30 text-sm">No commitment required · Typically within 1–3 business days</p>
+            <p className="mt-5 text-white/55 text-sm">No commitment required · Typically within 1–3 business days</p>
           </motion.div>
         </div>
       </section>

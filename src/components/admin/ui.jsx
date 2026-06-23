@@ -34,7 +34,7 @@ export function Field({ label, hint, children }) {
         </span>
       )}
       {children}
-      {hint && <span className="block text-white/35 text-xs mt-1">{hint}</span>}
+      {hint && <span className="block text-white/55 text-xs mt-1">{hint}</span>}
     </label>
   )
 }
@@ -105,10 +105,10 @@ export function StringListEditor({ label, hint, items, onChange, placeholder = '
               placeholder={placeholder}
               className={inputClass}
             />
-            <button type="button" onClick={() => move(i, -1)} className="text-white/30 hover:text-white p-1" title="Move up">
+            <button type="button" onClick={() => move(i, -1)} className="text-white/55 hover:text-white p-1" title="Move up">
               <ChevronUp size={14} />
             </button>
-            <button type="button" onClick={() => move(i, 1)} className="text-white/30 hover:text-white p-1" title="Move down">
+            <button type="button" onClick={() => move(i, 1)} className="text-white/55 hover:text-white p-1" title="Move down">
               <ChevronDown size={14} />
             </button>
             <button type="button" onClick={() => remove(i)} className="text-red-400/60 hover:text-red-400 p-1" title="Remove">
@@ -166,7 +166,7 @@ export function FileUpload({ label, hint, value, onChange, folder = 'uploads', a
               {busy ? 'Uploading…' : 'Upload file'}
               <input type="file" accept={accept} onChange={handle} className="hidden" disabled={busy} />
             </label>
-            <span className="text-white/30 text-xs">or paste a link below</span>
+            <span className="text-white/55 text-xs">or paste a link below</span>
           </div>
 
           <input

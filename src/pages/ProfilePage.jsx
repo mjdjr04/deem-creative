@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Phone, FileText, ExternalLink, Download, ChevronDown, Wrench, CheckCircle } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Mail, Phone, FileText, ExternalLink, Download, ChevronDown, Wrench, CheckCircle, Calendar, Check } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
 import { DeemCreativeMark } from '../components/DeemCreativeMark'
 import VCardButton from '../components/VCardButton'
 import ProjectMediaInline from '../components/ProjectMediaInline'
-import About from '../components/About'
 import Experience from '../components/Experience'
 import Skills from '../components/Skills'
+import SocialMedia from '../components/SocialMedia'
+import ContactForm from '../components/ContactForm'
 import defaultHeadshot from '../assets/headshot.jpeg'
 import { fullName } from '../lib/vcard'
+import { aboutDefaults } from '../data/defaults'
+import { trackEvent } from '../lib/analytics'
+import { ANALYTICS_EVENTS } from '../config/analytics'
 
 const LinkedInIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -52,12 +57,12 @@ function ProfileProjectCard({ project, index }) {
               {String(index + 1).padStart(2, '0')}
             </span>
             <h3 className="text-white font-semibold">{project.title}</h3>
-            {project.year && <span className="text-white/35 text-xs">{project.year}</span>}
+            {project.year && <span className="text-white/55 text-xs">{project.year}</span>}
           </div>
           {project.role && <p className="text-brand-light text-sm">{project.role}</p>}
           {project.brief && <p className="text-white/55 text-sm mt-1 leading-relaxed">{project.brief}</p>}
         </div>
-        <ChevronDown size={20} className={`text-white/40 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={20} className={`text-white/55 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       <AnimatePresence initial={false}>
@@ -86,7 +91,7 @@ function ProfileProjectCard({ project, index }) {
 
               {project.tools?.length > 0 && (
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Wrench size={14} className="text-white/30" />
+                  <Wrench size={14} className="text-white/55" />
                   {project.tools.map((t) => (
                     <span key={t} className="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-white/55 text-xs">{t}</span>
                   ))}
@@ -120,6 +125,12 @@ export default function ProfilePage() {
   const featured = projects.items.filter((p) => p.featured)
   const selected = featured.length ? featured : projects.items
 
+  const intro = about.profile || aboutDefaults.profile
+  const introParagraphs = (intro?.paragraphs || []).map((p) => p.trim()).filter(Boolean)
+  const stats = (intro?.stats || []).filter((s) => s && (s.value || s.label))
+  const quickFacts = (intro?.quickFacts || []).map((f) => (f || '').trim()).filter(Boolean)
+  const cta = intro?.cta || {}
+
   const btn = 'inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors'
 
   return (
@@ -151,7 +162,13 @@ export default function ProfilePage() {
             className="flex flex-wrap gap-3 mt-8"
           >
             {settings.resumeUrl && (
-              <a href={settings.resumeUrl} target="_blank" rel="noopener noreferrer" className={`${btn} bg-white text-brand-dark hover:bg-brand-light hover:text-white`}>
+              <a
+                href={settings.resumeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackEvent(ANALYTICS_EVENTS.RESUME_DOWNLOAD, { from: 'profile_header' })}
+                className={`${btn} bg-white text-brand-dark hover:bg-brand-light hover:text-white`}
+              >
                 <FileText size={16} /> {settings.resumeLabel || 'Download Resume'}
               </a>
             )}
@@ -175,14 +192,88 @@ export default function ProfilePage() {
         </div>
       </header>
 
+      {/* Profile intro — written for hiring managers */}
+      {introParagraphs.length > 0 && (
+        <Section className="py-16 sm:py-20 md:py-28 bg-brand-dark section-divider">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p className="text-brand-light text-sm font-semibold tracking-widest uppercase mb-4">
+              {intro.eyebrow}
+            </p>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-8 leading-tight max-w-3xl">
+              {intro.heading}
+            </h2>
+
+            <div className="grid lg:grid-cols-[1fr_minmax(0,20rem)] gap-10 lg:gap-14 items-start">
+              {/* Narrative */}
+              <div className="max-w-3xl">
+                {introParagraphs.map((para, i) => (
+                  <p
+                    key={i}
+                    className={`text-white/70 text-base sm:text-lg leading-relaxed ${
+                      i === introParagraphs.length - 1 ? '' : 'mb-5'
+                    }`}
+                  >
+                    {para}
+                  </p>
+                ))}
+
+                {/* Quick-fact chips */}
+                {quickFacts.length > 0 && (
+                  <motion.div
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, amount: 0.3 }}
+                    variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+                    className="flex flex-wrap gap-2.5 mt-8"
+                  >
+                    {quickFacts.map((fact) => (
+                      <motion.span
+                        key={fact}
+                        variants={reveal}
+                        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-mid border border-brand-border text-white/75 text-sm"
+                      >
+                        <Check size={14} className="text-brand-light flex-shrink-0" />
+                        {fact}
+                      </motion.span>
+                    ))}
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Animated stat cards */}
+              {stats.length > 0 && (
+                <motion.div
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={{ once: true, amount: 0.2 }}
+                  variants={{ show: { transition: { staggerChildren: 0.08 } } }}
+                  className="grid grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4"
+                >
+                  {stats.map((stat, i) => (
+                    <motion.div
+                      key={i}
+                      variants={reveal}
+                      whileHover={{ y: -3 }}
+                      className="rounded-2xl bg-brand-mid border border-brand-border p-4 sm:p-5 hover:border-brand-accent/50 transition-colors"
+                    >
+                      <p className="text-2xl sm:text-3xl font-bold text-white mb-1">{stat.value}</p>
+                      <p className="text-white/55 text-xs sm:text-sm leading-snug">{stat.label}</p>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </div>
+          </div>
+        </Section>
+      )}
+
       {/* Reused public sections (already animate on scroll) */}
-      <About />
-      <Experience />
+      <Experience collapsible />
       <Skills />
 
       {/* Interactive selected projects */}
       {selected.length > 0 && (
-        <Section className="py-20 md:py-28 bg-brand-dark section-divider">
+        <Section className="py-16 sm:py-20 md:py-28 bg-brand-dark section-divider">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <p className="text-brand-light text-sm font-semibold tracking-widest uppercase mb-4">Work</p>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">Selected Projects</h2>
@@ -200,9 +291,12 @@ export default function ProfilePage() {
         </Section>
       )}
 
+      {/* Social media work */}
+      <SocialMedia containerClass="max-w-5xl" />
+
       {/* Embedded resume */}
       {settings.resumeUrl && (
-        <Section className="py-20 md:py-28 bg-section-gradient section-divider">
+        <Section className="py-16 sm:py-20 md:py-28 bg-section-gradient section-divider">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between gap-4 mb-8">
               <h2 className="text-3xl md:text-4xl font-bold text-white">Resume</h2>
@@ -210,7 +304,7 @@ export default function ProfilePage() {
                 <Download size={15} /> Download PDF
               </a>
             </div>
-            <object data={settings.resumeUrl} type="application/pdf" className="w-full rounded-xl border border-brand-border" style={{ height: '85vh' }}>
+            <object data={settings.resumeUrl} type="application/pdf" className="w-full rounded-xl border border-brand-border h-[70vh] sm:h-[80vh] lg:h-[85vh]">
               <p className="text-white/60 text-sm p-6">
                 Your browser can’t display the embedded PDF.{' '}
                 <a href={settings.resumeUrl} className="text-brand-light underline">Download the resume instead.</a>
@@ -220,10 +314,76 @@ export default function ProfilePage() {
         </Section>
       )}
 
+      {/* Send me a message */}
+      <Section className="py-16 sm:py-20 md:py-28 bg-brand-dark section-divider">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-brand-light text-sm font-semibold tracking-widest uppercase mb-4">Contact</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-3 leading-tight">Send me a message</h2>
+          <p className="text-white/55 text-sm mb-8">
+            Prefer to write? Drop a note and I&apos;ll get back to you, usually within 24 hours.
+          </p>
+          <ContactForm />
+        </div>
+      </Section>
+
+      {/* Recruiter CTA */}
+      <Section className="py-16 sm:py-20 md:py-28 bg-hero-gradient section-divider">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-brand-light text-sm font-semibold tracking-widest uppercase mb-4">
+            Get in touch
+          </p>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
+            {cta.heading || "Let's work together."}
+          </h2>
+          {cta.subtext && (
+            <p className="text-white/65 text-base sm:text-lg leading-relaxed mb-9 max-w-2xl mx-auto">
+              {cta.subtext}
+            </p>
+          )}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link to="/hire" className={`${btn} bg-white text-brand-dark hover:bg-brand-light hover:text-white`}>
+              <Calendar size={16} /> Schedule a hiring call
+            </Link>
+            {vc.email && (
+              <a
+                href={`mailto:${vc.email}`}
+                onClick={() => trackEvent(ANALYTICS_EVENTS.EMAIL_CLICK, { from: 'profile_cta' })}
+                className={`${btn} border border-brand-accent text-white hover:bg-brand-navy`}
+              >
+                <Mail size={16} /> Email me
+              </a>
+            )}
+            {settings.resumeUrl && (
+              <a
+                href={settings.resumeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackEvent(ANALYTICS_EVENTS.RESUME_DOWNLOAD, { from: 'profile_cta' })}
+                className={`${btn} border border-brand-border text-white/80 hover:border-brand-accent hover:text-white`}
+              >
+                <Download size={16} /> Resume
+              </a>
+            )}
+            <VCardButton className={`${btn} border border-brand-border text-white/80 hover:border-brand-accent hover:text-white`} />
+            {about.linkedinUrl && (
+              <a
+                href={about.linkedinUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackEvent(ANALYTICS_EVENTS.OUTBOUND_LINKEDIN, { from: 'profile_cta' })}
+                className={`${btn} border border-brand-border text-white/80 hover:border-brand-accent hover:text-white`}
+              >
+                <LinkedInIcon size={16} /> LinkedIn
+              </a>
+            )}
+          </div>
+        </div>
+      </Section>
+
       {/* Footer */}
       <footer className="border-t border-brand-border bg-brand-dark">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-white/40 text-sm">{name} · {vc.email}</p>
+          <p className="text-white/55 text-sm text-center sm:text-left">{name} · {vc.email}</p>
           <VCardButton />
         </div>
       </footer>

@@ -257,7 +257,7 @@ export default function ChatWidget({ onOpenProject }) {
               <button
                 onClick={() => setNudge(null)}
                 aria-label="Dismiss"
-                className="absolute top-2 right-2 text-white/30 hover:text-white p-1"
+                className="absolute top-2 right-2 text-white/55 hover:text-white p-1"
               >
                 <X size={14} />
               </button>
@@ -306,7 +306,7 @@ export default function ChatWidget({ onOpenProject }) {
               </div>
               <div className="min-w-0">
                 <p className="text-white text-sm font-semibold leading-tight">{BOT_NAME}</p>
-                <p className="text-white/45 text-xs">Michael's AI assistant · powered by Claude</p>
+                <p className="text-white/55 text-xs">Michael's AI assistant · powered by Claude</p>
               </div>
             </div>
 

@@ -149,6 +149,51 @@ create policy "authenticated delete chats"
   to authenticated using (true);
 
 -- ---------------------------------------------------------------------------
+-- 3d. Analytics events (first-party, privacy-respecting)
+-- Anyone may INSERT a page view / event (only after the visitor accepts
+-- analytics cookies on the site); only the logged-in admin may read.
+-- No personal data is stored — ids are random and not tied to identity.
+-- ---------------------------------------------------------------------------
+create table if not exists public.analytics_events (
+  id            uuid primary key default gen_random_uuid(),
+  type          text not null,            -- 'pageview' | 'event'
+  name          text,                     -- event name (null for pageviews)
+  path          text,                     -- route, e.g. /portfolio
+  referrer_host text,                     -- external referrer hostname
+  visitor_id    text,                     -- random id (unique-visitor counting)
+  session_id    text,                     -- random per-tab id (visit grouping)
+  device        text,                     -- mobile | tablet | desktop
+  browser       text,
+  os            text,
+  screen_w      integer,
+  country       text,                     -- reserved for future edge geolocation
+  props         jsonb not null default '{}'::jsonb,
+  created_at    timestamptz not null default now()
+);
+
+create index if not exists idx_analytics_created_at on public.analytics_events (created_at desc);
+create index if not exists idx_analytics_type       on public.analytics_events (type);
+create index if not exists idx_analytics_path       on public.analytics_events (path);
+
+alter table public.analytics_events enable row level security;
+
+drop policy if exists "anyone can log analytics"      on public.analytics_events;
+drop policy if exists "authenticated read analytics"  on public.analytics_events;
+drop policy if exists "authenticated delete analytics" on public.analytics_events;
+
+create policy "anyone can log analytics"
+  on public.analytics_events for insert
+  to anon, authenticated with check (true);
+
+create policy "authenticated read analytics"
+  on public.analytics_events for select
+  to authenticated using (true);
+
+create policy "authenticated delete analytics"
+  on public.analytics_events for delete
+  to authenticated using (true);
+
+-- ---------------------------------------------------------------------------
 -- 4. Storage bucket for media + resume uploads (public read, admin write).
 -- ---------------------------------------------------------------------------
 insert into storage.buckets (id, name, public)

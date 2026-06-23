@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { DeemCreativeMark } from './DeemCreativeMark'
 import { useBooking } from '../context/BookingContext'
 import { useContent } from '../context/ContentContext'
+import { useConsent } from '../context/ConsentContext'
 import VCardButton from './VCardButton'
 
 const navLinks = [
@@ -34,6 +35,7 @@ export default function Contact() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.2 })
   const { open } = useBooking()
+  const { openBanner } = useConsent()
 
   return (
     <footer className="bg-brand-dark section-divider">
@@ -90,7 +92,7 @@ export default function Contact() {
 
           {/* Column 2: Navigation */}
           <div>
-            <h3 className="text-white/50 text-xs font-semibold tracking-widest uppercase mb-5">
+            <h3 className="text-white/55 text-xs font-semibold tracking-widest uppercase mb-5">
               Navigation
             </h3>
             <ul className="space-y-3">
@@ -109,7 +111,7 @@ export default function Contact() {
 
           {/* Column 3: CTA */}
           <div>
-            <h3 className="text-white/50 text-xs font-semibold tracking-widest uppercase mb-5">
+            <h3 className="text-white/55 text-xs font-semibold tracking-widest uppercase mb-5">
               Work Together
             </h3>
             <p className="text-white/60 text-sm leading-relaxed mb-5">
@@ -125,8 +127,8 @@ export default function Contact() {
             </motion.button>
 
             <div className="mt-6 pt-6 border-t border-brand-border">
-              <p className="text-white/40 text-xs">{settings.email}</p>
-              <p className="text-white/40 text-xs mt-1">@deemcreative</p>
+              <p className="text-white/55 text-xs">{settings.email}</p>
+              <p className="text-white/55 text-xs mt-1">@deemcreative</p>
             </div>
           </div>
         </motion.div>
@@ -134,12 +136,18 @@ export default function Contact() {
 
       <div className="border-t border-brand-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-white/35 text-xs">
+          <p className="text-white/55 text-xs">
             © {new Date().getFullYear()} Deem Creative. All rights reserved.
           </p>
-          <p className="text-white/35 text-xs">
-            Founded by Michael Deem Jr.
-          </p>
+          <div className="flex items-center gap-4">
+            <Link to="/privacy" className="text-white/55 text-xs hover:text-white transition-colors">
+              Privacy &amp; Cookies
+            </Link>
+            <button onClick={openBanner} className="text-white/55 text-xs hover:text-white transition-colors">
+              Cookie settings
+            </button>
+            <span className="text-white/55 text-xs">Founded by Michael Deem Jr.</span>
+          </div>
         </div>
       </div>
     </footer>

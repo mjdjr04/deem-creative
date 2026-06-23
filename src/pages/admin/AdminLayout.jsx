@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import {
   User, FolderKanban, Briefcase, Sparkles, Wrench, Settings,
-  LogOut, ExternalLink, UploadCloud, CheckCircle2, Rss, Mail, CalendarClock, MessageSquare,
+  LogOut, ExternalLink, UploadCloud, CheckCircle2, Rss, Mail, CalendarClock, MessageSquare, BarChart3,
 } from 'lucide-react'
 import { useAdmin } from '../../context/AdminContext'
 import PublishModal from './PublishModal'
@@ -17,6 +17,7 @@ const nav = [
   { to: 'emails', label: 'Booking Emails', icon: CalendarClock },
   { to: 'messages', label: 'Messages', icon: Mail },
   { to: 'chats', label: 'Chat Logs', icon: MessageSquare },
+  { to: 'analytics', label: 'Analytics', icon: BarChart3 },
   { to: 'settings', label: 'Settings', icon: Settings },
 ]
 
@@ -30,7 +31,7 @@ export default function AdminLayout() {
       <aside className="w-60 flex-shrink-0 border-r border-brand-border bg-brand-mid flex flex-col sticky top-0 h-screen self-start overflow-y-auto">
         <div className="p-5 border-b border-brand-border">
           <p className="text-white font-bold">Deem Creative</p>
-          <p className="text-white/40 text-xs">Site Admin</p>
+          <p className="text-white/55 text-xs">Site Admin</p>
         </div>
 
         <nav className="flex-1 p-3 space-y-1">
@@ -84,7 +85,7 @@ export default function AdminLayout() {
             ) : (
               <>
                 <CheckCircle2 size={16} className="text-green-400" />
-                <span className="text-white/50">All changes published</span>
+                <span className="text-white/55">All changes published</span>
               </>
             )}
           </div>

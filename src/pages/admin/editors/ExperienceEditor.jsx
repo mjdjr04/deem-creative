@@ -40,12 +40,12 @@ function CollapsibleItem({ title, subtitle, onRemove, onMove, children }) {
         <button onClick={() => setOpen((v) => !v)} className="flex-1 flex items-center justify-between text-left">
           <span>
             <span className="text-white font-medium">{title || 'Untitled'}</span>
-            {subtitle && <span className="text-white/40 text-sm ml-2">{subtitle}</span>}
+            {subtitle && <span className="text-white/55 text-sm ml-2">{subtitle}</span>}
           </span>
-          <ChevronDown size={18} className={`text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown size={18} className={`text-white/55 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
-        <button onClick={() => onMove(-1)} className="text-white/30 hover:text-white text-xs px-1">↑</button>
-        <button onClick={() => onMove(1)} className="text-white/30 hover:text-white text-xs px-1">↓</button>
+        <button onClick={() => onMove(-1)} className="text-white/55 hover:text-white text-xs px-1">↑</button>
+        <button onClick={() => onMove(1)} className="text-white/55 hover:text-white text-xs px-1">↓</button>
         <button onClick={onRemove} className="text-red-400/60 hover:text-red-400 p-1" title="Delete">
           <Trash2 size={16} />
         </button>

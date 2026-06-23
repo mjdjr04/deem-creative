@@ -103,7 +103,7 @@ export default function ContactForm() {
       </div>
       <div className="grid sm:grid-cols-2 gap-4">
         <label className="block">
-          <span className="block text-white/60 text-xs font-medium mb-1.5">Phone <span className="text-white/35">(optional)</span></span>
+          <span className="block text-white/60 text-xs font-medium mb-1.5">Phone <span className="text-white/55">(optional)</span></span>
           <input
             type="tel"
             placeholder="(555) 123-4567"
@@ -114,7 +114,7 @@ export default function ContactForm() {
           />
         </label>
         <label className="block">
-          <span className="block text-white/60 text-xs font-medium mb-1.5">Company / Organization <span className="text-white/35">(optional)</span></span>
+          <span className="block text-white/60 text-xs font-medium mb-1.5">Company / Organization <span className="text-white/55">(optional)</span></span>
           <input
             type="text"
             placeholder="Your organization"

@@ -22,7 +22,7 @@ export default function ProjectMediaInline({ project }) {
             />
           )}
         </div>
-        {mediaCaption && <figcaption className="text-white/40 text-xs mt-2">{mediaCaption}</figcaption>}
+        {mediaCaption && <figcaption className="text-white/55 text-xs mt-2">{mediaCaption}</figcaption>}
       </figure>
     )
   }
@@ -31,7 +31,7 @@ export default function ProjectMediaInline({ project }) {
     return (
       <figure>
         <img src={mediaUrl} alt={mediaAlt || title} className="w-full rounded-lg border border-brand-border object-cover" />
-        {mediaCaption && <figcaption className="text-white/40 text-xs mt-2">{mediaCaption}</figcaption>}
+        {mediaCaption && <figcaption className="text-white/55 text-xs mt-2">{mediaCaption}</figcaption>}
       </figure>
     )
   }

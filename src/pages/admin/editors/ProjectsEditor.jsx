@@ -64,10 +64,10 @@ function ProjectItem({ project, categories, onChange, onRemove, onMove }) {
             <span className="text-white font-medium">{project.title || 'Untitled project'}</span>
             {project.featured && <span className="ml-2 text-[10px] uppercase tracking-wide text-amber-300 border border-amber-300/40 rounded px-1.5 py-0.5">Featured</span>}
           </span>
-          <ChevronDown size={18} className={`text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown size={18} className={`text-white/55 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
-        <button onClick={() => onMove(-1)} className="text-white/30 hover:text-white text-xs px-1">↑</button>
-        <button onClick={() => onMove(1)} className="text-white/30 hover:text-white text-xs px-1">↓</button>
+        <button onClick={() => onMove(-1)} className="text-white/55 hover:text-white text-xs px-1">↑</button>
+        <button onClick={() => onMove(1)} className="text-white/55 hover:text-white text-xs px-1">↓</button>
         <button onClick={onRemove} className="text-red-400/60 hover:text-red-400 p-1" title="Delete project">
           <Trash2 size={16} />
         </button>

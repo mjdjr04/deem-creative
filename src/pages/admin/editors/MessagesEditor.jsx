@@ -53,20 +53,20 @@ function MessageCard({ m, onToggleRead, onRemove, onMarkRead }) {
           {m.email && <a href={`mailto:${m.email}`} className="text-brand-light text-sm hover:text-white">{m.email}</a>}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 mt-0.5">
             {m.phone && (
-              <a href={`tel:${m.phone.replace(/[^\d+]/g, '')}`} className="flex items-center gap-1 text-white/45 text-xs hover:text-white">
+              <a href={`tel:${m.phone.replace(/[^\d+]/g, '')}`} className="flex items-center gap-1 text-white/55 text-xs hover:text-white">
                 <Phone size={11} /> {m.phone}
               </a>
             )}
             {m.company && (
-              <span className="flex items-center gap-1 text-white/45 text-xs">
+              <span className="flex items-center gap-1 text-white/55 text-xs">
                 <Building2 size={11} /> {m.company}
               </span>
             )}
           </div>
-          <p className="text-white/35 text-xs mt-0.5">{formatDate(m.created_at)}</p>
+          <p className="text-white/55 text-xs mt-0.5">{formatDate(m.created_at)}</p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <button onClick={() => onToggleRead(m)} className="text-white/40 hover:text-white p-2" title={m.read ? 'Mark unread' : 'Mark read'}>
+          <button onClick={() => onToggleRead(m)} className="text-white/55 hover:text-white p-2" title={m.read ? 'Mark unread' : 'Mark read'}>
             {m.read ? <Mail size={16} /> : <MailOpen size={16} />}
           </button>
           <button onClick={() => onRemove(m)} className="text-red-400/60 hover:text-red-400 p-2" title="Delete">
@@ -91,13 +91,13 @@ function MessageCard({ m, onToggleRead, onRemove, onMarkRead }) {
               >
                 <Reply size={15} /> Reply
               </button>
-              <a href={mailtoHref(m)} className="inline-flex items-center gap-1.5 text-white/40 text-xs hover:text-white">
+              <a href={mailtoHref(m)} className="inline-flex items-center gap-1.5 text-white/55 text-xs hover:text-white">
                 <ExternalLink size={12} /> Open in email app instead
               </a>
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-white/40 text-xs">Sends from michael@deemcreative.com</p>
+              <p className="text-white/55 text-xs">Sends from michael@deemcreative.com</p>
               <input value={subject} onChange={(e) => setSubject(e.target.value)} className={replyInputClass} placeholder="Subject" />
               <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={5} className={`${replyInputClass} resize-y`} placeholder="Write your reply…" />
               {err && <p className="text-red-400 text-xs">{err}</p>}
@@ -176,7 +176,7 @@ export default function MessagesEditor() {
       <div className="flex items-start justify-between gap-4 mb-6 pb-5 border-b border-brand-border">
         <div>
           <h1 className="text-2xl font-bold text-white">Messages</h1>
-          <p className="text-white/50 text-sm mt-1">
+          <p className="text-white/55 text-sm mt-1">
             Contact-form submissions{unread > 0 ? ` — ${unread} unread` : ''}.
           </p>
         </div>
@@ -193,7 +193,7 @@ export default function MessagesEditor() {
       ) : error ? (
         <p className="text-red-400 text-sm">{error}</p>
       ) : messages.length === 0 ? (
-        <p className="text-white/40 text-sm">No messages yet.</p>
+        <p className="text-white/55 text-sm">No messages yet.</p>
       ) : (
         <div className="space-y-4">
           {messages.map((m) => (

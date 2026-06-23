@@ -158,9 +158,9 @@ export default function ContactPage() {
                     <Icon size={20} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-0.5">{method.label}</p>
+                    <p className="text-white/55 text-xs font-semibold uppercase tracking-widest mb-0.5">{method.label}</p>
                     <p className="text-white font-medium text-sm mb-1 break-words">{method.value}</p>
-                    <p className="text-white/50 text-xs">{method.description}</p>
+                    <p className="text-white/55 text-xs">{method.description}</p>
                   </div>
                   {method.external && <ExternalLink size={14} className="text-brand-border flex-shrink-0 mt-1" aria-hidden="true" />}
                 </div>

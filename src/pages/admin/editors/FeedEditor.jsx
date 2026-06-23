@@ -52,12 +52,12 @@ function PostItem({ post, onChange, onRemove, onMove }) {
         <button onClick={() => setOpen((v) => !v)} className="flex-1 flex items-center justify-between text-left">
           <span>
             <span className="text-white font-medium">{post.title || post.caption?.slice(0, 40) || 'Untitled post'}</span>
-            {post.date && <span className="text-white/40 text-sm ml-2">{post.date}</span>}
+            {post.date && <span className="text-white/55 text-sm ml-2">{post.date}</span>}
           </span>
-          <ChevronDown size={18} className={`text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown size={18} className={`text-white/55 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
-        <button onClick={() => onMove(-1)} className="text-white/30 hover:text-white text-xs px-1">↑</button>
-        <button onClick={() => onMove(1)} className="text-white/30 hover:text-white text-xs px-1">↓</button>
+        <button onClick={() => onMove(-1)} className="text-white/55 hover:text-white text-xs px-1">↑</button>
+        <button onClick={() => onMove(1)} className="text-white/55 hover:text-white text-xs px-1">↓</button>
         <button onClick={onRemove} className="text-red-400/60 hover:text-red-400 p-1" title="Delete post">
           <Trash2 size={16} />
         </button>
@@ -101,7 +101,7 @@ export default function FeedEditor() {
     >
       <div className="space-y-4">
         {items.length === 0 && (
-          <p className="text-white/40 text-sm">No posts yet. Add your first one below.</p>
+          <p className="text-white/55 text-sm">No posts yet. Add your first one below.</p>
         )}
         {items.map((post, i) => (
           <PostItem

@@ -11,6 +11,7 @@ import FeedEditor from './editors/FeedEditor'
 import EmailsEditor from './editors/EmailsEditor'
 import MessagesEditor from './editors/MessagesEditor'
 import ChatsEditor from './editors/ChatsEditor'
+import AnalyticsEditor from './editors/AnalyticsEditor'
 import SettingsEditor from './editors/SettingsEditor'
 import { Loader2 } from 'lucide-react'
 
@@ -26,7 +27,7 @@ function NotConfigured() {
           <code className="px-1.5 py-0.5 mx-1 rounded bg-brand-mid text-brand-light text-xs">VITE_SUPABASE_ANON_KEY</code>
           to a <code className="px-1.5 py-0.5 mx-1 rounded bg-brand-mid text-brand-light text-xs">.env.local</code> file.
         </p>
-        <p className="text-white/40 text-xs">See <strong>ADMIN_SETUP.md</strong> in your project for the step-by-step walkthrough.</p>
+        <p className="text-white/55 text-xs">See <strong>ADMIN_SETUP.md</strong> in your project for the step-by-step walkthrough.</p>
       </div>
     </div>
   )
@@ -79,6 +80,7 @@ function Gate() {
         <Route path="emails" element={<EmailsEditor />} />
         <Route path="messages" element={<MessagesEditor />} />
         <Route path="chats" element={<ChatsEditor />} />
+        <Route path="analytics" element={<AnalyticsEditor />} />
         <Route path="settings" element={<SettingsEditor />} />
         <Route path="*" element={<Navigate to="/admin/about" replace />} />
       </Route>

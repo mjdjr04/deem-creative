@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, ChevronDown } from 'lucide-react'
 import { DeemCreativeMark } from './DeemCreativeMark'
 import { useBooking } from '../context/BookingContext'
 
@@ -15,7 +15,14 @@ const LinkedInIcon = () => (
 
 const navLinks = [
   { label: 'Home',      to: '/' },
-  { label: 'Portfolio', to: '/portfolio' },
+  {
+    label: 'Portfolio',
+    to: '/portfolio',
+    children: [
+      { label: 'Projects',     to: '/portfolio?section=projects' },
+      { label: 'Social Media', to: '/portfolio?section=social' },
+    ],
+  },
   { label: 'Services',  to: '/services' },
   { label: 'Contact',   to: '/contact' },
 ]
@@ -62,27 +69,61 @@ export default function Navbar() {
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-1">
-            {navLinks.map(link => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`relative px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                  isActive(link.to)
-                    ? 'text-white'
-                    : 'text-white/70 hover:text-white hover:bg-brand-navy/30'
-                }`}
-              >
-                {link.label}
-                {isActive(link.to) && (
-                  <motion.span
-                    layoutId="nav-active-underline"
-                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                    className="absolute inset-x-2.5 bottom-0 h-0.5 rounded-full bg-brand-light"
-                    aria-hidden="true"
-                  />
-                )}
-              </Link>
-            ))}
+            {navLinks.map(link => {
+              const linkClass = `relative px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                isActive(link.to)
+                  ? 'text-white'
+                  : 'text-white/70 hover:text-white hover:bg-brand-navy/30'
+              }`
+              const underline = isActive(link.to) && (
+                <motion.span
+                  layoutId="nav-active-underline"
+                  transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                  className="absolute inset-x-2.5 bottom-0 h-0.5 rounded-full bg-brand-light"
+                  aria-hidden="true"
+                />
+              )
+
+              if (link.children) {
+                return (
+                  <div key={link.to} className="relative group">
+                    <Link to={link.to} className={linkClass}>
+                      <span className="inline-flex items-center gap-1">
+                        {link.label}
+                        <ChevronDown size={14} className="transition-transform group-hover:rotate-180" />
+                      </span>
+                      {underline}
+                    </Link>
+                    {/* Dropdown — pt-2 bridges the hover gap to the panel */}
+                    <div className="absolute left-0 top-full pt-2 opacity-0 invisible translate-y-1 transition-all duration-150 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:visible group-focus-within:translate-y-0">
+                      <div className="min-w-[190px] rounded-xl bg-brand-dark/95 backdrop-blur-sm border border-brand-border shadow-xl p-1.5">
+                        {link.children.map(child => (
+                          <Link
+                            key={child.to}
+                            to={child.to}
+                            className="block px-3 py-2 rounded-lg text-sm text-white/75 hover:text-white hover:bg-brand-navy/40 transition-colors"
+                          >
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  aria-current={isActive(link.to) ? 'page' : undefined}
+                  className={linkClass}
+                >
+                  {link.label}
+                  {underline}
+                </Link>
+              )
+            })}
 
             {/* LinkedIn — highlighted with border */}
             <motion.a
@@ -134,16 +175,32 @@ export default function Navbar() {
           >
             <div className="px-4 pb-6 pt-2 flex flex-col gap-1">
               {navLinks.map(link => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={closeMenu}
-                  className={`py-3 text-base font-medium border-b border-brand-border/50 transition-colors ${
-                    isActive(link.to) ? 'text-white' : 'text-white/80 hover:text-white'
-                  }`}
-                >
-                  {link.label}
-                </Link>
+                <div key={link.to} className="border-b border-brand-border/50">
+                  <Link
+                    to={link.to}
+                    onClick={closeMenu}
+                    aria-current={isActive(link.to) ? 'page' : undefined}
+                    className={`block py-3 text-base font-medium transition-colors ${
+                      isActive(link.to) ? 'text-white' : 'text-white/80 hover:text-white'
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                  {link.children && (
+                    <div className="ml-3 mb-2 flex flex-col border-l border-brand-border/50">
+                      {link.children.map(child => (
+                        <Link
+                          key={child.to}
+                          to={child.to}
+                          onClick={closeMenu}
+                          className="py-2 pl-4 text-sm text-white/60 hover:text-white transition-colors"
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
               <a
                 href={LINKEDIN_URL}

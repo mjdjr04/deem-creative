@@ -1,11 +1,24 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
 import PortfolioExplorer from '../components/PortfolioExplorer'
 import Feed from '../components/Feed'
+import SocialMedia from '../components/SocialMedia'
 
 export default function PortfolioPage({ onProjectSelect }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.2 })
+  const { search } = useLocation()
+
+  // Scroll to the section requested by the navbar dropdown (?section=projects|social).
+  useEffect(() => {
+    const section = new URLSearchParams(search).get('section')
+    if (!section) return
+    const t = setTimeout(() => {
+      document.getElementById(section)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 80)
+    return () => clearTimeout(t)
+  }, [search])
 
   return (
     <>
@@ -45,8 +58,13 @@ export default function PortfolioPage({ onProjectSelect }) {
         />
       </section>
 
-      <PortfolioExplorer onProjectSelect={onProjectSelect} />
+      <div id="projects" className="scroll-mt-20">
+        <PortfolioExplorer onProjectSelect={onProjectSelect} />
+      </div>
       <Feed />
+      <div id="social" className="scroll-mt-20">
+        <SocialMedia />
+      </div>
     </>
   )
 }

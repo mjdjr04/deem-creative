@@ -133,14 +133,14 @@ export default function ProjectModal({ project, onClose }) {
                   <span className="px-2.5 py-1 rounded-full bg-brand-surface border border-brand-border text-brand-light text-xs font-medium">
                     {project.category}
                   </span>
-                  <span className="text-white/40 text-xs">{project.year}</span>
+                  <span className="text-white/55 text-xs">{project.year}</span>
                 </div>
 
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-1">
                   {project.title}
                 </h2>
                 <p className="text-brand-light text-sm mb-1 font-medium">{project.client}</p>
-                <p className="text-white/50 text-sm mb-6">Role: {project.role}</p>
+                <p className="text-white/55 text-sm mb-6">Role: {project.role}</p>
 
                 <p className="text-white/75 leading-relaxed mb-8 text-base">
                   {project.description}

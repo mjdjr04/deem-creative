@@ -181,6 +181,24 @@ export async function deleteChatSession(sessionId) {
   if (error) throw error
 }
 
+// ---------------------------------------------------------------------------
+// Analytics (first-party page views + events)
+// ---------------------------------------------------------------------------
+
+/** Admin: fetch raw analytics rows for the last `days` days (capped). */
+export async function fetchAnalytics({ days = 30 } = {}) {
+  if (!isSupabaseConfigured) return []
+  const since = new Date(Date.now() - days * 86400000).toISOString()
+  const { data, error } = await supabase
+    .from('analytics_events')
+    .select('type, name, path, referrer_host, visitor_id, session_id, device, browser, os, created_at')
+    .gte('created_at', since)
+    .order('created_at', { ascending: false })
+    .limit(20000)
+  if (error) throw error
+  return data ?? []
+}
+
 /**
  * Admin: send a reply email from the owner's address via the Google Apps Script.
  * The script verifies the included Supabase session token before sending, so

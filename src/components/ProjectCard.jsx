@@ -98,7 +98,7 @@ export default function ProjectCard({ project, onClick }) {
         </p>
         <div className="flex items-center justify-between">
           <p className="text-brand-light/70 text-xs font-medium">{project.client}</p>
-          <p className="text-white/40 text-xs">{project.year}</p>
+          <p className="text-white/55 text-xs">{project.year}</p>
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5">
           {project.tags.slice(0, 3).map(tag => (

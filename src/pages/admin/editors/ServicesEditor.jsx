@@ -47,10 +47,10 @@ function ServiceItem({ service, onChange, onRemove, onMove }) {
         <GripVertical size={16} className="text-white/20" />
         <button onClick={() => setOpen((v) => !v)} className="flex-1 flex items-center justify-between text-left">
           <span className="text-white font-medium">{service.title || 'Untitled service'}</span>
-          <ChevronDown size={18} className={`text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown size={18} className={`text-white/55 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
-        <button onClick={() => onMove(-1)} className="text-white/30 hover:text-white text-xs px-1">↑</button>
-        <button onClick={() => onMove(1)} className="text-white/30 hover:text-white text-xs px-1">↓</button>
+        <button onClick={() => onMove(-1)} className="text-white/55 hover:text-white text-xs px-1">↑</button>
+        <button onClick={() => onMove(1)} className="text-white/55 hover:text-white text-xs px-1">↓</button>
         <button onClick={onRemove} className="text-red-400/60 hover:text-red-400 p-1" title="Delete service">
           <Trash2 size={16} />
         </button>

@@ -79,7 +79,7 @@ export default function PortfolioExplorer({ onProjectSelect }) {
         </motion.div>
 
         {filtered.length === 0 && (
-          <div className="text-center py-16 text-white/40">
+          <div className="text-center py-16 text-white/55">
             No projects in this category yet.
           </div>
         )}

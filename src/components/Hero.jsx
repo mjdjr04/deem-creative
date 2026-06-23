@@ -110,7 +110,7 @@ export default function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="flex flex-wrap items-center justify-center gap-2 text-xs text-white/50 font-medium"
+          className="flex flex-wrap items-center justify-center gap-2 text-xs text-white/55 font-medium"
         >
           {['Video Production', 'Social Media Strategy', 'Digital Storytelling', 'Website Support', 'Creative Operations'].map((item, i) => (
             <span key={item} className="flex items-center gap-2">
@@ -132,7 +132,7 @@ export default function Hero() {
         <motion.div
           animate={{ y: [0, 8, 0] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-          className="text-white/30"
+          className="text-white/55"
         >
           <ChevronDown size={26} />
         </motion.div>

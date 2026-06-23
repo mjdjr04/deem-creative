@@ -33,7 +33,7 @@ export default function Login() {
           <Lock className="text-brand-light" size={22} />
         </div>
         <h1 className="text-xl font-bold text-white text-center mb-1">Deem Creative Admin</h1>
-        <p className="text-white/50 text-sm text-center mb-6">Sign in to manage your site.</p>
+        <p className="text-white/55 text-sm text-center mb-6">Sign in to manage your site.</p>
 
         <Field label="Email">
           <TextInput

@@ -34,8 +34,8 @@ function Session({ session, onRemoveExchange, onRemoveSession }) {
     <Card>
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="min-w-0">
-          <p className="text-white/40 text-xs">{formatDate(session.items[0].created_at)}</p>
-          <p className="text-white/30 text-[11px] mt-0.5">
+          <p className="text-white/55 text-xs">{formatDate(session.items[0].created_at)}</p>
+          <p className="text-white/55 text-[11px] mt-0.5">
             {session.items.length} {session.items.length === 1 ? 'exchange' : 'exchanges'}
           </p>
         </div>
@@ -52,7 +52,7 @@ function Session({ session, onRemoveExchange, onRemoveSession }) {
         {session.items.map((row) => (
           <div key={row.id} className="group space-y-2">
             <div className="flex gap-2">
-              <span className="mt-0.5 text-white/40 flex-shrink-0"><User size={14} /></span>
+              <span className="mt-0.5 text-white/55 flex-shrink-0"><User size={14} /></span>
               <p className="text-white/85 text-sm whitespace-pre-line flex-1">{row.question}</p>
               <button
                 onClick={() => onRemoveExchange(row.id)}
@@ -125,7 +125,7 @@ export default function ChatsEditor() {
       <div className="flex items-start justify-between gap-4 mb-6 pb-5 border-b border-brand-border">
         <div>
           <h1 className="text-2xl font-bold text-white">Chat Logs</h1>
-          <p className="text-white/50 text-sm mt-1">
+          <p className="text-white/55 text-sm mt-1">
             What visitors are asking the AI assistant
             {sessions.length > 0 ? ` — ${sessions.length} ${sessions.length === 1 ? 'conversation' : 'conversations'}` : ''}.
           </p>
@@ -145,7 +145,7 @@ export default function ChatsEditor() {
       ) : sessions.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
           <MessageSquare size={28} className="text-white/20 mb-3" />
-          <p className="text-white/40 text-sm">No conversations yet.</p>
+          <p className="text-white/55 text-sm">No conversations yet.</p>
         </div>
       ) : (
         <div className="space-y-4">

@@ -35,7 +35,7 @@ export default function PublishModal({ onClose }) {
           <div className="text-center py-4">
             <CheckCircle2 size={42} className="text-green-400 mx-auto mb-3" />
             <h2 className="text-lg font-bold text-white">Published!</h2>
-            <p className="text-white/50 text-sm mt-1">Your changes are now live.</p>
+            <p className="text-white/55 text-sm mt-1">Your changes are now live.</p>
           </div>
         ) : (
           <>
@@ -46,7 +46,7 @@ export default function PublishModal({ onClose }) {
                 </div>
                 <h2 className="text-lg font-bold text-white">Publish all changes?</h2>
               </div>
-              <button onClick={onClose} className="text-white/40 hover:text-white" disabled={busy}>
+              <button onClick={onClose} className="text-white/55 hover:text-white" disabled={busy}>
                 <X size={20} />
               </button>
             </div>

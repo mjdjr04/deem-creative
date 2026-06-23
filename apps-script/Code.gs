@@ -26,9 +26,27 @@ var CONFIG = {
 
   // Bookable window, in THIS SCRIPT'S time zone (set it to America/New_York
   // under Project Settings ⚙ → Time zone). 11 = 11 AM, 15 = 3 PM.
+  // These are the defaults; per-booking-type hours live in TYPES below.
   WORK_START_HOUR: 11,
   WORK_END_HOUR: 15,       // last slot ends by 3:00 PM → last start 2:30 PM
   WORK_DAYS: [1, 2, 3, 4, 5],   // Mon–Fri (0 = Sun … 6 = Sat)
+
+  // Two booking types share the SAME calendar (so they can't double-book each
+  // other) but have their own hours, wording, and meeting formats.
+  TYPES: {
+    consultation: {
+      startHour: 11, endHour: 15,
+      eventLabel: 'Deem Creative Consultation',
+      calTitle: 'Deem Creative Consultation',
+      meetingTypes: ['zoom', 'in-person'],
+    },
+    recruiter: {
+      startHour: 10, endHour: 17,   // 10 AM – 5 PM (last start 4:30 PM)
+      eventLabel: 'Hiring Call',
+      calTitle: 'Call with Michael Deem Jr.',
+      meetingTypes: ['zoom', 'phone'],
+    },
+  },
 
   MAX_DAYS_AHEAD: 60,      // can't book more than 60 days out
   MIN_NOTICE_HOURS: 48,    // must book at least 48 hours ahead
@@ -65,19 +83,51 @@ var TPL_DEFAULTS = {
   inPersonLine: 'Michael Deem Jr. will confirm the exact location with you (South Jersey area) before your meeting.',
   rescheduleLine: 'Need to reschedule? Just reply to this email.',
   signoff: 'Michael Deem Jr., Deem Creative',
+  recruiter: {
+    confirmation: {
+      subject: "You're booked — call with Michael Deem Jr.",
+      heading: "You're booked!",
+      intro: 'Thanks for scheduling a call with Michael Deem Jr. Looking forward to connecting. Here are the details:',
+    },
+    reminderDayBefore: {
+      subject: 'Reminder: your call with Michael Deem Jr. is tomorrow',
+      heading: 'See you tomorrow',
+      intro: 'A friendly reminder that your call with Michael Deem Jr. is tomorrow:',
+    },
+    reminderDayOf: {
+      subject: 'Reminder: your call with Michael Deem Jr. is today',
+      heading: 'See you today',
+      intro: 'A friendly reminder that your call with Michael Deem Jr. is today:',
+    },
+    zoomLine: 'Michael Deem Jr. will email you the Zoom link before the call.',
+    phoneLine: 'Michael Deem Jr. will call the number you provided at the scheduled time.',
+  },
 };
 
-var MEETING_LABELS = { zoom: 'Zoom', 'in-person': 'In person' };
+var MEETING_LABELS = { zoom: 'Zoom', 'in-person': 'In person', phone: 'Phone' };
+
+/** Resolve a booking type to its CONFIG.TYPES entry (defaults to consultation). */
+function typeConfig(type) {
+  return (CONFIG.TYPES && CONFIG.TYPES[type]) ? CONFIG.TYPES[type] : CONFIG.TYPES.consultation;
+}
+
+/** Human-readable event/calendar location for a meeting format. */
+function meetingLocation(meetingType, phone) {
+  if (meetingType === 'zoom') return 'Zoom (link to follow by email)';
+  if (meetingType === 'phone') return 'Phone call' + (phone ? ' — ' + phone : '');
+  return 'In person — South Jersey (location to be confirmed)';
+}
 
 // ─── Web endpoints ──────────────────────────────────────────────────────────
 
 function doGet(e) {
   var action = e && e.parameter ? e.parameter.action : '';
+  var type = (e && e.parameter && e.parameter.type) ? e.parameter.type : 'consultation';
   if (action === 'availability') {
     return jsonResponse({
       ok: true,
       durationMinutes: CONFIG.SLOT_MINUTES,
-      slots: getAvailableSlots(),
+      slots: getAvailableSlots(type),
     });
   }
   return jsonResponse({ ok: false, error: 'Unknown action' });
@@ -102,12 +152,17 @@ function doPost(e) {
       return jsonResponse({ ok: false, error: 'Unknown action' });
     }
 
+    // Which kind of booking? consultation (default) or recruiter/hiring call.
+    var bookingType = (f.type === 'recruiter') ? 'recruiter' : 'consultation';
+    var tc = typeConfig(bookingType);
+
     // Trim + length-cap every field
     var firstName = clean(f.firstName, 100);
     var lastName = clean(f.lastName, 100);
     var email = clean(f.email, 200);
     var phone = clean(f.phone, 50);
     var organization = clean(f.organization, 200);
+    var roleTitle = clean(f.roleTitle, 200); // recruiter only
     var projectOverview = clean(f.projectOverview, 2000);
     var materials = clean(f.materials, 2000); // optional
     var meetingType = String(f.meetingType || '').trim();
@@ -116,10 +171,14 @@ function doPost(e) {
     if (!firstName || !lastName || !phone || !organization || !projectOverview) {
       return jsonResponse({ ok: false, error: 'Please fill in all required fields.' });
     }
+    if (bookingType === 'recruiter' && !roleTitle) {
+      return jsonResponse({ ok: false, error: 'Please include the role / position.' });
+    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return jsonResponse({ ok: false, error: 'A valid email is required.' });
     }
-    if (!MEETING_LABELS[meetingType]) {
+    // Meeting type must be valid for THIS booking type.
+    if (!MEETING_LABELS[meetingType] || tc.meetingTypes.indexOf(meetingType) === -1) {
       return jsonResponse({ ok: false, error: 'Please choose a meeting type.' });
     }
 
@@ -128,8 +187,8 @@ function doPost(e) {
       return jsonResponse({ ok: false, error: 'Invalid start time.' });
     }
 
-    // Re-check the slot is still free (guards against double-booking)
-    if (getAvailableSlots().indexOf(start.toISOString()) === -1) {
+    // Re-check the slot is still free for this type (guards against double-booking)
+    if (getAvailableSlots(bookingType).indexOf(start.toISOString()) === -1) {
       return jsonResponse({ ok: false, code: 'SLOT_TAKEN', error: 'That slot is no longer available.' });
     }
 
@@ -137,29 +196,30 @@ function doPost(e) {
     var fullName = firstName + ' ' + lastName;
     var typeLabel = MEETING_LABELS[meetingType];
 
-    var location = meetingType === 'zoom'
-      ? 'Zoom (link to follow by email)'
-      : 'In person — South Jersey (location to be confirmed)';
+    var location = meetingLocation(meetingType, phone);
 
     var description =
       'Booked via deemcreative.com\n\n' +
+      'Type: ' + tc.eventLabel + '\n' +
       'Name: ' + fullName + '\n' +
       'Email: ' + email + '\n' +
       'Phone: ' + phone + '\n' +
       'Organization: ' + organization + '\n' +
+      (bookingType === 'recruiter' ? 'Role / position: ' + roleTitle + '\n' : '') +
       'Meeting type: ' + typeLabel + '\n\n' +
-      'Project overview:\n' + projectOverview +
-      (materials ? '\n\nMaterials to review beforehand:\n' + materials : '');
+      (bookingType === 'recruiter' ? 'About the opportunity:\n' : 'Project overview:\n') + projectOverview +
+      (materials ? '\n\n' + (bookingType === 'recruiter' ? 'Job link / details:\n' : 'Materials to review beforehand:\n') + materials : '');
 
     var cal = CalendarApp.getDefaultCalendar();
     var event = cal.createEvent(
-      CONFIG.BUSINESS_NAME + ' Consultation — ' + fullName + ' (' + typeLabel + ')',
+      tc.eventLabel + ' — ' + fullName + ' (' + typeLabel + ')',
       start, end,
       { description: description, location: location, guests: email, sendInvites: true }
     );
 
     // Tags let the daily reminder job find this booking later
     event.setTag('deemBooking', 'true');
+    event.setTag('bookingType', bookingType);
     event.setTag('clientEmail', email);
     event.setTag('clientFirstName', firstName);
     event.setTag('meetingType', meetingType);
@@ -167,12 +227,12 @@ function doPost(e) {
     // Friendly confirmation to the client + a heads-up to you
     sendClientEmail('confirmation', {
       firstName: firstName, email: email,
-      start: start, end: end, meetingType: meetingType,
+      start: start, end: end, meetingType: meetingType, bookingType: bookingType,
     });
     sendOwnerEmail({
       fullName: fullName, email: email, phone: phone, organization: organization,
-      projectOverview: projectOverview, materials: materials,
-      meetingType: meetingType, start: start, end: end,
+      roleTitle: roleTitle, projectOverview: projectOverview, materials: materials,
+      meetingType: meetingType, bookingType: bookingType, start: start, end: end,
     });
 
     return jsonResponse({
@@ -180,6 +240,7 @@ function doPost(e) {
       start: start.toISOString(),
       end: end.toISOString(),
       meetingType: meetingType,
+      bookingType: bookingType,
     });
   } catch (err) {
     return jsonResponse({ ok: false, error: 'Booking failed: ' + err });
@@ -189,7 +250,11 @@ function doPost(e) {
 // ─── Availability ───────────────────────────────────────────────────────────
 
 /** Open slot start times (ISO strings), honoring hours, notice, window & buffer. */
-function getAvailableSlots() {
+function getAvailableSlots(type) {
+  var tc = typeConfig(type);
+  var startHour = tc.startHour != null ? tc.startHour : CONFIG.WORK_START_HOUR;
+  var endHour = tc.endHour != null ? tc.endHour : CONFIG.WORK_END_HOUR;
+
   var now = new Date();
   var minStartMs = now.getTime() + CONFIG.MIN_NOTICE_HOURS * 3600000;
   var horizonMs = now.getTime() + CONFIG.MAX_DAYS_AHEAD * 86400000;
@@ -211,8 +276,8 @@ function getAvailableSlots() {
   while (day.getTime() <= horizonMs) {
     if (CONFIG.WORK_DAYS.indexOf(day.getDay()) !== -1) {
       for (
-        var mins = CONFIG.WORK_START_HOUR * 60;
-        mins + CONFIG.SLOT_MINUTES <= CONFIG.WORK_END_HOUR * 60;
+        var mins = startHour * 60;
+        mins + CONFIG.SLOT_MINUTES <= endHour * 60;
         mins += CONFIG.SLOT_MINUTES
       ) {
         var slotStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, mins);
@@ -266,6 +331,7 @@ function remindForDay(dayOffset, kind, sentTag) {
       start: ev.getStartTime(),
       end: ev.getEndTime(),
       meetingType: ev.getTag('meetingType') || 'zoom',
+      bookingType: ev.getTag('bookingType') || 'consultation',
     });
     ev.setTag(sentTag, 'true');
   });
@@ -509,11 +575,18 @@ function sendClientEmail(kind, d) {
     'reminder-day-before': 'reminderDayBefore',
     'reminder-day-of': 'reminderDayOf',
   };
-  var t = T[keyMap[kind]] || T.confirmation;
+
+  // Recruiter bookings use their own template set (T.recruiter.*); reschedule
+  // line and sign-off are shared across both types.
+  var isRecruiter = d.bookingType === 'recruiter';
+  var src = isRecruiter && T.recruiter ? T.recruiter : T;
+  var t = src[keyMap[kind]] || src.confirmation || T.confirmation;
 
   var when = formatRange(d.start, d.end);
   var typeLabel = MEETING_LABELS[d.meetingType] || 'Meeting';
-  var meetLine = d.meetingType === 'zoom' ? T.zoomLine : T.inPersonLine;
+  var meetLine = isRecruiter
+    ? (d.meetingType === 'phone' ? src.phoneLine : src.zoomLine)
+    : (d.meetingType === 'zoom' ? T.zoomLine : T.inPersonLine);
 
   // "Add to calendar" links for the major providers (the attached .ics covers
   // Apple Calendar and anything else).
@@ -569,12 +642,12 @@ function sendClientEmail(kind, d) {
 /** Shared event details used by every calendar link + the .ics file. */
 function calData(d) {
   var fmtZ = function (dt) { return Utilities.formatDate(dt, 'UTC', "yyyyMMdd'T'HHmmss'Z'"); };
+  var tc = typeConfig(d.bookingType);
+  var isRecruiter = d.bookingType === 'recruiter';
   return {
-    title: CONFIG.BUSINESS_NAME + ' Consultation',
-    desc: 'Consultation with ' + CONFIG.HOST_NAME + ', ' + CONFIG.BUSINESS_NAME + '.',
-    loc: d.meetingType === 'zoom'
-      ? 'Zoom (link to follow by email)'
-      : 'In person — South Jersey (location to be confirmed)',
+    title: tc.calTitle,
+    desc: (isRecruiter ? 'Call with ' : 'Consultation with ') + CONFIG.HOST_NAME + ', ' + CONFIG.BUSINESS_NAME + '.',
+    loc: meetingLocation(d.meetingType, d.phone),
     startZ: fmtZ(d.start), endZ: fmtZ(d.end),
     startIso: d.start.toISOString(), endIso: d.end.toISOString(),
   };
@@ -614,9 +687,9 @@ function yahooCalLink(d) {
 /** Build an .ics (iCalendar) string for the booking. */
 function buildIcs(d) {
   var fmt = function (dt) { return Utilities.formatDate(dt, 'UTC', "yyyyMMdd'T'HHmmss'Z'"); };
-  var loc = d.meetingType === 'zoom'
-    ? 'Zoom (link to follow by email)'
-    : 'In person — South Jersey (location to be confirmed)';
+  var tc = typeConfig(d.bookingType);
+  var isRecruiter = d.bookingType === 'recruiter';
+  var loc = meetingLocation(d.meetingType, d.phone);
   var esc = function (s) { return String(s).replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n'); };
   return [
     'BEGIN:VCALENDAR',
@@ -628,8 +701,8 @@ function buildIcs(d) {
     'DTSTAMP:' + fmt(new Date()),
     'DTSTART:' + fmt(d.start),
     'DTEND:' + fmt(d.end),
-    'SUMMARY:' + esc(CONFIG.BUSINESS_NAME + ' Consultation'),
-    'DESCRIPTION:' + esc('Consultation with ' + CONFIG.HOST_NAME + ', ' + CONFIG.BUSINESS_NAME + '.'),
+    'SUMMARY:' + esc(tc.calTitle),
+    'DESCRIPTION:' + esc((isRecruiter ? 'Call with ' : 'Consultation with ') + CONFIG.HOST_NAME + ', ' + CONFIG.BUSINESS_NAME + '.'),
     'LOCATION:' + esc(loc),
     'ORGANIZER;CN=' + CONFIG.BUSINESS_NAME + ':mailto:' + CONFIG.OWNER_EMAIL,
     'END:VEVENT',
@@ -638,24 +711,27 @@ function buildIcs(d) {
 }
 
 function sendOwnerEmail(d) {
+  var isRecruiter = d.bookingType === 'recruiter';
+  var heading = isRecruiter ? 'New hiring call booked' : 'New consultation booked';
   var html =
     '<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;color:#1a2e4a">' +
-      '<h2 style="margin:0 0 16px">New consultation booked</h2>' +
+      '<h2 style="margin:0 0 16px">' + heading + '</h2>' +
       '<table style="width:100%;border-collapse:collapse">' +
         row('When', formatRange(d.start, d.end)) +
         row('Format', MEETING_LABELS[d.meetingType]) +
         row('Name', escapeHtml(d.fullName)) +
         row('Email', escapeHtml(d.email)) +
         row('Phone', escapeHtml(d.phone)) +
-        row('Organization', escapeHtml(d.organization)) +
-        row('Project overview', escapeHtml(d.projectOverview)) +
-        row('Materials', d.materials ? escapeHtml(d.materials) : '—') +
+        row('Company', escapeHtml(d.organization)) +
+        (isRecruiter ? row('Role / position', escapeHtml(d.roleTitle || '—')) : '') +
+        row(isRecruiter ? 'About the opportunity' : 'Project overview', escapeHtml(d.projectOverview)) +
+        row(isRecruiter ? 'Job link / details' : 'Materials', d.materials ? escapeHtml(d.materials) : '—') +
       '</table>' +
     '</div>';
 
   MailApp.sendEmail({
     to: CONFIG.OWNER_EMAIL,
-    subject: 'New booking: ' + d.fullName + ' (' + MEETING_LABELS[d.meetingType] + ')',
+    subject: (isRecruiter ? 'New hiring call: ' : 'New booking: ') + d.fullName + ' (' + MEETING_LABELS[d.meetingType] + ')',
     htmlBody: html,
     name: CONFIG.BUSINESS_NAME,
     replyTo: d.email,

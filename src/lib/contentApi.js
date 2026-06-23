@@ -181,6 +181,27 @@ export async function deleteChatSession(sessionId) {
   if (error) throw error
 }
 
+/**
+ * Admin: AI-generate a short description for a feed post from its photos +
+ * caption (Claude vision, via the Apps Script). Requires a logged-in admin.
+ */
+export async function describeFeedPost({ title, caption, photos }) {
+  if (!isSupabaseConfigured) throw new Error('Supabase is not configured.')
+  if (!BOOKING_API_URL) throw new Error('AI endpoint is not configured (booking Apps Script URL missing).')
+  const { data } = await supabase.auth.getSession()
+  const token = data?.session?.access_token
+  if (!token) throw new Error('You appear to be signed out. Please sign in again.')
+
+  const res = await fetch(BOOKING_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'feedDescribe', token, title, caption, photos }),
+  })
+  const result = await res.json()
+  if (!result.ok) throw new Error(result.error || 'Description failed')
+  return result.description
+}
+
 // ---------------------------------------------------------------------------
 // Analytics (first-party page views + events)
 // ---------------------------------------------------------------------------

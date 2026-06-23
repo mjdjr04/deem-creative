@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { ChevronDown, GripVertical, Plus, Trash2 } from 'lucide-react'
+import { ChevronDown, GripVertical, Plus, Trash2, Sparkles, Loader2 } from 'lucide-react'
 import { EditorShell, useSectionDraft } from '../EditorShell'
 import { Field, TextInput, TextArea, FileUpload, Card, Button } from '../../../components/admin/ui'
+import { describeFeedPost } from '../../../lib/contentApi'
 
 // Today's date as YYYY-MM-DD for new-post defaults.
 const today = () => new Date().toISOString().slice(0, 10)
@@ -10,6 +11,7 @@ const newPost = () => ({
   id: 'post-' + Date.now(),
   title: '',
   caption: '',
+  description: '',
   photos: [],
   date: today(),
 })
@@ -44,7 +46,27 @@ function PhotosEditor({ photos, onChange, folder }) {
 
 function PostItem({ post, onChange, onRemove, onMove }) {
   const [open, setOpen] = useState(false)
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiError, setAiError] = useState(null)
   const set = (key, v) => onChange({ ...post, [key]: v })
+
+  const generate = async () => {
+    setAiBusy(true)
+    setAiError(null)
+    try {
+      const description = await describeFeedPost({
+        title: post.title || '',
+        caption: post.caption || '',
+        photos: (post.photos || []).filter(Boolean),
+      })
+      set('description', description)
+    } catch (e) {
+      setAiError(e.message || 'Could not generate a description.')
+    } finally {
+      setAiBusy(false)
+    }
+  }
+
   return (
     <Card>
       <div className="flex items-center gap-2">
@@ -69,7 +91,29 @@ function PostItem({ post, onChange, onRemove, onMove }) {
             <Field label="Title (optional)"><TextInput value={post.title || ''} onChange={(e) => set('title', e.target.value)} /></Field>
             <Field label="Publish date"><TextInput type="date" value={post.date || ''} onChange={(e) => set('date', e.target.value)} /></Field>
           </div>
-          <Field label="Caption"><TextArea value={post.caption || ''} onChange={(e) => set('caption', e.target.value)} rows={3} /></Field>
+          <Field label="Caption" hint="The full text shown when a visitor opens the post.">
+            <TextArea value={post.caption || ''} onChange={(e) => set('caption', e.target.value)} rows={3} />
+          </Field>
+
+          <Field
+            label="Preview description"
+            hint="The short blurb shown on the post card before someone clicks. Generate it with AI from your photos, or write your own."
+          >
+            <TextArea value={post.description || ''} onChange={(e) => set('description', e.target.value)} rows={2} placeholder="A short, enticing one-liner…" />
+            <div className="flex items-center gap-3 mt-2">
+              <button
+                type="button"
+                onClick={generate}
+                disabled={aiBusy}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-accent text-brand-light text-xs font-semibold hover:bg-brand-navy hover:text-white transition-colors disabled:opacity-50"
+              >
+                {aiBusy ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                {aiBusy ? 'Generating…' : 'Generate with AI'}
+              </button>
+              {aiError && <span className="text-red-400 text-xs">{aiError}</span>}
+            </div>
+          </Field>
+
           <PhotosEditor photos={post.photos} onChange={(v) => set('photos', v)} folder="feed" />
         </div>
       )}

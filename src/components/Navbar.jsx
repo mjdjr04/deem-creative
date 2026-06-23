@@ -20,6 +20,7 @@ const navLinks = [
     to: '/portfolio',
     children: [
       { label: 'Projects',     to: '/portfolio?section=projects' },
+      { label: 'Updates',      to: '/portfolio?section=feed' },
       { label: 'Social Media', to: '/portfolio?section=social' },
     ],
   },

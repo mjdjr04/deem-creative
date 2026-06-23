@@ -10,11 +10,17 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* Stop horizontal rubber-banding on mobile. `clip` (not `hidden`) clips the
+       overflow without creating a scroll container, so position: sticky/fixed
+       still work (the navbar stays sticky). */
+    overflow-x: clip;
   }
 
   body {
     @apply bg-brand-dark text-white antialiased;
-    overflow-x: hidden;
+    overflow-x: hidden; /* fallback for browsers without overflow: clip */
+    overflow-x: clip;
+    max-width: 100%;
     text-rendering: optimizeLegibility;
   }
 

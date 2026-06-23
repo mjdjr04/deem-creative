@@ -148,6 +148,11 @@ function doPost(e) {
       return handleChat(f);
     }
 
+    // Admin-only: AI-generate a short description of a feed post from its photos.
+    if (f.action === 'feedDescribe') {
+      return handleFeedDescribe(f);
+    }
+
     if (f.action !== 'book') {
       return jsonResponse({ ok: false, error: 'Unknown action' });
     }
@@ -428,6 +433,71 @@ function handleReply(f) {
     replyTo: CONFIG.OWNER_EMAIL,
   });
   return jsonResponse({ ok: true });
+}
+
+// ─── AI feed-post description (admin only) ──────────────────────────────────
+
+/**
+ * Generate a short, click-enticing description of a feed post from its photos
+ * and caption, using Claude vision. Admin-only (verified Supabase token) since
+ * it costs money. The result is saved into the post and shown on the public
+ * preview cards — visitors never trigger this.
+ */
+function handleFeedDescribe(f) {
+  if (!verifySupabaseUser(f.token)) {
+    return jsonResponse({ ok: false, error: 'Not authorized. Please sign in again.' });
+  }
+  var key = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
+  if (!key) return jsonResponse({ ok: false, error: 'The AI is not set up yet.' });
+
+  var title = clean(f.title, 200);
+  var caption = clean(f.caption, 2000);
+  // Only publicly-fetchable image URLs can be sent to the vision model.
+  var photos = (f.photos || [])
+    .filter(function (u) { return u && /^https?:\/\//.test(u); })
+    .slice(0, 4);
+
+  if (!photos.length && !caption) {
+    return jsonResponse({ ok: false, error: 'Add a photo or caption first.' });
+  }
+
+  var content = [];
+  photos.forEach(function (url) {
+    content.push({ type: 'image', source: { type: 'url', url: url } });
+  });
+  content.push({
+    type: 'text',
+    text:
+      'This is a post on a creative portfolio website' +
+      (title ? ' titled "' + title + '"' : '') + '.' +
+      (caption ? ' The author\'s caption is: "' + caption + '".' : '') +
+      ' Write ONE concise sentence (max 30 words) describing what the post shows, ' +
+      'to entice a visitor to click and read the full post. ' +
+      'Plain text only — no quotes, no preamble, no hashtags.',
+  });
+
+  var payload = {
+    model: 'claude-opus-4-8',
+    max_tokens: 200,
+    messages: [{ role: 'user', content: content }],
+  };
+
+  var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post',
+    contentType: 'application/json',
+    muteHttpExceptions: true,
+    headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    payload: JSON.stringify(payload),
+  });
+  if (res.getResponseCode() !== 200) {
+    return jsonResponse({ ok: false, error: 'AI description failed. Please try again.' });
+  }
+  var data = JSON.parse(res.getContentText());
+  var text = '';
+  (data.content || []).forEach(function (b) { if (b.type === 'text') text += b.text; });
+  text = text.trim().replace(/^["']|["']$/g, '');
+  if (!text) return jsonResponse({ ok: false, error: "Couldn't generate a description." });
+  return jsonResponse({ ok: true, description: text });
 }
 
 // ─── AI Chatbot ───────────────────────────────────────────────────────────

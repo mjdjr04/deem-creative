@@ -21,6 +21,15 @@ jobs:
       - run: npm ci
 
       - run: npm run build
+        env:
+          # Vite inlines VITE_* vars at BUILD time. Without these the deployed
+          # bundle ships with Supabase disabled and falls back to bundled
+          # default content (published CMS data never loads). Set these as
+          # repository secrets: Settings → Secrets and variables → Actions.
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_GA4_ID: ${{ secrets.VITE_GA4_ID }}
+          VITE_CLOUDFLARE_TOKEN: ${{ secrets.VITE_CLOUDFLARE_TOKEN }}
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4

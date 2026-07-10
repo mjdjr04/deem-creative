@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Loader2, RefreshCw, ExternalLink, BarChart3, MapPin } from 'lucide-react'
-import { fetchAnalytics } from '../../../lib/contentApi'
+import { fetchAnalytics, trafficSource } from '../../../lib/contentApi'
 import {
   GA4_MEASUREMENT_ID,
   CLOUDFLARE_BEACON_TOKEN,
@@ -264,6 +264,16 @@ export default function AnalyticsEditor() {
       else if (r.type === 'event') byDay.get(key).events++
     }
 
+    // Traffic sources: one count per SESSION using its first-touch source. Rows
+    // arrive newest-first, so the last write per session is its earliest event.
+    const sessionSource = new Map()
+    for (const r of rows) {
+      if (r.session_id) sessionSource.set(r.session_id, trafficSource(r))
+    }
+    const sourceCounts = new Map()
+    for (const src of sessionSource.values()) sourceCounts.set(src, (sourceCounts.get(src) || 0) + 1)
+    const sources = [...sourceCounts.entries()].sort((a, b) => b[1] - a[1])
+
     return {
       pageviews,
       events,
@@ -277,6 +287,8 @@ export default function AnalyticsEditor() {
       topEvents: countBy(events, 'name'),
       countries: countBy(pageviews, 'country'),
       cities: countBy(pageviews, 'city'),
+      sources,
+      sessionCount: sessionSource.size,
     }
   }, [rows, days, nowMs])
 
@@ -376,6 +388,7 @@ export default function AnalyticsEditor() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
+            <BarList title="Traffic sources" rows={stats.sources} total={stats.sessionCount} empty="No visits yet." />
             <BarList title="Top pages" rows={stats.topPages} total={stats.pageviews.length} />
             <BarList title="Referrers" rows={stats.referrers} total={stats.referrers.reduce((a, [, c]) => a + c, 0)} empty="No external referrers yet (mostly direct visits)." />
             <BarList title="Devices" rows={stats.devices} total={stats.pageviews.length} />

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Loader2, RefreshCw, Users, ChevronRight, MapPin, Monitor, Smartphone, Tablet,
-  Eye, MousePointerClick, Repeat,
+  Eye, MousePointerClick, Repeat, Compass,
 } from 'lucide-react'
-import { fetchAnalytics } from '../../../lib/contentApi'
+import { fetchAnalytics, trafficSource } from '../../../lib/contentApi'
 
 const RANGES = [
   { days: 7, label: '7 days' },
@@ -29,10 +29,12 @@ function fmtDuration(sec) {
   return s ? `${m}m ${s}s` : `${m}m`
 }
 
-function deviceIcon(device) {
-  if (device === 'mobile') return Smartphone
-  if (device === 'tablet') return Tablet
-  return Monitor
+const fmtDate = (ms) => new Date(ms).toLocaleDateString([], { month: 'short', day: 'numeric' })
+
+function deviceGlyph(device, size = 12) {
+  if (device === 'mobile') return <Smartphone size={size} />
+  if (device === 'tablet') return <Tablet size={size} />
+  return <Monitor size={size} />
 }
 
 const prettyEvent = (name) => (name || 'event').replace(/_/g, ' ')
@@ -46,13 +48,112 @@ function StatCard({ label, value }) {
   )
 }
 
+// One visit: summary row that expands into the ordered journey. Self-contained
+// so it renders identically in the flat list and nested under a visitor.
+function SessionCard({ s, nowMs, nested = false }) {
+  const [open, setOpen] = useState(false)
+  const location = [s.city, s.country].filter(Boolean).join(', ') || 'Unknown location'
+  return (
+    <div className={`rounded-xl overflow-hidden ${nested ? 'bg-brand-dark/40 border border-brand-border/60' : 'bg-brand-mid border border-brand-border'}`}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-3 md:gap-4 p-4 text-left hover:bg-brand-surface/40 transition-colors"
+      >
+        <ChevronRight size={18} className={`text-white/40 flex-shrink-0 transition-transform ${open ? 'rotate-90' : ''}`} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="flex items-center gap-1.5 text-white font-medium text-sm">
+              <MapPin size={14} className="text-brand-light flex-shrink-0" /> {location}
+            </span>
+            {s.returning && !nested && (
+              <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-brand-navy text-brand-light">
+                <Repeat size={11} /> Returning
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap text-white/50 text-xs mt-1">
+            <span className="flex items-center gap-1">{deviceGlyph(s.device)} {s.device}{s.browser ? ` · ${s.browser}` : ''}</span>
+            <span>{s.pageviews} page{s.pageviews === 1 ? '' : 's'}</span>
+            {s.eventCount > 0 && <span className="text-amber-300/80">{s.eventCount} action{s.eventCount === 1 ? '' : 's'}</span>}
+            <span>{fmtDuration(s.durationSec)}</span>
+            <span className="flex items-center gap-1"><Compass size={12} /> {s.source === 'Direct' ? 'Direct' : `via ${s.source}`}</span>
+          </div>
+        </div>
+        <span className="text-white/40 text-xs flex-shrink-0 whitespace-nowrap">{timeAgo(s.startMs, nowMs)}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-brand-border px-4 py-3 bg-brand-dark/30">
+          <p className="text-white/40 text-[11px] uppercase tracking-wide mb-2">
+            Journey · visitor {s.visitorId ? `#${s.visitorId.slice(0, 6)}` : 'unknown'}
+          </p>
+          <ol className="space-y-1.5">
+            {s.events.map((e, i) => {
+              const isEvent = e.type === 'event'
+              const Icon = isEvent ? MousePointerClick : Eye
+              const label = isEvent ? prettyEvent(e.name) : (e.path || '/')
+              const t = new Date(e.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })
+              return (
+                <li key={i} className="flex items-center gap-2.5 text-sm">
+                  <Icon size={13} className={isEvent ? 'text-amber-300 flex-shrink-0' : 'text-brand-light flex-shrink-0'} />
+                  <span className={`${isEvent ? 'text-amber-200' : 'text-white/80'} truncate`}>{label}</span>
+                  <span className="text-white/30 text-xs ml-auto flex-shrink-0">{t}</span>
+                </li>
+              )
+            })}
+          </ol>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// One visitor across all their visits: count, first/last seen, expand to visits.
+function VisitorCard({ v, nowMs }) {
+  const [open, setOpen] = useState(false)
+  const location = [v.city, v.country].filter(Boolean).join(', ') || 'Unknown location'
+  return (
+    <div className="rounded-xl bg-brand-mid border border-brand-border overflow-hidden">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-3 md:gap-4 p-4 text-left hover:bg-brand-surface/40 transition-colors"
+      >
+        <ChevronRight size={18} className={`text-white/40 flex-shrink-0 transition-transform ${open ? 'rotate-90' : ''}`} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="flex items-center gap-1.5 text-white font-medium text-sm">
+              <MapPin size={14} className="text-brand-light flex-shrink-0" /> {location}
+            </span>
+            <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-brand-navy text-brand-light">
+              <Repeat size={11} /> {v.visitCount} visit{v.visitCount === 1 ? '' : 's'}
+            </span>
+          </div>
+          <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap text-white/50 text-xs mt-1">
+            <span className="flex items-center gap-1">{deviceGlyph(v.device)} {v.device}</span>
+            <span>{v.totalPageviews} page{v.totalPageviews === 1 ? '' : 's'}</span>
+            {v.totalEvents > 0 && <span className="text-amber-300/80">{v.totalEvents} action{v.totalEvents === 1 ? '' : 's'}</span>}
+            <span>First seen {fmtDate(v.firstMs)}</span>
+          </div>
+        </div>
+        <span className="text-white/40 text-xs flex-shrink-0 whitespace-nowrap">{timeAgo(v.lastMs, nowMs)}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-brand-border p-3 bg-brand-dark/20 space-y-2">
+          {v.sessions.map((s) => <SessionCard key={s.sessionId} s={s} nowMs={nowMs} nested />)}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function VisitorsEditor() {
   const [days, setDays] = useState(30)
   const [rows, setRows] = useState([])
   const [nowMs, setNowMs] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [open, setOpen] = useState(() => new Set())
+  const [view, setView] = useState('visit') // 'visit' | 'visitor'
 
   const load = async (d) => {
     setLoading(true)
@@ -72,7 +173,7 @@ export default function VisitorsEditor() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(days) }, [days])
 
-  const { sessions, stats } = useMemo(() => {
+  const { sessions, visitors, stats } = useMemo(() => {
     // Group raw events into sessions (one per-tab visit), keyed by session_id.
     const byId = new Map()
     for (const r of rows) {
@@ -92,7 +193,6 @@ export default function VisitorsEditor() {
       const startMs = new Date(first.created_at).getTime()
       const endMs = new Date(last.created_at).getTime()
       const geo = s.events.find((e) => e.city || e.country) || first
-      const ref = s.events.find((e) => e.type === 'pageview' && e.referrer_host)?.referrer_host || ''
       list.push({
         sessionId: s.sessionId,
         visitorId: s.visitorId,
@@ -105,29 +205,42 @@ export default function VisitorsEditor() {
         country: geo.country,
         device: first.device,
         browser: first.browser,
-        referrer: ref,
+        source: trafficSource(first),
       })
       visitorCount.set(s.visitorId, (visitorCount.get(s.visitorId) || 0) + 1)
     }
     list.sort((a, b) => b.startMs - a.startMs)
     for (const s of list) s.returning = (visitorCount.get(s.visitorId) || 0) > 1
 
+    // Roll sessions up into visitors (newest activity first).
+    const vMap = new Map()
+    for (const s of list) {
+      if (!vMap.has(s.visitorId)) vMap.set(s.visitorId, [])
+      vMap.get(s.visitorId).push(s)
+    }
+    const visitors = [...vMap.entries()].map(([visitorId, ss]) => ({
+      visitorId,
+      sessions: ss, // already newest-first
+      visitCount: ss.length,
+      firstMs: Math.min(...ss.map((s) => s.startMs)),
+      lastMs: Math.max(...ss.map((s) => s.startMs)),
+      totalPageviews: ss.reduce((a, s) => a + s.pageviews, 0),
+      totalEvents: ss.reduce((a, s) => a + s.eventCount, 0),
+      city: ss[0].city,
+      country: ss[0].country,
+      device: ss[0].device,
+    })).sort((a, b) => b.lastMs - a.lastMs)
+
     return {
       sessions: list,
+      visitors,
       stats: {
         total: list.length,
-        uniqueVisitors: new Set(list.map((s) => s.visitorId).filter(Boolean)).size,
+        uniqueVisitors: vMap.size,
         returningVisitors: [...visitorCount.values()].filter((c) => c > 1).length,
       },
     }
   }, [rows])
-
-  const toggle = (id) =>
-    setOpen((prev) => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
 
   return (
     <div>
@@ -186,68 +299,25 @@ export default function VisitorsEditor() {
             <StatCard label="Returning" value={stats.returningVisitors} />
           </div>
 
-          <div className="space-y-3">
-            {sessions.map((s) => {
-              const DeviceIcon = deviceIcon(s.device)
-              const isOpen = open.has(s.sessionId)
-              const location = [s.city, s.country].filter(Boolean).join(', ') || 'Unknown location'
-              return (
-                <div key={s.sessionId} className="rounded-xl bg-brand-mid border border-brand-border overflow-hidden">
-                  <button
-                    onClick={() => toggle(s.sessionId)}
-                    className="w-full flex items-center gap-3 md:gap-4 p-4 text-left hover:bg-brand-surface/40 transition-colors"
-                  >
-                    <ChevronRight
-                      size={18}
-                      className={`text-white/40 flex-shrink-0 transition-transform ${isOpen ? 'rotate-90' : ''}`}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="flex items-center gap-1.5 text-white font-medium text-sm">
-                          <MapPin size={14} className="text-brand-light flex-shrink-0" /> {location}
-                        </span>
-                        {s.returning && (
-                          <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-brand-navy text-brand-light">
-                            <Repeat size={11} /> Returning
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap text-white/50 text-xs mt-1">
-                        <span className="flex items-center gap-1"><DeviceIcon size={12} /> {s.device}{s.browser ? ` · ${s.browser}` : ''}</span>
-                        <span>{s.pageviews} page{s.pageviews === 1 ? '' : 's'}</span>
-                        {s.eventCount > 0 && <span className="text-amber-300/80">{s.eventCount} action{s.eventCount === 1 ? '' : 's'}</span>}
-                        <span>{fmtDuration(s.durationSec)}</span>
-                        {s.referrer && <span className="truncate">via {s.referrer}</span>}
-                      </div>
-                    </div>
-                    <span className="text-white/40 text-xs flex-shrink-0 whitespace-nowrap">{timeAgo(s.startMs, nowMs)}</span>
-                  </button>
+          <div className="flex items-center gap-2">
+            <span className="text-white/40 text-xs">Group by</span>
+            <div className="flex rounded-lg border border-brand-border overflow-hidden">
+              {[{ k: 'visit', label: 'Visit' }, { k: 'visitor', label: 'Visitor' }].map((o) => (
+                <button
+                  key={o.k}
+                  onClick={() => setView(o.k)}
+                  className={`px-3 py-1.5 text-sm transition-colors ${view === o.k ? 'bg-brand-navy text-white' : 'text-white/60 hover:text-white'}`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-                  {isOpen && (
-                    <div className="border-t border-brand-border px-4 py-3 bg-brand-dark/30">
-                      <p className="text-white/40 text-[11px] uppercase tracking-wide mb-2">
-                        Journey · visitor {s.visitorId ? `#${s.visitorId.slice(0, 6)}` : 'unknown'}
-                      </p>
-                      <ol className="space-y-1.5">
-                        {s.events.map((e, i) => {
-                          const isEvent = e.type === 'event'
-                          const Icon = isEvent ? MousePointerClick : Eye
-                          const label = isEvent ? prettyEvent(e.name) : (e.path || '/')
-                          const t = new Date(e.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })
-                          return (
-                            <li key={i} className="flex items-center gap-2.5 text-sm">
-                              <Icon size={13} className={isEvent ? 'text-amber-300 flex-shrink-0' : 'text-brand-light flex-shrink-0'} />
-                              <span className={`${isEvent ? 'text-amber-200' : 'text-white/80'} truncate`}>{label}</span>
-                              <span className="text-white/30 text-xs ml-auto flex-shrink-0">{t}</span>
-                            </li>
-                          )
-                        })}
-                      </ol>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+          <div className="space-y-3">
+            {view === 'visit'
+              ? sessions.map((s) => <SessionCard key={s.sessionId} s={s} nowMs={nowMs} />)
+              : visitors.map((v) => <VisitorCard key={v.visitorId} v={v} nowMs={nowMs} />)}
           </div>
         </div>
       )}

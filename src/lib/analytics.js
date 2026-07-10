@@ -27,12 +27,25 @@ function randomId() {
   return 'xxxxxxxxxxxx'.replace(/x/g, () => ((Math.random() * 16) | 0).toString(16))
 }
 
+// Whether this device has been here before — determined ONCE, the first time
+// visitorId() runs this session, by checking if the id already existed. Used to
+// flag returning visitors (badge + live presence).
+let _returningChecked = false
+let _returning = false
+
 function visitorId() {
   try {
     let id = localStorage.getItem(VID_KEY)
+    if (!_returningChecked) { _returning = Boolean(id); _returningChecked = true }
     if (!id) { id = randomId(); localStorage.setItem(VID_KEY, id) }
     return id
   } catch { return null }
+}
+
+/** True if this browser had a visitor id before this session (a repeat visit). */
+export function isReturningVisitor() {
+  if (!_returningChecked) visitorId()
+  return _returning
 }
 
 function sessionId() {
@@ -41,6 +54,31 @@ function sessionId() {
     if (!id) { id = randomId(); sessionStorage.setItem(SID_KEY, id) }
     return id
   } catch { return null }
+}
+
+// ── Campaign attribution (first-touch, per session) ─────────────────────────
+// Capture how the visitor arrived from a tagged link — UTM params or a simple
+// ?ref=. Read once on the first event of the session (before SPA navigation
+// clears the query string) and cached, so every event carries the same source.
+const CAMPAIGN_KEY = 'dc_campaign_v1'
+
+function getCampaign() {
+  try {
+    const cached = sessionStorage.getItem(CAMPAIGN_KEY)
+    if (cached) return JSON.parse(cached)
+  } catch { /* sessionStorage unavailable */ }
+
+  const c = {}
+  try {
+    const p = new URLSearchParams(window.location.search)
+    const src = p.get('utm_source'); if (src) c.utm_source = src
+    const med = p.get('utm_medium'); if (med) c.utm_medium = med
+    const camp = p.get('utm_campaign'); if (camp) c.utm_campaign = camp
+    const ref = p.get('ref'); if (ref) c.ref = ref
+  } catch { /* malformed URL */ }
+
+  try { sessionStorage.setItem(CAMPAIGN_KEY, JSON.stringify(c)) } catch { /* ignore */ }
+  return c
 }
 
 // ── Lightweight UA parsing (no dependency) ──────────────────────────────────
@@ -161,7 +199,9 @@ export function setAnalyticsAllowed(value) {
 /** Log a page view across every enabled layer. */
 export function trackPageview(path) {
   if (!allowed) return
-  const page = path || window.location.hash.replace(/^#/, '') || '/'
+  // Strip any query string (e.g. ?ref=…) so campaign tags don't fragment the
+  // "Top pages" list — attribution is captured separately via getCampaign().
+  const page = (path || window.location.pathname || '/').split('?')[0]
 
   if (GA4_MEASUREMENT_ID && window.gtag) {
     window.gtag('event', 'page_view', { page_path: page, page_location: window.location.href })
@@ -184,6 +224,9 @@ export function trackEvent(name, props = {}) {
 function writeCustom(type, name, path, props) {
   if (!CUSTOM_ANALYTICS_ENABLED || !isSupabaseConfigured || !supabase) return
   const { device, browser, os } = parseUA()
+  // Campaign attribution rides along in props so it needs no schema change and
+  // is available per event; event-specific props win on any key conflict.
+  const enrichedProps = { ...getCampaign(), ...props }
   // Resolve location first (cached per session), then insert. Geo failures
   // resolve to nulls, so the event is always logged either way.
   getGeo()
@@ -204,7 +247,7 @@ function writeCustom(type, name, path, props) {
           country: geo.country,
           city: geo.city,
           region: geo.region,
-          props,
+          props: enrichedProps,
         })
         .then(() => {}, () => {}) // swallow errors (RLS, offline, table missing)
     })

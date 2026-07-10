@@ -212,7 +212,7 @@ export async function fetchAnalytics({ days = 30 } = {}) {
   const since = new Date(Date.now() - days * 86400000).toISOString()
   const { data, error } = await supabase
     .from('analytics_events')
-    .select('type, name, path, referrer_host, visitor_id, session_id, device, browser, os, created_at')
+    .select('type, name, path, referrer_host, visitor_id, session_id, device, browser, os, country, city, region, created_at')
     .gte('created_at', since)
     .order('created_at', { ascending: false })
     .limit(20000)

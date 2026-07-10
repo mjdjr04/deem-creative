@@ -69,7 +69,7 @@ export default function PrivacyPage() {
             analytics services:
           </p>
           <ul className="list-disc pl-5 space-y-1.5">
-            <li><strong className="text-white/80">Deem Creative analytics</strong> — our own first-party, privacy-respecting measurement.</li>
+            <li><strong className="text-white/80">Deem Creative analytics</strong> — our own first-party, cookieless measurement. It derives an approximate location (country and city) from your IP address to understand where visitors come from; we do not store your IP address itself.</li>
             <li><strong className="text-white/80">Google Analytics 4</strong> — provided by Google; may set cookies and process data per Google’s policies.</li>
             <li><strong className="text-white/80">Cloudflare Web Analytics</strong> — cookieless traffic measurement.</li>
           </ul>

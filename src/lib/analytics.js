@@ -76,6 +76,51 @@ function referrerHost() {
   } catch { return '' }
 }
 
+// ── Approximate visitor location (first-party, cookieless) ──────────────────
+// The site is static (no server to read IPs), so we resolve an approximate
+// country/city from the visitor's IP via a free, no-key endpoint. Looked up
+// ONCE per session (cached in sessionStorage) and reused for every event, so
+// it never adds a network call per pageview. Best-effort: any failure leaves
+// the fields null and logging proceeds normally.
+const GEO_KEY = 'dc_geo_v1'
+let geoPromise = null
+
+async function fetchGeo() {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 2500)
+  try {
+    const res = await fetch('https://ipwho.is/', { signal: controller.signal })
+    const j = await res.json()
+    if (j && j.success !== false) {
+      return {
+        country: j.country || null,
+        city: j.city || null,
+        region: j.region || null,
+      }
+    }
+  } catch {
+    /* offline, blocked, timeout, rate-limited — fall through to nulls */
+  } finally {
+    clearTimeout(timer)
+  }
+  return { country: null, city: null, region: null }
+}
+
+/** Resolve approximate location once per session; memoized + sessionStorage-cached. */
+function getGeo() {
+  if (geoPromise) return geoPromise
+  geoPromise = (async () => {
+    try {
+      const cached = sessionStorage.getItem(GEO_KEY)
+      if (cached) return JSON.parse(cached)
+    } catch { /* sessionStorage unavailable */ }
+    const geo = await fetchGeo()
+    try { sessionStorage.setItem(GEO_KEY, JSON.stringify(geo)) } catch { /* ignore */ }
+    return geo
+  })()
+  return geoPromise
+}
+
 // ── Google Analytics 4 ──────────────────────────────────────────────────────
 function loadGA4() {
   if (ga4Loaded || !GA4_MEASUREMENT_ID) return
@@ -139,24 +184,29 @@ export function trackEvent(name, props = {}) {
 function writeCustom(type, name, path, props) {
   if (!CUSTOM_ANALYTICS_ENABLED || !isSupabaseConfigured || !supabase) return
   const { device, browser, os } = parseUA()
-  try {
-    supabase
-      .from('analytics_events')
-      .insert({
-        type,
-        name,
-        path,
-        referrer_host: referrerHost(),
-        visitor_id: visitorId(),
-        session_id: sessionId(),
-        device,
-        browser,
-        os,
-        screen_w: window.innerWidth || null,
-        props,
-      })
-      .then(() => {}, () => {}) // swallow errors (RLS, offline, table missing)
-  } catch {
-    /* never let analytics break the page */
-  }
+  // Resolve location first (cached per session), then insert. Geo failures
+  // resolve to nulls, so the event is always logged either way.
+  getGeo()
+    .then((geo) => {
+      supabase
+        .from('analytics_events')
+        .insert({
+          type,
+          name,
+          path,
+          referrer_host: referrerHost(),
+          visitor_id: visitorId(),
+          session_id: sessionId(),
+          device,
+          browser,
+          os,
+          screen_w: window.innerWidth || null,
+          country: geo.country,
+          city: geo.city,
+          region: geo.region,
+          props,
+        })
+        .then(() => {}, () => {}) // swallow errors (RLS, offline, table missing)
+    })
+    .catch(() => { /* never let analytics break the page */ })
 }

@@ -166,7 +166,9 @@ create table if not exists public.analytics_events (
   browser       text,
   os            text,
   screen_w      integer,
-  country       text,                     -- reserved for future edge geolocation
+  country       text,                     -- approximate, from first-party IP geolocation
+  city          text,                     -- approximate city (IP geolocation)
+  region        text,                     -- approximate region/state (IP geolocation)
   props         jsonb not null default '{}'::jsonb,
   created_at    timestamptz not null default now()
 );

@@ -3,7 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import {
   User, FolderKanban, Briefcase, Sparkles, Wrench, Settings,
   LogOut, ExternalLink, UploadCloud, CheckCircle2, Rss, Mail, CalendarClock, MessageSquare, BarChart3,
-  Menu, X,
+  Users, Menu, X,
 } from 'lucide-react'
 import { useAdmin } from '../../context/AdminContext'
 import PublishModal from './PublishModal'
@@ -19,6 +19,7 @@ const nav = [
   { to: 'messages', label: 'Messages', icon: Mail },
   { to: 'chats', label: 'Chat Logs', icon: MessageSquare },
   { to: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { to: 'visitors', label: 'Visitors', icon: Users },
   { to: 'settings', label: 'Settings', icon: Settings },
 ]
 

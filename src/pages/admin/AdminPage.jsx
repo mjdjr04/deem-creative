@@ -12,6 +12,7 @@ import EmailsEditor from './editors/EmailsEditor'
 import MessagesEditor from './editors/MessagesEditor'
 import ChatsEditor from './editors/ChatsEditor'
 import AnalyticsEditor from './editors/AnalyticsEditor'
+import VisitorsEditor from './editors/VisitorsEditor'
 import SettingsEditor from './editors/SettingsEditor'
 import { Loader2 } from 'lucide-react'
 
@@ -81,6 +82,7 @@ function Gate() {
         <Route path="messages" element={<MessagesEditor />} />
         <Route path="chats" element={<ChatsEditor />} />
         <Route path="analytics" element={<AnalyticsEditor />} />
+        <Route path="visitors" element={<VisitorsEditor />} />
         <Route path="settings" element={<SettingsEditor />} />
         <Route path="*" element={<Navigate to="/admin/about" replace />} />
       </Route>

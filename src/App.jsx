@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense } from 'react'
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion'
 import { BookingProvider } from './context/BookingContext'
 import { ContentProvider } from './context/ContentContext'
@@ -82,14 +82,14 @@ function PublicSite() {
 
 export default function App() {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <ContentProvider>
         <ConsentProvider>
           <MotionConfig reducedMotion="user">
             {/* Logs page views + high-intent events once consent is granted. */}
             <AnalyticsManager />
             <Routes>
-              {/* Admin panel — standalone, no public chrome. Visit /#/admin */}
+              {/* Admin panel — standalone, no public chrome. Visit /admin */}
               <Route
                 path="/admin/*"
                 element={
@@ -98,7 +98,7 @@ export default function App() {
                   </Suspense>
                 }
               />
-              {/* Shareable full-profile page — standalone, not in the navbar. Visit /#/profile */}
+              {/* Shareable full-profile page — standalone, not in the navbar. Visit /profile */}
               <Route path="/profile" element={<ProfilePage />} />
               {/* Everything else renders the public site */}
               <Route path="*" element={<PublicSite />} />
@@ -107,6 +107,6 @@ export default function App() {
           </MotionConfig>
         </ConsentProvider>
       </ContentProvider>
-    </HashRouter>
+    </BrowserRouter>
   )
 }

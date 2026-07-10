@@ -83,7 +83,7 @@ export default function AboutEditor() {
       <Card className="mb-6">
         <h3 className="text-white font-semibold mb-1">Profile Page — Bio</h3>
         <p className="text-white/55 text-xs mb-4">
-          The hiring-manager intro shown on your shareable profile page (/#/profile). Separate from the homepage About above.
+          The hiring-manager intro shown on your shareable profile page (/profile). Separate from the homepage About above.
         </p>
 
         <Field label="Eyebrow">

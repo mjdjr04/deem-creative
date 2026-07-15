@@ -193,7 +193,69 @@ export function setAnalyticsAllowed(value) {
   if (allowed) {
     loadGA4()
     loadCloudflare()
+    startPresence()
+  } else {
+    stopPresence()
   }
+}
+
+// ── Live presence (Supabase Realtime) ───────────────────────────────────────
+// Announces "this visitor is on the site now" to a shared realtime channel so
+// the admin can see who's active. Ephemeral — no database writes. Consent-gated
+// (started/stopped by setAnalyticsAllowed) and best-effort: any failure is
+// swallowed so it can never affect the visitor's experience.
+const PRESENCE_CHANNEL = 'presence:visitors'
+let presenceChannel = null
+let presencePath = typeof window !== 'undefined' ? (window.location.pathname || '/') : '/'
+
+function presenceState() {
+  const { device, browser } = parseUA()
+  return {
+    visitorId: visitorId(),
+    sessionId: sessionId(),
+    returning: isReturningVisitor(),
+    path: presencePath.split('?')[0],
+    device,
+    browser,
+    since: new Date().toISOString(),
+  }
+}
+
+function startPresence() {
+  if (!isSupabaseConfigured || !supabase || presenceChannel) return
+  try {
+    const channel = supabase.channel(PRESENCE_CHANNEL, {
+      config: { presence: { key: sessionId() } },
+    })
+    presenceChannel = channel
+    channel.subscribe((status) => {
+      if (status !== 'SUBSCRIBED' || presenceChannel !== channel) return
+      // Enrich with approximate location once geo resolves, then announce.
+      getGeo()
+        .then((geo) => channel.track({ ...presenceState(), country: geo.country, city: geo.city }))
+        .catch(() => { channel.track(presenceState()).catch(() => {}) })
+    })
+  } catch {
+    presenceChannel = null
+  }
+}
+
+/** Update the visitor's current page in presence (called on navigation). */
+export function updatePresencePath(path) {
+  presencePath = path || window.location.pathname || '/'
+  if (!presenceChannel) return
+  getGeo()
+    .then((geo) => presenceChannel.track({ ...presenceState(), country: geo.country, city: geo.city }))
+    .catch(() => {})
+}
+
+function stopPresence() {
+  if (!presenceChannel) return
+  try {
+    presenceChannel.untrack()
+    supabase.removeChannel(presenceChannel)
+  } catch { /* ignore */ }
+  presenceChannel = null
 }
 
 /** Log a page view across every enabled layer. */
@@ -212,7 +274,8 @@ export function trackPageview(path) {
 /** Log a named high-intent event (resume_download, booking_start, …). */
 export function trackEvent(name, props = {}) {
   if (!allowed || !name) return
-  const page = window.location.hash.replace(/^#/, '') || '/'
+  // Clean-URL pathname (the app uses BrowserRouter — there is no location.hash).
+  const page = (window.location.pathname || '/').split('?')[0]
 
   if (GA4_MEASUREMENT_ID && window.gtag) {
     window.gtag('event', name, props)

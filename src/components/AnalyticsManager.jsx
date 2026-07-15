@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useConsent } from '../context/ConsentContext'
-import { setAnalyticsAllowed, trackPageview } from '../lib/analytics'
+import { setAnalyticsAllowed, trackPageview, updatePresencePath } from '../lib/analytics'
 
 // Bridges consent state + router navigation into the analytics core:
 //   • flips analytics on/off whenever consent changes
@@ -15,10 +15,12 @@ export default function AnalyticsManager() {
     setAnalyticsAllowed(analyticsAllowed)
   }, [analyticsAllowed])
 
-  // Log a page view on navigation (and on the first allowed render).
+  // Log a page view on navigation (and on the first allowed render), and update
+  // the visitor's current page in live presence.
   useEffect(() => {
     if (!analyticsAllowed) return
     trackPageview(location.pathname + (location.search || ''))
+    updatePresencePath(location.pathname)
   }, [analyticsAllowed, location.pathname, location.search])
 
   return null

@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
 import { Send, Loader2, CheckCircle2 } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
-import { submitMessage } from '../lib/contentApi'
-import { trackEvent } from '../lib/analytics'
+import { submitMessage, isVisitorBlocked } from '../lib/contentApi'
+import { trackEvent, currentVisitorId } from '../lib/analytics'
 import { ANALYTICS_EVENTS } from '../config/analytics'
 
 const inputClass =
@@ -59,6 +59,14 @@ export default function ContactForm() {
 
     setBusy(true)
     setError(null)
+
+    // 4) Soft block: a visitor the admin has blocked gets a silent no-op.
+    if (await isVisitorBlocked(currentVisitorId())) {
+      setBusy(false)
+      setDone(true)
+      setForm({ name: '', email: '', phone: '', company: '', message: '' })
+      return
+    }
 
     let ok = false
     let firstErr = null

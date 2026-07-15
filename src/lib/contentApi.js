@@ -223,6 +223,52 @@ export async function fetchAnalytics({ days = 30 } = {}) {
   return (data ?? []).filter((r) => !(r.path || '').startsWith('/admin'))
 }
 
+// ── Visitor blocklist (in-app soft block) ───────────────────────────────────
+
+/** Admin: list all blocked visitor ids (most recent first). */
+export async function fetchBlockedVisitors() {
+  if (!isSupabaseConfigured) return []
+  const { data, error } = await supabase
+    .from('blocked_visitors')
+    .select('visitor_id, reason, created_at')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+/** Admin: block a visitor id from submitting the contact form. */
+export async function blockVisitor(visitorId, reason = null) {
+  if (!isSupabaseConfigured) throw new Error('Supabase is not configured.')
+  if (!visitorId) throw new Error('No visitor id to block.')
+  const { error } = await supabase
+    .from('blocked_visitors')
+    .upsert({ visitor_id: visitorId, reason }, { onConflict: 'visitor_id' })
+  if (error) throw error
+}
+
+/** Admin: remove a visitor id from the blocklist. */
+export async function unblockVisitor(visitorId) {
+  if (!isSupabaseConfigured) throw new Error('Supabase is not configured.')
+  const { error } = await supabase.from('blocked_visitors').delete().eq('visitor_id', visitorId)
+  if (error) throw error
+}
+
+/**
+ * Public: is this visitor id blocked? Uses a security-definer RPC so anonymous
+ * callers can check a single id without reading the whole blocklist. Best-effort
+ * — returns false if the check can't run (fail open, never blocks a real user).
+ */
+export async function isVisitorBlocked(visitorId) {
+  if (!isSupabaseConfigured || !visitorId) return false
+  try {
+    const { data, error } = await supabase.rpc('is_visitor_blocked', { vid: visitorId })
+    if (error) return false
+    return Boolean(data)
+  } catch {
+    return false
+  }
+}
+
 /**
  * Human-readable traffic source for an analytics row: a campaign tag
  * (utm_source or ?ref=) if present, else the organic referrer host, else

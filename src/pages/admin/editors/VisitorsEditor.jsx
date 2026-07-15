@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Loader2, RefreshCw, Users, ChevronRight, MapPin, Monitor, Smartphone, Tablet,
-  Eye, MousePointerClick, Repeat, Compass,
+  Eye, MousePointerClick, Repeat, Compass, Ban, ShieldCheck,
 } from 'lucide-react'
-import { fetchAnalytics, trafficSource } from '../../../lib/contentApi'
+import {
+  fetchAnalytics, trafficSource, fetchBlockedVisitors, blockVisitor, unblockVisitor,
+} from '../../../lib/contentApi'
 
 const RANGES = [
   { days: 7, label: '7 days' },
@@ -39,6 +41,29 @@ function deviceGlyph(device, size = 12) {
 
 const prettyEvent = (name) => (name || 'event').replace(/_/g, ' ')
 
+// Block / unblock control shown inside an expanded visit or visitor. Blocking a
+// visitor id stops that browser from submitting the contact form (soft block).
+function BlockControl({ visitorId, blocked, busy, onToggle }) {
+  if (!visitorId) return null
+  return blocked ? (
+    <button
+      onClick={() => onToggle(visitorId, false)}
+      disabled={busy}
+      className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-brand-border text-white/60 hover:text-white hover:border-brand-accent transition-colors disabled:opacity-50"
+    >
+      <ShieldCheck size={13} /> Unblock
+    </button>
+  ) : (
+    <button
+      onClick={() => onToggle(visitorId, true)}
+      disabled={busy}
+      className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-red-500/30 text-red-300/80 hover:text-red-200 hover:border-red-500/60 transition-colors disabled:opacity-50"
+    >
+      <Ban size={13} /> Block this visitor
+    </button>
+  )
+}
+
 function StatCard({ label, value }) {
   return (
     <div className="rounded-xl bg-brand-mid border border-brand-border p-5">
@@ -50,7 +75,7 @@ function StatCard({ label, value }) {
 
 // One visit: summary row that expands into the ordered journey. Self-contained
 // so it renders identically in the flat list and nested under a visitor.
-function SessionCard({ s, nowMs, nested = false }) {
+function SessionCard({ s, nowMs, nested = false, blocked = false, blockBusy = false, onToggleBlock }) {
   const [open, setOpen] = useState(false)
   const location = [s.city, s.country].filter(Boolean).join(', ') || 'Unknown location'
   return (
@@ -68,6 +93,11 @@ function SessionCard({ s, nowMs, nested = false }) {
             {s.returning && !nested && (
               <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-brand-navy text-brand-light">
                 <Repeat size={11} /> Returning
+              </span>
+            )}
+            {blocked && (
+              <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300">
+                <Ban size={11} /> Blocked
               </span>
             )}
           </div>
@@ -102,6 +132,11 @@ function SessionCard({ s, nowMs, nested = false }) {
               )
             })}
           </ol>
+          {onToggleBlock && (
+            <div className="mt-3 pt-3 border-t border-brand-border/60 flex justify-end">
+              <BlockControl visitorId={s.visitorId} blocked={blocked} busy={blockBusy} onToggle={onToggleBlock} />
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -109,7 +144,7 @@ function SessionCard({ s, nowMs, nested = false }) {
 }
 
 // One visitor across all their visits: count, first/last seen, expand to visits.
-function VisitorCard({ v, nowMs }) {
+function VisitorCard({ v, nowMs, blocked = false, blockBusy = false, onToggleBlock }) {
   const [open, setOpen] = useState(false)
   const location = [v.city, v.country].filter(Boolean).join(', ') || 'Unknown location'
   return (
@@ -127,6 +162,11 @@ function VisitorCard({ v, nowMs }) {
             <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-brand-navy text-brand-light">
               <Repeat size={11} /> {v.visitCount} visit{v.visitCount === 1 ? '' : 's'}
             </span>
+            {blocked && (
+              <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300">
+                <Ban size={11} /> Blocked
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap text-white/50 text-xs mt-1">
             <span className="flex items-center gap-1">{deviceGlyph(v.device)} {v.device}</span>
@@ -141,6 +181,11 @@ function VisitorCard({ v, nowMs }) {
       {open && (
         <div className="border-t border-brand-border p-3 bg-brand-dark/20 space-y-2">
           {v.sessions.map((s) => <SessionCard key={s.sessionId} s={s} nowMs={nowMs} nested />)}
+          {onToggleBlock && (
+            <div className="pt-2 flex justify-end">
+              <BlockControl visitorId={v.visitorId} blocked={blocked} busy={blockBusy} onToggle={onToggleBlock} />
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -154,18 +199,42 @@ export default function VisitorsEditor() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [view, setView] = useState('visit') // 'visit' | 'visitor'
+  const [blocked, setBlocked] = useState(() => new Set()) // blocked visitor ids
+  const [blockBusyId, setBlockBusyId] = useState(null)
 
   const load = async (d) => {
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchAnalytics({ days: d })
+      const [data, blockList] = await Promise.all([
+        fetchAnalytics({ days: d }),
+        fetchBlockedVisitors().catch(() => []),
+      ])
       setNowMs(Date.now())
       setRows(data)
+      setBlocked(new Set(blockList.map((b) => b.visitor_id)))
     } catch (e) {
       setError(e.message || 'Could not load visitor data.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const toggleBlock = async (visitorId, shouldBlock) => {
+    setBlockBusyId(visitorId)
+    try {
+      if (shouldBlock) await blockVisitor(visitorId)
+      else await unblockVisitor(visitorId)
+      setBlocked((prev) => {
+        const next = new Set(prev)
+        if (shouldBlock) next.add(visitorId)
+        else next.delete(visitorId)
+        return next
+      })
+    } catch (e) {
+      setError(e.message || 'Could not update the blocklist.')
+    } finally {
+      setBlockBusyId(null)
     }
   }
 
@@ -316,8 +385,26 @@ export default function VisitorsEditor() {
 
           <div className="space-y-3">
             {view === 'visit'
-              ? sessions.map((s) => <SessionCard key={s.sessionId} s={s} nowMs={nowMs} />)
-              : visitors.map((v) => <VisitorCard key={v.visitorId} v={v} nowMs={nowMs} />)}
+              ? sessions.map((s) => (
+                  <SessionCard
+                    key={s.sessionId}
+                    s={s}
+                    nowMs={nowMs}
+                    blocked={blocked.has(s.visitorId)}
+                    blockBusy={blockBusyId === s.visitorId}
+                    onToggleBlock={toggleBlock}
+                  />
+                ))
+              : visitors.map((v) => (
+                  <VisitorCard
+                    key={v.visitorId}
+                    v={v}
+                    nowMs={nowMs}
+                    blocked={blocked.has(v.visitorId)}
+                    blockBusy={blockBusyId === v.visitorId}
+                    onToggleBlock={toggleBlock}
+                  />
+                ))}
           </div>
         </div>
       )}

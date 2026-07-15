@@ -38,6 +38,7 @@ export const ANALYTICS_EVENTS = {
   BOOKING_START: 'booking_start',
   RECRUITER_BOOKING_START: 'recruiter_booking_start',
   BOOKING_CONFIRMED: 'booking_confirmed',
+  FORM_START: 'form_start',
   CONTACT_SUBMIT: 'contact_submit',
   PROJECT_OPEN: 'project_open',
   CHAT_OPEN: 'chat_open',

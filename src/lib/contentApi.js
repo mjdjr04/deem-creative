@@ -217,7 +217,10 @@ export async function fetchAnalytics({ days = 30 } = {}) {
     .order('created_at', { ascending: false })
     .limit(20000)
   if (error) throw error
-  return data ?? []
+  // Exclude admin-panel activity: the owner's own browsing of /admin would
+  // otherwise pollute Top Pages and inflate every metric. (New data isn't
+  // tracked on /admin at all; this also cleans up rows collected before that.)
+  return (data ?? []).filter((r) => !(r.path || '').startsWith('/admin'))
 }
 
 /**

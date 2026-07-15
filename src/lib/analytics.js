@@ -48,6 +48,11 @@ export function isReturningVisitor() {
   return _returning
 }
 
+/** This browser's stable anonymous visitor id (or null if storage is blocked). */
+export function currentVisitorId() {
+  return visitorId()
+}
+
 function sessionId() {
   try {
     let id = sessionStorage.getItem(SID_KEY)
@@ -193,10 +198,19 @@ export function setAnalyticsAllowed(value) {
   if (allowed) {
     loadGA4()
     loadCloudflare()
-    startPresence()
   } else {
     stopPresence()
   }
+}
+
+/**
+ * Explicitly start/stop live presence. Kept separate from setAnalyticsAllowed so
+ * the app can suppress presence on admin routes (the owner shouldn't appear as a
+ * live visitor of their own site).
+ */
+export function setPresenceEnabled(on) {
+  if (on && allowed) startPresence()
+  else stopPresence()
 }
 
 // ── Live presence (Supabase Realtime) ───────────────────────────────────────

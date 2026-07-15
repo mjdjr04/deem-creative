@@ -1,24 +1,62 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Send, Loader2, CheckCircle2 } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
 import { submitMessage } from '../lib/contentApi'
+import { trackEvent } from '../lib/analytics'
+import { ANALYTICS_EVENTS } from '../config/analytics'
 
 const inputClass =
   'w-full px-4 py-3 rounded-lg bg-brand-mid border border-brand-border text-white text-sm placeholder-white/30 focus:outline-none focus:border-brand-accent'
+
+// Spam thresholds. A human takes more than a couple seconds to fill the form,
+// and won't legitimately submit twice within a short window.
+const MIN_FILL_MS = 3000
+const RESUBMIT_COOLDOWN_MS = 30000
+const RATE_KEY = 'dc_last_contact'
 
 export default function ContactForm() {
   const contact = useContent().settings.contact || {}
   const heading = contact.heading || 'Send a Message'
   const subtext = contact.subtext || "Fill out the form and I'll get back to you, usually within 24 hours."
   const [form, setForm] = useState({ name: '', email: '', phone: '', company: '', message: '' })
+  const [website, setWebsite] = useState('') // honeypot — real users never see or fill this
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState(null)
 
-  const set = (key, v) => setForm((f) => ({ ...f, [key]: v }))
+  const startedAt = useRef(0) // ms of first interaction; 0 until the user edits
+
+  const set = (key, v) => {
+    // Fire a one-time "form_start" the first time the visitor edits the form, so
+    // the visitor journey shows started-vs-submitted; also anchors the fill timer.
+    if (!startedAt.current) {
+      startedAt.current = Date.now()
+      trackEvent(ANALYTICS_EVENTS.FORM_START, { form: 'contact' })
+    }
+    setForm((f) => ({ ...f, [key]: v }))
+  }
 
   const submit = async (e) => {
     e.preventDefault()
+
+    // ── Spam gates (all silent: pretend success so bots don't adapt) ──────────
+    // 1) Honeypot filled → bot.
+    // 2) Never interacted, or filled implausibly fast → bot.
+    const filledMs = startedAt.current ? Date.now() - startedAt.current : 0
+    if (website || filledMs < MIN_FILL_MS) {
+      setDone(true)
+      setForm({ name: '', email: '', phone: '', company: '', message: '' })
+      return
+    }
+    // 3) Rate limit: same browser submitting again within the cooldown.
+    try {
+      const last = Number(localStorage.getItem(RATE_KEY) || 0)
+      if (last && Date.now() - last < RESUBMIT_COOLDOWN_MS) {
+        setDone(true)
+        return
+      }
+    } catch { /* localStorage unavailable — skip rate limit */ }
+
     setBusy(true)
     setError(null)
 
@@ -50,6 +88,8 @@ export default function ContactForm() {
 
     setBusy(false)
     if (ok) {
+      trackEvent(ANALYTICS_EVENTS.CONTACT_SUBMIT, { form: 'contact' })
+      try { localStorage.setItem(RATE_KEY, String(Date.now())) } catch { /* ignore */ }
       setDone(true)
       setForm({ name: '', email: '', phone: '', company: '', message: '' })
     } else {
@@ -74,6 +114,21 @@ export default function ContactForm() {
     <form onSubmit={submit} className="space-y-4">
       <h2 className="text-2xl font-bold text-white">{heading}</h2>
       <p className="text-white/60 text-sm leading-relaxed">{subtext}</p>
+
+      {/* Honeypot: hidden from humans (off-screen + not focusable). Bots that
+          fill every field trip this and are silently dropped. */}
+      <div aria-hidden="true" className="absolute -left-[9999px] top-auto h-px w-px overflow-hidden">
+        <label>
+          Website
+          <input
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+          />
+        </label>
+      </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
         <label className="block">

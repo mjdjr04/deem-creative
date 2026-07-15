@@ -5,8 +5,20 @@ import {
   CheckCircle2, ArrowLeft, ExternalLink, Globe, Loader2,
 } from 'lucide-react'
 import { BOOKING_API_URL, GOOGLE_BOOKING_FALLBACK_URL } from '../config/booking'
-import { trackEvent } from '../lib/analytics'
+import { trackEvent, currentVisitorId } from '../lib/analytics'
 import { ANALYTICS_EVENTS } from '../config/analytics'
+import { isVisitorBlocked } from '../lib/contentApi'
+
+// Spam thresholds (shared intent with the contact form): a human takes more than
+// a couple seconds on the form and won't legitimately book twice in quick succession.
+const MIN_FILL_MS = 3000
+const RESUBMIT_COOLDOWN_MS = 60000
+const BOOK_RATE_KEY = 'dc_last_booking'
+
+// Shown when a booking is blocked (by the admin or the spam filter). Generic so
+// it doesn't reveal why, with a direct path for anyone caught by mistake.
+const FLAGGED_MSG = "This booking couldn't be completed — it was flagged by our spam filter. If this is a mistake, please email michael@deemcreative.com directly."
+const RATE_MSG = 'You just submitted a booking a moment ago — please wait a minute before trying again.'
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 const MONTHS = [
@@ -204,7 +216,9 @@ export default function BookingFlow({ config }) {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
   const [confirmation, setConfirmation] = useState(null)
+  const [botField, setBotField] = useState('') // honeypot — hidden from real users
   const startTracked = useRef(false)
+  const formStartMs = useRef(0) // ms the booking form became fillable (slot chosen)
 
   const detectedTz = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone, [])
   const [timezone, setTimezone] = useState(detectedTz)
@@ -235,10 +249,12 @@ export default function BookingFlow({ config }) {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadAvailability() }, [loadAvailability])
 
-  // Fire the "booking started" analytics event once the visitor reaches the form.
+  // Fire the "booking started" analytics event once the visitor reaches the form,
+  // and anchor the spam fill-timer to when the form became fillable.
   useEffect(() => {
     if (selectedSlot && !startTracked.current) {
       startTracked.current = true
+      formStartMs.current = Date.now()
       trackEvent(config.bookingStartEvent || ANALYTICS_EVENTS.BOOKING_START, { type: apiType })
     }
   }, [selectedSlot, config.bookingStartEvent, apiType])
@@ -271,8 +287,33 @@ export default function BookingFlow({ config }) {
       setSubmitError('Please choose a meeting type.')
       return
     }
+
+    // ── Spam gates (show a visible error, don't book) ─────────────────────────
+    // 1) Honeypot filled → bot.  2) Submitted implausibly fast → bot.
+    const filledMs = formStartMs.current ? Date.now() - formStartMs.current : 0
+    if (botField || filledMs < MIN_FILL_MS) {
+      setSubmitError(FLAGGED_MSG)
+      return
+    }
+    // 3) Rate limit: same browser booking again within the cooldown.
+    try {
+      const last = Number(localStorage.getItem(BOOK_RATE_KEY) || 0)
+      if (last && Date.now() - last < RESUBMIT_COOLDOWN_MS) {
+        setSubmitError(RATE_MSG)
+        return
+      }
+    } catch { /* localStorage unavailable — skip rate limit */ }
+
     setSubmitting(true)
     setSubmitError(null)
+
+    // 4) Soft block: a visitor the admin blocked can't book.
+    if (await isVisitorBlocked(currentVisitorId())) {
+      setSubmitting(false)
+      setSubmitError(FLAGGED_MSG)
+      return
+    }
+
     try {
       const payload = { action: 'book', type: apiType, start: selectedSlot, timezone }
       for (const f of fields) payload[f.name] = String(form[f.name] || '').trim()
@@ -294,6 +335,7 @@ export default function BookingFlow({ config }) {
         return
       }
       setConfirmation(data)
+      try { localStorage.setItem(BOOK_RATE_KEY, String(Date.now())) } catch { /* ignore */ }
       trackEvent(ANALYTICS_EVENTS.BOOKING_CONFIRMED, { type: apiType })
     } catch {
       setSubmitError('Something went wrong while booking. Please try again, or use the email link below.')
@@ -525,6 +567,20 @@ export default function BookingFlow({ config }) {
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
+                      {/* Honeypot: hidden from humans (off-screen, not focusable);
+                          bots that fill every field trip it and are rejected. */}
+                      <div aria-hidden="true" className="absolute -left-[9999px] top-auto h-px w-px overflow-hidden">
+                        <label>
+                          Website
+                          <input
+                            type="text"
+                            tabIndex={-1}
+                            autoComplete="off"
+                            value={botField}
+                            onChange={e => setBotField(e.target.value)}
+                          />
+                        </label>
+                      </div>
                       {fieldRows.map((row, i) =>
                         row.length === 2 ? (
                           <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-4">

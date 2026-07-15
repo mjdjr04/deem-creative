@@ -14,6 +14,11 @@ const MIN_FILL_MS = 3000
 const RESUBMIT_COOLDOWN_MS = 30000
 const RATE_KEY = 'dc_last_contact'
 
+// Shown when a submission is blocked (by the admin or the spam filter). Kept
+// generic so it doesn't reveal exactly why, and offers a path for real people.
+const FLAGGED_MSG = "This message couldn't be sent — it was flagged by our spam filter. If this is a mistake, please email me directly at michael@deemcreative.com."
+const RATE_MSG = 'You just sent a message a moment ago — please wait a bit before sending another.'
+
 export default function ContactForm() {
   const contact = useContent().settings.contact || {}
   const heading = contact.heading || 'Send a Message'
@@ -39,20 +44,18 @@ export default function ContactForm() {
   const submit = async (e) => {
     e.preventDefault()
 
-    // ── Spam gates (all silent: pretend success so bots don't adapt) ──────────
-    // 1) Honeypot filled → bot.
-    // 2) Never interacted, or filled implausibly fast → bot.
+    // ── Spam gates (show a visible error instead of sending) ──────────────────
+    // 1) Honeypot filled → bot.  2) Never interacted / filled implausibly fast.
     const filledMs = startedAt.current ? Date.now() - startedAt.current : 0
     if (website || filledMs < MIN_FILL_MS) {
-      setDone(true)
-      setForm({ name: '', email: '', phone: '', company: '', message: '' })
+      setError(FLAGGED_MSG)
       return
     }
     // 3) Rate limit: same browser submitting again within the cooldown.
     try {
       const last = Number(localStorage.getItem(RATE_KEY) || 0)
       if (last && Date.now() - last < RESUBMIT_COOLDOWN_MS) {
-        setDone(true)
+        setError(RATE_MSG)
         return
       }
     } catch { /* localStorage unavailable — skip rate limit */ }
@@ -60,11 +63,10 @@ export default function ContactForm() {
     setBusy(true)
     setError(null)
 
-    // 4) Soft block: a visitor the admin has blocked gets a silent no-op.
+    // 4) Soft block: a visitor the admin has blocked sees the flagged error.
     if (await isVisitorBlocked(currentVisitorId())) {
       setBusy(false)
-      setDone(true)
-      setForm({ name: '', email: '', phone: '', company: '', message: '' })
+      setError(FLAGGED_MSG)
       return
     }
 

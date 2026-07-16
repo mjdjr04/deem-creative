@@ -1,6 +1,9 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Loader2, RefreshCw, Trash2, Mail, MailOpen, Reply, Phone, Building2, Send, CheckCircle2, ExternalLink } from 'lucide-react'
-import { fetchMessages, setMessageRead, deleteMessage, sendReply } from '../../../lib/contentApi'
+import { Loader2, RefreshCw, Trash2, Mail, MailOpen, Reply, Phone, Building2, Send, CheckCircle2, ExternalLink, Ban, ShieldCheck } from 'lucide-react'
+import {
+  fetchMessages, setMessageRead, deleteMessage, sendReply,
+  fetchBlockedEmails, blockEmail, unblockEmail,
+} from '../../../lib/contentApi'
 import { Card } from '../../../components/admin/ui'
 
 function formatDate(ts) {
@@ -19,7 +22,7 @@ function mailtoHref(m) {
 const replyInputClass =
   'w-full px-3 py-2 rounded-lg bg-brand-dark border border-brand-border text-white text-sm placeholder-white/30 focus:outline-none focus:border-brand-accent'
 
-function MessageCard({ m, onToggleRead, onRemove, onMarkRead }) {
+function MessageCard({ m, onToggleRead, onRemove, onMarkRead, blocked, blockBusy, onToggleBlock }) {
   const firstName = (m.name || '').trim().split(/\s+/)[0] || ''
   const [replying, setReplying] = useState(false)
   const [subject, setSubject] = useState('Re: your message to Deem Creative')
@@ -50,7 +53,14 @@ function MessageCard({ m, onToggleRead, onRemove, onMarkRead }) {
             <span className="text-white font-semibold">{m.name || 'Anonymous'}</span>
             {!m.read && <span className="text-[10px] uppercase tracking-wide text-brand-dark bg-brand-light rounded px-1.5 py-0.5 font-bold">New</span>}
           </div>
-          {m.email && <a href={`mailto:${m.email}`} className="text-brand-light text-sm hover:text-white">{m.email}</a>}
+          <div className="flex items-center gap-2 flex-wrap">
+            {m.email && <a href={`mailto:${m.email}`} className="text-brand-light text-sm hover:text-white">{m.email}</a>}
+            {blocked && (
+              <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300">
+                <Ban size={11} /> Blocked
+              </span>
+            )}
+          </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 mt-0.5">
             {m.phone && (
               <a href={`tel:${m.phone.replace(/[^\d+]/g, '')}`} className="flex items-center gap-1 text-white/55 text-xs hover:text-white">
@@ -66,6 +76,16 @@ function MessageCard({ m, onToggleRead, onRemove, onMarkRead }) {
           <p className="text-white/55 text-xs mt-0.5">{formatDate(m.created_at)}</p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
+          {m.email && (
+            <button
+              onClick={() => onToggleBlock(m.email, !blocked)}
+              disabled={blockBusy}
+              className={`p-2 disabled:opacity-40 ${blocked ? 'text-white/55 hover:text-white' : 'text-red-400/60 hover:text-red-400'}`}
+              title={blocked ? 'Unblock this sender' : 'Block this sender (they can no longer submit forms or book)'}
+            >
+              {blocked ? <ShieldCheck size={16} /> : <Ban size={16} />}
+            </button>
+          )}
           <button onClick={() => onToggleRead(m)} className="text-white/55 hover:text-white p-2" title={m.read ? 'Mark unread' : 'Mark read'}>
             {m.read ? <Mail size={16} /> : <MailOpen size={16} />}
           </button>
@@ -126,12 +146,17 @@ export default function MessagesEditor() {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [blocked, setBlocked] = useState(() => new Set()) // lowercased blocked emails
+  const [blockBusy, setBlockBusy] = useState(null)
+  const [manualEmail, setManualEmail] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      setMessages(await fetchMessages())
+      const [msgs, blockList] = await Promise.all([fetchMessages(), fetchBlockedEmails().catch(() => [])])
+      setMessages(msgs)
+      setBlocked(new Set(blockList.map((b) => b.email)))
     } catch (e) {
       setError(e.message || 'Could not load messages')
     } finally {
@@ -143,12 +168,44 @@ export default function MessagesEditor() {
   // the effect body (avoids cascading-render warnings).
   useEffect(() => {
     let active = true
-    fetchMessages()
-      .then((data) => { if (active) setMessages(data) })
+    Promise.all([fetchMessages(), fetchBlockedEmails().catch(() => [])])
+      .then(([msgs, blockList]) => {
+        if (!active) return
+        setMessages(msgs)
+        setBlocked(new Set(blockList.map((b) => b.email)))
+      })
       .catch((e) => { if (active) setError(e.message || 'Could not load messages') })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [])
+
+  const toggleBlockEmail = async (email, shouldBlock) => {
+    const key = String(email || '').trim().toLowerCase()
+    if (!key) return
+    setBlockBusy(key)
+    try {
+      if (shouldBlock) await blockEmail(key)
+      else await unblockEmail(key)
+      setBlocked((prev) => {
+        const next = new Set(prev)
+        if (shouldBlock) next.add(key)
+        else next.delete(key)
+        return next
+      })
+    } catch (e) {
+      setError(e.message || 'Could not update the blocklist.')
+    } finally {
+      setBlockBusy(null)
+    }
+  }
+
+  const addManualBlock = async (e) => {
+    e.preventDefault()
+    const key = manualEmail.trim().toLowerCase()
+    if (!key) return
+    await toggleBlockEmail(key, true)
+    setManualEmail('')
+  }
 
   const toggleRead = async (m) => {
     setMessages((prev) => prev.map((x) => (x.id === m.id ? { ...x, read: !m.read } : x)))
@@ -188,6 +245,51 @@ export default function MessagesEditor() {
         </button>
       </div>
 
+      {/* Blocked emails manager — blocking an email stops that person from
+          submitting the contact form OR booking, on any device. */}
+      <div className="mb-6 rounded-xl bg-brand-mid border border-brand-border p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Ban size={15} className="text-red-400/80" />
+          <h2 className="text-white/80 text-sm font-semibold">Blocked emails</h2>
+          <span className="text-white/40 text-xs">({blocked.size})</span>
+        </div>
+        <form onSubmit={addManualBlock} className="flex items-center gap-2 mb-3">
+          <input
+            type="email"
+            value={manualEmail}
+            onChange={(e) => setManualEmail(e.target.value)}
+            placeholder="Block an email (e.g. a booking spammer)…"
+            className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-brand-dark border border-brand-border text-white text-sm placeholder-white/30 focus:outline-none focus:border-brand-accent"
+          />
+          <button
+            type="submit"
+            disabled={!manualEmail.trim() || blockBusy != null}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-500/30 text-red-300/80 text-sm hover:text-red-200 hover:border-red-500/60 transition-colors disabled:opacity-40 flex-shrink-0"
+          >
+            <Ban size={14} /> Block
+          </button>
+        </form>
+        {blocked.size === 0 ? (
+          <p className="text-white/40 text-xs">No blocked emails. Block a sender below, or add one above.</p>
+        ) : (
+          <ul className="flex flex-wrap gap-2">
+            {[...blocked].map((email) => (
+              <li key={email} className="inline-flex items-center gap-1.5 text-xs pl-2.5 pr-1.5 py-1 rounded-lg bg-brand-dark border border-brand-border text-white/70">
+                {email}
+                <button
+                  onClick={() => toggleBlockEmail(email, false)}
+                  disabled={blockBusy === email}
+                  className="p-0.5 rounded text-white/40 hover:text-white disabled:opacity-40"
+                  title="Unblock"
+                >
+                  <ShieldCheck size={13} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {loading ? (
         <div className="flex justify-center py-16"><Loader2 className="animate-spin text-brand-light" /></div>
       ) : error ? (
@@ -203,6 +305,9 @@ export default function MessagesEditor() {
               onToggleRead={toggleRead}
               onRemove={remove}
               onMarkRead={(msg) => toggleRead({ ...msg, read: false })}
+              blocked={m.email ? blocked.has(m.email.trim().toLowerCase()) : false}
+              blockBusy={m.email ? blockBusy === m.email.trim().toLowerCase() : false}
+              onToggleBlock={toggleBlockEmail}
             />
           ))}
         </div>

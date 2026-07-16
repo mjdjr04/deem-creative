@@ -182,6 +182,13 @@ function doPost(e) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return jsonResponse({ ok: false, error: 'A valid email is required.' });
     }
+    // Server-side block backstop: reject blocked emails before creating anything
+    // (no calendar event, no confirmation email). Bypass-proof — the client
+    // check can be evaded, this can't. Fails OPEN so a Supabase hiccup never
+    // blocks a real booking.
+    if (isEmailBlocked(email)) {
+      return jsonResponse({ ok: false, code: 'BLOCKED', error: 'This booking could not be completed.' });
+    }
     // Meeting type must be valid for THIS booking type.
     if (!MEETING_LABELS[meetingType] || tc.meetingTypes.indexOf(meetingType) === -1) {
       return jsonResponse({ ok: false, error: 'Please choose a meeting type.' });
@@ -387,6 +394,31 @@ function mergeTpl(def, got) {
     }
   }
   return out;
+}
+
+/**
+ * Server-side email blocklist check. Calls the Supabase security-definer RPC
+ * is_email_blocked (case-insensitive). Returns false on any error (fail open),
+ * so a Supabase outage never blocks a legitimate booking.
+ */
+function isEmailBlocked(email) {
+  if (!email) return false;
+  try {
+    var res = UrlFetchApp.fetch(CONFIG.SUPABASE_URL + '/rest/v1/rpc/is_email_blocked', {
+      method: 'post',
+      contentType: 'application/json',
+      muteHttpExceptions: true,
+      headers: {
+        apikey: CONFIG.SUPABASE_ANON_KEY,
+        Authorization: 'Bearer ' + CONFIG.SUPABASE_ANON_KEY,
+      },
+      payload: JSON.stringify({ em: String(email).trim() }),
+    });
+    if (res.getResponseCode() === 200) {
+      return JSON.parse(res.getContentText()) === true;
+    }
+  } catch (err) { /* fail open */ }
+  return false;
 }
 
 /** Verify a Supabase access token belongs to a real (logged-in) user. */

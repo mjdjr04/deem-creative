@@ -269,6 +269,54 @@ export async function isVisitorBlocked(visitorId) {
   }
 }
 
+// ── Email blocklist (reliable, device-independent) ──────────────────────────
+
+/** Admin: list all blocked emails (most recent first). */
+export async function fetchBlockedEmails() {
+  if (!isSupabaseConfigured) return []
+  const { data, error } = await supabase
+    .from('blocked_emails')
+    .select('email, reason, created_at')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+/** Admin: block an email address (case-insensitive; stored lowercased). */
+export async function blockEmail(email, reason = null) {
+  if (!isSupabaseConfigured) throw new Error('Supabase is not configured.')
+  const normalized = String(email || '').trim().toLowerCase()
+  if (!normalized) throw new Error('No email to block.')
+  const { error } = await supabase
+    .from('blocked_emails')
+    .upsert({ email: normalized, reason }, { onConflict: 'email' })
+  if (error) throw error
+}
+
+/** Admin: remove an email from the blocklist. */
+export async function unblockEmail(email) {
+  if (!isSupabaseConfigured) throw new Error('Supabase is not configured.')
+  const normalized = String(email || '').trim().toLowerCase()
+  const { error } = await supabase.from('blocked_emails').delete().eq('email', normalized)
+  if (error) throw error
+}
+
+/**
+ * Public: is this email blocked? Security-definer RPC (case-insensitive), so
+ * anonymous callers can check one email. Fails open (returns false on error).
+ */
+export async function isEmailBlocked(email) {
+  const normalized = String(email || '').trim().toLowerCase()
+  if (!isSupabaseConfigured || !normalized) return false
+  try {
+    const { data, error } = await supabase.rpc('is_email_blocked', { em: normalized })
+    if (error) return false
+    return Boolean(data)
+  } catch {
+    return false
+  }
+}
+
 /**
  * Human-readable traffic source for an analytics row: a campaign tag
  * (utm_source or ?ref=) if present, else the organic referrer host, else

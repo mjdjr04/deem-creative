@@ -2,12 +2,12 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calendar, Clock, Video, ChevronLeft, ChevronRight,
-  CheckCircle2, ArrowLeft, ExternalLink, Globe, Loader2,
+  CheckCircle2, ArrowLeft, Globe, Loader2,
 } from 'lucide-react'
-import { BOOKING_API_URL, GOOGLE_BOOKING_FALLBACK_URL } from '../config/booking'
+import { BOOKING_API_URL } from '../config/booking'
 import { trackEvent, currentVisitorId } from '../lib/analytics'
 import { ANALYTICS_EVENTS } from '../config/analytics'
-import { isVisitorBlocked } from '../lib/contentApi'
+import { isVisitorBlocked, isEmailBlocked } from '../lib/contentApi'
 
 // Spam thresholds (shared intent with the contact form): a human takes more than
 // a couple seconds on the form and won't legitimately book twice in quick succession.
@@ -175,24 +175,24 @@ function MonthCalendar({ viewDate, onNav, slotsByDay, selectedDay, onSelectDay }
   )
 }
 
-function FallbackCard({ message }) {
+function FallbackCard({ message, onRetry }) {
   return (
     <motion.div {...fadeUp} className="text-center py-10 px-6">
       <div className="w-14 h-14 mx-auto mb-5 rounded-2xl bg-brand-navy border border-brand-accent/40 flex items-center justify-center text-brand-light">
         <Calendar size={26} aria-hidden="true" />
       </div>
-      <h3 className="text-white font-semibold text-lg mb-2">Pick a time on Google Calendar</h3>
+      <h3 className="text-white font-semibold text-lg mb-2">Scheduling is briefly unavailable</h3>
       <p className="text-white/55 text-sm max-w-sm mx-auto mb-7">{message}</p>
-      <motion.a
-        href={GOOGLE_BOOKING_FALLBACK_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.97 }}
-        className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-white text-brand-dark font-bold hover:bg-brand-light hover:text-white transition-all shadow-lg"
-      >
-        <Calendar size={18} /> Open Scheduling Page <ExternalLink size={14} />
-      </motion.a>
+      {onRetry && (
+        <motion.button
+          onClick={onRetry}
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.97 }}
+          className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-white text-brand-dark font-bold hover:bg-brand-light hover:text-white transition-all shadow-lg"
+        >
+          <Calendar size={18} /> Try again
+        </motion.button>
+      )}
       <p className="text-white/55 text-xs mt-5">
         Or email <a href="mailto:michael@deemcreative.com" className="text-brand-light hover:text-white transition-colors">michael@deemcreative.com</a>
       </p>
@@ -307,8 +307,13 @@ export default function BookingFlow({ config }) {
     setSubmitting(true)
     setSubmitError(null)
 
-    // 4) Soft block: a visitor the admin blocked can't book.
-    if (await isVisitorBlocked(currentVisitorId())) {
+    // 4) Soft block: blocked by anonymous visitor id OR (reliably) by email.
+    //    The Apps Script re-checks the email server-side as a bypass-proof backstop.
+    const [blockedById, blockedByEmail] = await Promise.all([
+      isVisitorBlocked(currentVisitorId()),
+      isEmailBlocked(form.email),
+    ])
+    if (blockedById || blockedByEmail) {
       setSubmitting(false)
       setSubmitError(FLAGGED_MSG)
       return
@@ -329,6 +334,9 @@ export default function BookingFlow({ config }) {
           setSubmitError('That time was just booked by someone else. Please pick another slot.')
           setSelectedSlot(null)
           loadAvailability()
+        } else if (data.code === 'BLOCKED') {
+          // Server-side email block backstop.
+          setSubmitError(FLAGGED_MSG)
         } else {
           throw new Error(data.error || 'Booking failed')
         }
@@ -470,11 +478,11 @@ export default function BookingFlow({ config }) {
               <AnimatePresence mode="wait">
 
                 {status === 'unconfigured' && (
-                  <FallbackCard key="unconfigured" message="Choose a time on the scheduling page and you'll receive a calendar invite right away." />
+                  <FallbackCard key="unconfigured" message="Online scheduling isn't set up yet. Email me and I'll get you booked right away." />
                 )}
 
                 {status === 'error' && (
-                  <FallbackCard key="error" message="Live availability couldn't be loaded right now, but you can still book through the scheduling page." />
+                  <FallbackCard key="error" message="Live availability couldn't be loaded right now. Please try again in a moment, or email me and I'll get you booked." onRetry={loadAvailability} />
                 )}
 
                 {status === 'loading' && (

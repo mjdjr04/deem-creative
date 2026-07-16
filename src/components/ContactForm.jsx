@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Send, Loader2, CheckCircle2 } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
-import { submitMessage, isVisitorBlocked } from '../lib/contentApi'
+import { submitMessage, isVisitorBlocked, isEmailBlocked } from '../lib/contentApi'
 import { trackEvent, currentVisitorId } from '../lib/analytics'
 import { ANALYTICS_EVENTS } from '../config/analytics'
 
@@ -63,8 +63,12 @@ export default function ContactForm() {
     setBusy(true)
     setError(null)
 
-    // 4) Soft block: a visitor the admin has blocked sees the flagged error.
-    if (await isVisitorBlocked(currentVisitorId())) {
+    // 4) Soft block: blocked by anonymous visitor id OR (reliably) by email.
+    const [blockedById, blockedByEmail] = await Promise.all([
+      isVisitorBlocked(currentVisitorId()),
+      isEmailBlocked(form.email),
+    ])
+    if (blockedById || blockedByEmail) {
       setBusy(false)
       setError(FLAGGED_MSG)
       return

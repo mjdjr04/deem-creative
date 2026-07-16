@@ -302,6 +302,28 @@ export async function unblockEmail(email) {
 }
 
 /**
+ * Public: verify a Cloudflare Turnstile token server-side via the booking Apps
+ * Script (which holds the secret). Returns true if the Apps Script confirms the
+ * token — or if the check can't run at all (network error → fail open so a
+ * transient issue never blocks a real person). An explicitly failed check
+ * (ok:false) returns false. No token → false (caller should require one).
+ */
+export async function verifyTurnstile(token) {
+  if (!BOOKING_API_URL || !token) return false
+  try {
+    const res = await fetch(BOOKING_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'verifyTurnstile', token }),
+    })
+    const data = await res.json()
+    return Boolean(data.ok)
+  } catch {
+    return true // network hiccup — don't block a legitimate submission
+  }
+}
+
+/**
  * Public: is this email blocked? Security-definer RPC (case-insensitive), so
  * anonymous callers can check one email. Fails open (returns false on error).
  */

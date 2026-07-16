@@ -8,6 +8,8 @@ import { BOOKING_API_URL } from '../config/booking'
 import { trackEvent, currentVisitorId } from '../lib/analytics'
 import { ANALYTICS_EVENTS } from '../config/analytics'
 import { isVisitorBlocked, isEmailBlocked } from '../lib/contentApi'
+import { isTurnstileEnabled } from '../config/turnstile'
+import Turnstile from './Turnstile'
 
 // Spam thresholds (shared intent with the contact form): a human takes more than
 // a couple seconds on the form and won't legitimately book twice in quick succession.
@@ -217,6 +219,8 @@ export default function BookingFlow({ config }) {
   const [submitError, setSubmitError] = useState(null)
   const [confirmation, setConfirmation] = useState(null)
   const [botField, setBotField] = useState('') // honeypot — hidden from real users
+  const [tsToken, setTsToken] = useState('') // Cloudflare Turnstile token
+  const turnstile = useRef(null)
   const startTracked = useRef(false)
   const formStartMs = useRef(0) // ms the booking form became fillable (slot chosen)
 
@@ -307,7 +311,15 @@ export default function BookingFlow({ config }) {
     setSubmitting(true)
     setSubmitError(null)
 
-    // 4) Soft block: blocked by anonymous visitor id OR (reliably) by email.
+    // 4) Turnstile: require a token when enabled (the Apps Script verifies it
+    //    server-side before creating anything).
+    if (isTurnstileEnabled && !tsToken) {
+      setSubmitting(false)
+      setSubmitError('Please complete the "I’m human" check below.')
+      return
+    }
+
+    // 5) Soft block: blocked by anonymous visitor id OR (reliably) by email.
     //    The Apps Script re-checks the email server-side as a bypass-proof backstop.
     const [blockedById, blockedByEmail] = await Promise.all([
       isVisitorBlocked(currentVisitorId()),
@@ -320,7 +332,7 @@ export default function BookingFlow({ config }) {
     }
 
     try {
-      const payload = { action: 'book', type: apiType, start: selectedSlot, timezone }
+      const payload = { action: 'book', type: apiType, start: selectedSlot, timezone, turnstileToken: tsToken }
       for (const f of fields) payload[f.name] = String(form[f.name] || '').trim()
 
       const res = await fetch(BOOKING_API_URL, {
@@ -349,6 +361,7 @@ export default function BookingFlow({ config }) {
       setSubmitError('Something went wrong while booking. Please try again, or use the email link below.')
     } finally {
       setSubmitting(false)
+      turnstile.current?.reset() // single-use token — refresh for any retry
     }
   }
 
@@ -598,6 +611,8 @@ export default function BookingFlow({ config }) {
                           renderField(row[0])
                         ),
                       )}
+
+                      <Turnstile controlRef={turnstile} onToken={setTsToken} />
 
                       {submitError && <p className="text-red-400 text-sm" role="alert">{submitError}</p>}
 

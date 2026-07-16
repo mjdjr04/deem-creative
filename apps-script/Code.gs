@@ -153,6 +153,12 @@ function doPost(e) {
       return handleFeedDescribe(f);
     }
 
+    // Public: verify a Cloudflare Turnstile token (used by the contact form,
+    // which otherwise posts straight to Supabase).
+    if (f.action === 'verifyTurnstile') {
+      return jsonResponse({ ok: verifyTurnstile(f.token) });
+    }
+
     if (f.action !== 'book') {
       return jsonResponse({ ok: false, error: 'Unknown action' });
     }
@@ -188,6 +194,10 @@ function doPost(e) {
     // blocks a real booking.
     if (isEmailBlocked(email)) {
       return jsonResponse({ ok: false, code: 'BLOCKED', error: 'This booking could not be completed.' });
+    }
+    // Bot check: verify the Turnstile token before creating anything.
+    if (!verifyTurnstile(f.turnstileToken)) {
+      return jsonResponse({ ok: false, code: 'BLOCKED', error: 'Verification failed. Please try again.' });
     }
     // Meeting type must be valid for THIS booking type.
     if (!MEETING_LABELS[meetingType] || tc.meetingTypes.indexOf(meetingType) === -1) {
@@ -419,6 +429,34 @@ function isEmailBlocked(email) {
     }
   } catch (err) { /* fail open */ }
   return false;
+}
+
+/**
+ * Verify a Cloudflare Turnstile token using the secret in Script Properties
+ * (key: TURNSTILE_SECRET). Behaviour:
+ *   • No secret configured → returns true (feature inert until you finish setup,
+ *     so bookings/contact never break before the secret is added).
+ *   • Secret set, no token   → returns false (a token is required).
+ *   • Secret set, token set  → asks Cloudflare; returns its verdict. If Cloudflare
+ *     is unreachable, fails OPEN (returns true) so an outage can't block real
+ *     people who already solved the widget.
+ */
+function verifyTurnstile(token) {
+  var secret = PropertiesService.getScriptProperties().getProperty('TURNSTILE_SECRET');
+  if (!secret) return true;   // not configured yet
+  if (!token) return false;   // configured → token required
+  try {
+    var res = UrlFetchApp.fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'post',
+      muteHttpExceptions: true,
+      payload: { secret: secret, response: token },
+    });
+    if (res.getResponseCode() === 200) {
+      var data = JSON.parse(res.getContentText());
+      return !!(data && data.success);   // explicit pass/fail from Cloudflare
+    }
+  } catch (err) { /* network issue — fall through to fail open */ }
+  return true;   // couldn't reach Cloudflare → don't block a real submission
 }
 
 /** Verify a Supabase access token belongs to a real (logged-in) user. */

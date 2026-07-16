@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
 import { Send, Loader2, CheckCircle2 } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
-import { submitMessage, isVisitorBlocked, isEmailBlocked } from '../lib/contentApi'
+import { submitMessage, isVisitorBlocked, isEmailBlocked, verifyTurnstile } from '../lib/contentApi'
 import { trackEvent, currentVisitorId } from '../lib/analytics'
 import { ANALYTICS_EVENTS } from '../config/analytics'
+import { isTurnstileEnabled } from '../config/turnstile'
+import Turnstile from './Turnstile'
 
 const inputClass =
   'w-full px-4 py-3 rounded-lg bg-brand-mid border border-brand-border text-white text-sm placeholder-white/30 focus:outline-none focus:border-brand-accent'
@@ -29,6 +31,8 @@ export default function ContactForm() {
   const [done, setDone] = useState(false)
   const [error, setError] = useState(null)
 
+  const [tsToken, setTsToken] = useState('') // Cloudflare Turnstile token
+  const turnstile = useRef(null)
   const startedAt = useRef(0) // ms of first interaction; 0 until the user edits
 
   const set = (key, v) => {
@@ -74,6 +78,22 @@ export default function ContactForm() {
       return
     }
 
+    // 5) Turnstile: require a solved, server-verified token when enabled.
+    if (isTurnstileEnabled) {
+      if (!tsToken) {
+        setBusy(false)
+        setError('Please complete the "I’m human" check below.')
+        return
+      }
+      const human = await verifyTurnstile(tsToken)
+      if (!human) {
+        setBusy(false)
+        setError(FLAGGED_MSG)
+        turnstile.current?.reset()
+        return
+      }
+    }
+
     let ok = false
     let firstErr = null
 
@@ -101,6 +121,8 @@ export default function ContactForm() {
     }
 
     setBusy(false)
+    // The Turnstile token is single-use — clear it for any subsequent attempt.
+    turnstile.current?.reset()
     if (ok) {
       trackEvent(ANALYTICS_EVENTS.CONTACT_SUBMIT, { form: 'contact' })
       try { localStorage.setItem(RATE_KEY, String(Date.now())) } catch { /* ignore */ }
@@ -205,6 +227,8 @@ export default function ContactForm() {
           className={`${inputClass} resize-y`}
         />
       </label>
+
+      <Turnstile controlRef={turnstile} onToken={setTsToken} />
 
       {error && <p className="text-red-400 text-sm">{error}</p>}
 

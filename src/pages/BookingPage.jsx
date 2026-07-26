@@ -1,31 +1,40 @@
-import { Video, MapPin } from 'lucide-react'
+import { useEffect } from 'react'
+import { useParams, Navigate } from 'react-router-dom'
+import { Video, MapPin, Phone } from 'lucide-react'
 import BookingFlow from '../components/BookingFlow'
-import { SESSION, MEETING_TYPES, CONSULTATION_FIELDS } from '../config/booking'
+import { MEETING_KINDS, PICKER_KINDS } from '../config/booking'
 import { ANALYTICS_EVENTS } from '../config/analytics'
 
-const config = {
-  apiType: 'consultation',
-  bookingStartEvent: ANALYTICS_EVENTS.BOOKING_START,
-  eyebrow: 'Deem Creative',
-  pageTitle: 'Book a Consultation',
-  pageSubtitle:
-    "Pick a time that works for you — it goes straight onto the calendar, and you'll get a confirmation email right away.",
-  session: SESSION,
-  detailItems: [{ icon: Video, text: 'Zoom or in person — your choice' }],
-  whatToExpect: [
-    'Clarify your goals and what success looks like',
-    'Review your current content, systems, or creative challenges',
-    'Walk away with clear next steps — no pressure',
-  ],
-  meetingTypes: MEETING_TYPES,
-  meetingIcons: { zoom: Video, 'in-person': MapPin },
-  confirmedMeetingLine: (type) =>
-    type === 'in-person'
-      ? 'This is an in-person meeting — Michael will confirm the exact location (South Jersey area) with you.'
-      : 'This is a Zoom meeting — Michael will email you the link before your meeting.',
-  fields: CONSULTATION_FIELDS,
+const MEETING_ICONS = { zoom: Video, 'in-person': MapPin, phone: Phone }
+
+// Map a MEETING_KINDS entry to the config shape BookingFlow consumes.
+// eslint-disable-next-line react-refresh/only-export-components -- RecruiterBookingPage reuses this builder; keeping it here avoids a third page-config file
+export function buildBookingConfig(kind) {
+  return {
+    apiType: kind.apiType,
+    bookingStartEvent: ANALYTICS_EVENTS.BOOKING_START,
+    eyebrow: kind.eyebrow,
+    pageTitle: kind.pageTitle,
+    pageSubtitle: kind.pageSubtitle,
+    session: kind.session,
+    detailItems: (kind.detailItemsText || []).map(text => ({ icon: Video, text })),
+    whatToExpect: kind.whatToExpect,
+    meetingTypes: kind.meetingTypes,
+    meetingIcons: MEETING_ICONS,
+    confirmedMeetingLine: (type) => (kind.confirmedLines && kind.confirmedLines[type]) || '',
+    fields: kind.fields,
+  }
 }
 
 export default function BookingPage() {
-  return <BookingFlow config={config} />
+  const { type } = useParams()
+  const kind = type && MEETING_KINDS[type]
+  const valid = kind && PICKER_KINDS.includes(type)
+
+  useEffect(() => {
+    if (valid) document.title = `${kind.session.title} — Deem Creative`
+  }, [valid, kind])
+
+  if (!valid) return <Navigate to="/booking" replace />
+  return <BookingFlow config={buildBookingConfig(kind)} />
 }

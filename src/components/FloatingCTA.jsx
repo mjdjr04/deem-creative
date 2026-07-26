@@ -8,7 +8,7 @@ export default function FloatingCTA() {
   const [isVisible, setIsVisible] = useState(false)
   const { open } = useBooking()
   const location = useLocation()
-  const onBookingPage = location.pathname === '/booking'
+  const onBookingPage = location.pathname.startsWith('/booking')
 
   useEffect(() => {
     const onScroll = () => {

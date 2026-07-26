@@ -16,6 +16,7 @@ import HomePage from './pages/HomePage'
 import PortfolioPage from './pages/PortfolioPage'
 import ServicesPage from './pages/ServicesPage'
 import ContactPage from './pages/ContactPage'
+import BookingLanding from './pages/BookingLanding'
 import BookingPage from './pages/BookingPage'
 import RecruiterBookingPage from './pages/RecruiterBookingPage'
 import ProfilePage from './pages/ProfilePage'
@@ -42,7 +43,8 @@ function AnimatedRoutes({ onProjectSelect }) {
           <Route path="/portfolio" element={<PortfolioPage onProjectSelect={onProjectSelect} />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/contact" element={<ContactPage />} />
-          <Route path="/booking" element={<BookingPage />} />
+          <Route path="/booking" element={<BookingLanding />} />
+          <Route path="/booking/:type" element={<BookingPage />} />
           <Route path="/hire" element={<RecruiterBookingPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
         </Routes>

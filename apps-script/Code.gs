@@ -1007,7 +1007,7 @@ function buildIcs(d) {
     'DTSTART:' + fmt(d.start),
     'DTEND:' + fmt(d.end),
     'SUMMARY:' + esc(tc.calTitle),
-    'DESCRIPTION:' + esc((isRecruiter ? 'Call with ' : 'Consultation with ') + CONFIG.HOST_NAME + ', ' + CONFIG.BUSINESS_NAME + '.'),
+    'DESCRIPTION:' + esc((isRecruiter ? 'Call with ' : 'Meeting with ') + CONFIG.HOST_NAME + ', ' + CONFIG.BUSINESS_NAME + '.' + (d.zoomUrl ? ' Zoom: ' + d.zoomUrl : '')),
     'LOCATION:' + esc(loc),
     'ORGANIZER;CN=' + CONFIG.BUSINESS_NAME + ':mailto:' + CONFIG.OWNER_EMAIL,
     'END:VEVENT',

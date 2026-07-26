@@ -88,6 +88,32 @@ To test reminders without waiting, run the **`sendReminders`** function manually
 from the editor; it emails anyone booked for today/tomorrow who hasn't been
 reminded yet.
 
+## Auto-generate a unique Zoom link per booking (optional)
+
+By default, Zoom bookings say "Michael will email you the link." To have the
+script create a **real, unique Zoom meeting for every Zoom booking** (like the
+Google Calendar Zoom button does, but automatic):
+
+1. Go to **[marketplace.zoom.us](https://marketplace.zoom.us)**, sign in, then
+   **Develop → Build App → Server-to-Server OAuth → Create**. Name it
+   `Deem Creative Booking`.
+2. On **App Credentials**, note the **Account ID**, **Client ID**, and
+   **Client Secret**.
+3. Fill in the **Information** tab (company + your name/email) — required to activate.
+4. **Scopes → Add Scopes → Meeting** → add the "view and manage meetings"
+   (`meeting:write`) scope. Save.
+5. **Activation → Activate your app.**
+6. In the Apps Script editor: **⚙ Project Settings → Script Properties → Add**,
+   and create three properties (names are case-sensitive):
+   - `ZOOM_ACCOUNT_ID`
+   - `ZOOM_CLIENT_ID`
+   - `ZOOM_CLIENT_SECRET`
+7. Re-deploy (Deploy → Manage deployments → Edit → New version). Done — Zoom
+   bookings now get a unique join link in the calendar event and the emails.
+
+If these properties are absent, or Zoom is unreachable, bookings still succeed
+and simply use the "link to follow by email" wording — nothing breaks.
+
 ## 7. Changing settings later
 
 Edit `CONFIG` in `Code.gs` (hours, buffer, 48-hour notice, 60-day window, reminder

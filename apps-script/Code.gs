@@ -243,7 +243,14 @@ function doPost(e) {
     var fullName = firstName + ' ' + lastName;
     var typeLabel = MEETING_LABELS[meetingType];
 
-    var location = meetingLocation(meetingType, phone);
+    // For Zoom bookings, create a real unique Zoom meeting (falls back to null
+    // → "link to follow by email" if Zoom isn't configured or errors).
+    var zoom = (meetingType === 'zoom')
+      ? createZoomMeeting(tc.calTitle + ' — ' + fullName, start, tc.slotMinutes || CONFIG.SLOT_MINUTES)
+      : null;
+    var zoomUrl = zoom ? zoom.joinUrl : '';
+
+    var location = meetingLocation(meetingType, phone, zoomUrl);
 
     var description =
       'Booked via deemcreative.com\n\n' +
@@ -253,7 +260,9 @@ function doPost(e) {
       'Phone: ' + phone + '\n' +
       (organization ? 'Organization: ' + organization + '\n' : '') +
       (bookingType === 'recruiter' ? 'Role / position: ' + roleTitle + '\n' : '') +
-      'Meeting type: ' + typeLabel + '\n\n' +
+      'Meeting type: ' + typeLabel + '\n' +
+      (zoomUrl ? 'Zoom link: ' + zoomUrl + (zoom.password ? '  (passcode: ' + zoom.password + ')' : '') + '\n' : '') +
+      '\n' +
       (bookingType === 'recruiter' ? 'About the opportunity:\n' : 'Project overview:\n') + projectOverview +
       (materials ? '\n\n' + (bookingType === 'recruiter' ? 'Job link / details:\n' : 'Materials to review beforehand:\n') + materials : '');
 
@@ -270,11 +279,13 @@ function doPost(e) {
     event.setTag('clientEmail', email);
     event.setTag('clientFirstName', firstName);
     event.setTag('meetingType', meetingType);
+    if (zoomUrl) event.setTag('zoomUrl', zoomUrl);
 
     // Friendly confirmation to the client + a heads-up to you
     sendClientEmail('confirmation', {
       firstName: firstName, email: email,
       start: start, end: end, meetingType: meetingType, bookingType: bookingType,
+      zoomUrl: zoomUrl,
     });
     sendOwnerEmail({
       fullName: fullName, email: email, phone: phone, organization: organization,
@@ -393,6 +404,7 @@ function remindForDay(dayOffset, kind, sentTag) {
       end: ev.getEndTime(),
       meetingType: ev.getTag('meetingType') || 'zoom',
       bookingType: ev.getTag('bookingType') || 'consultation',
+      zoomUrl: ev.getTag('zoomUrl') || '',
     });
     ev.setTag(sentTag, 'true');
   });
@@ -496,6 +508,71 @@ function verifyTurnstile(token) {
     }
   } catch (err) { /* network issue — fall through to fail open */ }
   return true;   // couldn't reach Cloudflare → don't block a real submission
+}
+
+// ─── Zoom (Server-to-Server OAuth) ──────────────────────────────────────────
+
+/**
+ * Create a unique Zoom meeting for a booking and return its join URL.
+ * Requires Script Properties ZOOM_ACCOUNT_ID / ZOOM_CLIENT_ID /
+ * ZOOM_CLIENT_SECRET. Returns null (→ caller falls back to "link to follow by
+ * email") when unconfigured or if Zoom errors, so a booking never fails on Zoom.
+ */
+function createZoomMeeting(topic, startDate, durationMin) {
+  var props = PropertiesService.getScriptProperties();
+  var accountId = props.getProperty('ZOOM_ACCOUNT_ID');
+  var clientId = props.getProperty('ZOOM_CLIENT_ID');
+  var clientSecret = props.getProperty('ZOOM_CLIENT_SECRET');
+  if (!accountId || !clientId || !clientSecret) return null;  // not set up yet
+
+  try {
+    var token = getZoomToken(accountId, clientId, clientSecret);
+    if (!token) return null;
+    var res = UrlFetchApp.fetch('https://api.zoom.us/v2/users/me/meetings', {
+      method: 'post',
+      contentType: 'application/json',
+      muteHttpExceptions: true,
+      headers: { Authorization: 'Bearer ' + token },
+      payload: JSON.stringify({
+        topic: String(topic).slice(0, 200),
+        type: 2,  // scheduled meeting
+        start_time: Utilities.formatDate(startDate, 'America/New_York', "yyyy-MM-dd'T'HH:mm:ss"),
+        duration: durationMin,
+        timezone: 'America/New_York',
+        settings: { join_before_host: true, waiting_room: false },
+      }),
+    });
+    if (res.getResponseCode() === 201) {
+      var data = JSON.parse(res.getContentText());
+      if (data && data.join_url) return { joinUrl: data.join_url, password: data.password || '' };
+    }
+  } catch (err) { /* fall through to fallback */ }
+  return null;
+}
+
+/** Fetch (and 50-min cache) a Zoom S2S OAuth access token. Returns null on error. */
+function getZoomToken(accountId, clientId, clientSecret) {
+  var cache = CacheService.getScriptCache();
+  var cached = cache.get('zoomToken');
+  if (cached) return cached;
+  try {
+    var res = UrlFetchApp.fetch(
+      'https://zoom.us/oauth/token?grant_type=account_credentials&account_id=' + encodeURIComponent(accountId),
+      {
+        method: 'post',
+        muteHttpExceptions: true,
+        headers: { Authorization: 'Basic ' + Utilities.base64Encode(clientId + ':' + clientSecret) },
+      }
+    );
+    if (res.getResponseCode() === 200) {
+      var data = JSON.parse(res.getContentText());
+      if (data && data.access_token) {
+        cache.put('zoomToken', data.access_token, Math.max(60, (data.expires_in || 3600) - 300));
+        return data.access_token;
+      }
+    }
+  } catch (err) { /* fall through */ }
+  return null;
 }
 
 /** Verify a Supabase access token belongs to a real (logged-in) user. */
@@ -795,7 +872,12 @@ function sendClientEmail(kind, d) {
           row('Format', typeLabel) +
         '</table>' +
         calBtn +
-        '<p style="margin:0 0 20px;color:#42526b">' + escapeHtml(meetLine) + '</p>' +
+        (d.zoomUrl
+          ? '<div style="margin:0 0 20px">' +
+              '<a href="' + escapeHtml(d.zoomUrl) + '" style="' + pill + '">Join Zoom meeting</a>' +
+              '<p style="margin:8px 0 0;color:#42526b;font-size:13px;word-break:break-all">' + escapeHtml(d.zoomUrl) + '</p>' +
+            '</div>'
+          : '<p style="margin:0 0 20px;color:#42526b">' + escapeHtml(meetLine) + '</p>') +
         '<p style="margin:0;color:#42526b">' + escapeHtml(T.rescheduleLine) + '</p>' +
         '<p style="margin:24px 0 0;color:#90a0b7;font-size:13px">— ' + escapeHtml(T.signoff) + '</p>' +
       '</div>' +
@@ -825,8 +907,9 @@ function calData(d) {
   var isRecruiter = d.bookingType === 'recruiter';
   return {
     title: tc.calTitle,
-    desc: (isRecruiter ? 'Call with ' : 'Consultation with ') + CONFIG.HOST_NAME + ', ' + CONFIG.BUSINESS_NAME + '.',
-    loc: meetingLocation(d.meetingType, d.phone),
+    desc: (isRecruiter ? 'Call with ' : 'Meeting with ') + CONFIG.HOST_NAME + ', ' + CONFIG.BUSINESS_NAME + '.'
+      + (d.zoomUrl ? ' Zoom: ' + d.zoomUrl : ''),
+    loc: meetingLocation(d.meetingType, d.phone, d.zoomUrl),
     startZ: fmtZ(d.start), endZ: fmtZ(d.end),
     startIso: d.start.toISOString(), endIso: d.end.toISOString(),
   };
@@ -868,7 +951,7 @@ function buildIcs(d) {
   var fmt = function (dt) { return Utilities.formatDate(dt, 'UTC', "yyyyMMdd'T'HHmmss'Z'"); };
   var tc = typeConfig(d.bookingType);
   var isRecruiter = d.bookingType === 'recruiter';
-  var loc = meetingLocation(d.meetingType, d.phone);
+  var loc = meetingLocation(d.meetingType, d.phone, d.zoomUrl);
   var esc = function (s) { return String(s).replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n'); };
   return [
     'BEGIN:VCALENDAR',

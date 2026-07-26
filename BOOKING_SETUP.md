@@ -12,17 +12,17 @@ It runs through a small **Google Apps Script** that executes as you (the code is
 
 In `apps-script/Code.gs`, the `CONFIG` block at the top is set to:
 
-| Setting | Value |
-|---|---|
-| Hours | 11:00 AM – 3:00 PM |
-| Days | Monday – Friday |
-| Slot length | 30 minutes |
-| Booking window | up to **60 days** ahead |
-| Minimum notice | **48 hours** |
-| Buffer between meetings | **30 minutes** |
-| Reminder send time | 8:00 AM ET, day before + day of |
+| Type | Length | Days & window (ET) | Max/day | Buffer | Formats |
+|---|---|---|---|---|---|
+| Networking / Coffee Chat | 20 min | Mon–Fri, 3:00–5:00 PM | 2 | 15 min | Zoom, Phone |
+| Free Consultation | 30 min | Mon–Fri, 11:00 AM–3:00 PM | 3 | 30 min | Zoom, In-person |
+| Strategy Deep-Dive | 60 min | Mon/Wed/Fri, 11:00 AM–2:00 PM | 1 | 30 min | Zoom, In-person |
+| Recruiter / Hiring Call | 30 min | Mon–Fri, 10:00 AM–5:00 PM | — | 30 min | Zoom, Phone |
 
-Change any of these later by editing `CONFIG` and re-deploying (step 7).
+Shared across all types: booking window up to **60 days** ahead, minimum notice
+**48 hours**, reminder emails at **8:00 AM ET** the day before + day of. Change
+any per-type value in `CONFIG.TYPES` (in `apps-script/Code.gs`) and re-deploy;
+change the shared values in `CONFIG`.
 
 ## 1. Create the script
 
@@ -72,6 +72,10 @@ it won't create duplicates.)
    ```sh
    npm run deploy
    ```
+
+> The `/booking` page now shows a **meeting-type picker** (Networking,
+> Consultation, Strategy Deep-Dive). Each routes to `/booking/<type>`. The
+> recruiter flow stays at `/hire` and is not shown in the picker.
 
 ## 6. Test it
 

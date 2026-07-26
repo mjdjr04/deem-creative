@@ -31,17 +31,35 @@ var CONFIG = {
   WORK_END_HOUR: 15,       // last slot ends by 3:00 PM → last start 2:30 PM
   WORK_DAYS: [1, 2, 3, 4, 5],   // Mon–Fri (0 = Sun … 6 = Sat)
 
-  // Two booking types share the SAME calendar (so they can't double-book each
-  // other) but have their own hours, wording, and meeting formats.
+  // Four booking types share the SAME calendar (so they can't double-book each
+  // other) but each has its own duration, hours, days, per-day cap, buffer,
+  // wording, and meeting formats. Keep durations in sync with
+  // src/config/booking.js → MEETING_KINDS[*].session.durationMinutes.
   TYPES: {
+    networking: {
+      slotMinutes: 20, startHour: 15, endHour: 17, workDays: [1, 2, 3, 4, 5],
+      maxPerDay: 2, bufferMinutes: 15,
+      eventLabel: 'Networking Chat',
+      calTitle: 'Networking Chat with Michael Deem Jr.',
+      meetingTypes: ['zoom', 'phone'],
+    },
     consultation: {
-      startHour: 11, endHour: 15,
+      slotMinutes: 30, startHour: 11, endHour: 15, workDays: [1, 2, 3, 4, 5],
+      maxPerDay: 3, bufferMinutes: 30,
       eventLabel: 'Deem Creative Consultation',
       calTitle: 'Deem Creative Consultation',
       meetingTypes: ['zoom', 'in-person'],
     },
+    strategy: {
+      slotMinutes: 60, startHour: 11, endHour: 14, workDays: [1, 3, 5],
+      maxPerDay: 1, bufferMinutes: 30,
+      eventLabel: 'Strategy Deep-Dive',
+      calTitle: 'Deem Creative Strategy Deep-Dive',
+      meetingTypes: ['zoom', 'in-person'],
+    },
     recruiter: {
-      startHour: 10, endHour: 17,   // 10 AM – 5 PM (last start 4:30 PM)
+      slotMinutes: 30, startHour: 10, endHour: 17, workDays: [1, 2, 3, 4, 5],
+      maxPerDay: null, bufferMinutes: 30,
       eventLabel: 'Hiring Call',
       calTitle: 'Call with Michael Deem Jr.',
       meetingTypes: ['zoom', 'phone'],
@@ -112,8 +130,8 @@ function typeConfig(type) {
 }
 
 /** Human-readable event/calendar location for a meeting format. */
-function meetingLocation(meetingType, phone) {
-  if (meetingType === 'zoom') return 'Zoom (link to follow by email)';
+function meetingLocation(meetingType, phone, zoomUrl) {
+  if (meetingType === 'zoom') return zoomUrl ? zoomUrl : 'Zoom (link to follow by email)';
   if (meetingType === 'phone') return 'Phone call' + (phone ? ' — ' + phone : '');
   return 'In person — South Jersey (location to be confirmed)';
 }
@@ -124,9 +142,10 @@ function doGet(e) {
   var action = e && e.parameter ? e.parameter.action : '';
   var type = (e && e.parameter && e.parameter.type) ? e.parameter.type : 'consultation';
   if (action === 'availability') {
+    var tcg = typeConfig(type);
     return jsonResponse({
       ok: true,
-      durationMinutes: CONFIG.SLOT_MINUTES,
+      durationMinutes: tcg.slotMinutes != null ? tcg.slotMinutes : CONFIG.SLOT_MINUTES,
       slots: getAvailableSlots(type),
     });
   }
@@ -163,8 +182,9 @@ function doPost(e) {
       return jsonResponse({ ok: false, error: 'Unknown action' });
     }
 
-    // Which kind of booking? consultation (default) or recruiter/hiring call.
-    var bookingType = (f.type === 'recruiter') ? 'recruiter' : 'consultation';
+    // Which kind of booking? Falls back to consultation for anything unexpected.
+    var VALID_TYPES = { networking: 1, consultation: 1, strategy: 1, recruiter: 1 };
+    var bookingType = VALID_TYPES[f.type] ? f.type : 'consultation';
     var tc = typeConfig(bookingType);
 
     // Trim + length-cap every field
@@ -178,12 +198,17 @@ function doPost(e) {
     var materials = clean(f.materials, 2000); // optional
     var meetingType = String(f.meetingType || '').trim();
 
-    // Validate required fields (everything except `materials`)
-    if (!firstName || !lastName || !phone || !organization || !projectOverview) {
+    // Per-type required fields (email is validated separately below).
+    var REQUIRED = {
+      networking: ['firstName', 'lastName', 'phone', 'projectOverview'],
+      consultation: ['firstName', 'lastName', 'phone', 'organization', 'projectOverview'],
+      strategy: ['firstName', 'lastName', 'phone', 'organization', 'projectOverview'],
+      recruiter: ['firstName', 'lastName', 'phone', 'organization', 'roleTitle', 'projectOverview'],
+    };
+    var vals = { firstName: firstName, lastName: lastName, phone: phone, organization: organization, roleTitle: roleTitle, projectOverview: projectOverview };
+    var missing = (REQUIRED[bookingType] || REQUIRED.consultation).some(function (k) { return !vals[k]; });
+    if (missing) {
       return jsonResponse({ ok: false, error: 'Please fill in all required fields.' });
-    }
-    if (bookingType === 'recruiter' && !roleTitle) {
-      return jsonResponse({ ok: false, error: 'Please include the role / position.' });
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return jsonResponse({ ok: false, error: 'A valid email is required.' });
@@ -214,7 +239,7 @@ function doPost(e) {
       return jsonResponse({ ok: false, code: 'SLOT_TAKEN', error: 'That slot is no longer available.' });
     }
 
-    var end = new Date(start.getTime() + CONFIG.SLOT_MINUTES * 60000);
+    var end = new Date(start.getTime() + (tc.slotMinutes || CONFIG.SLOT_MINUTES) * 60000);
     var fullName = firstName + ' ' + lastName;
     var typeLabel = MEETING_LABELS[meetingType];
 
@@ -226,7 +251,7 @@ function doPost(e) {
       'Name: ' + fullName + '\n' +
       'Email: ' + email + '\n' +
       'Phone: ' + phone + '\n' +
-      'Organization: ' + organization + '\n' +
+      (organization ? 'Organization: ' + organization + '\n' : '') +
       (bookingType === 'recruiter' ? 'Role / position: ' + roleTitle + '\n' : '') +
       'Meeting type: ' + typeLabel + '\n\n' +
       (bookingType === 'recruiter' ? 'About the opportunity:\n' : 'Project overview:\n') + projectOverview +
@@ -271,45 +296,59 @@ function doPost(e) {
 
 // ─── Availability ───────────────────────────────────────────────────────────
 
-/** Open slot start times (ISO strings), honoring hours, notice, window & buffer. */
+/** Open slot start times (ISO strings) for one booking type, honoring that
+ *  type's duration, hours, days, buffer, and per-day cap plus the global
+ *  notice/window. */
 function getAvailableSlots(type) {
   var tc = typeConfig(type);
+  var slotMin = tc.slotMinutes != null ? tc.slotMinutes : CONFIG.SLOT_MINUTES;
   var startHour = tc.startHour != null ? tc.startHour : CONFIG.WORK_START_HOUR;
   var endHour = tc.endHour != null ? tc.endHour : CONFIG.WORK_END_HOUR;
+  var workDays = tc.workDays || CONFIG.WORK_DAYS;
+  var bufferMin = tc.bufferMinutes != null ? tc.bufferMinutes : CONFIG.BUFFER_MINUTES;
+  var maxPerDay = tc.maxPerDay != null ? tc.maxPerDay : null;
 
   var now = new Date();
   var minStartMs = now.getTime() + CONFIG.MIN_NOTICE_HOURS * 3600000;
   var horizonMs = now.getTime() + CONFIG.MAX_DAYS_AHEAD * 86400000;
 
   var cal = CalendarApp.getDefaultCalendar();
+  var events = cal.getEvents(now, new Date(horizonMs + 86400000))
+    .filter(function (ev) { return !ev.isAllDayEvent(); });
 
-  // Pad every real event by the buffer on both sides so bookings can't sit
-  // within BUFFER_MINUTES of an existing commitment. All-day events ignored.
-  var pad = CONFIG.BUFFER_MINUTES * 60000;
-  var busy = cal.getEvents(now, new Date(horizonMs + 86400000))
-    .filter(function (ev) { return !ev.isAllDayEvent(); })
-    .map(function (ev) {
-      return [ev.getStartTime().getTime() - pad, ev.getEndTime().getTime() + pad];
+  // Pad every real event by THIS TYPE's buffer on both sides.
+  var pad = bufferMin * 60000;
+  var busy = events.map(function (ev) {
+    return [ev.getStartTime().getTime() - pad, ev.getEndTime().getTime() + pad];
+  });
+
+  // Count existing bookings OF THIS TYPE per calendar day, for the per-day cap.
+  var perDayCount = {};
+  if (maxPerDay != null) {
+    events.forEach(function (ev) {
+      if (ev.getTag('deemBooking') !== 'true') return;
+      if (ev.getTag('bookingType') !== type) return;
+      var d = ev.getStartTime();
+      var key = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+      perDayCount[key] = (perDayCount[key] || 0) + 1;
     });
+  }
 
   var slots = [];
   var day = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
   while (day.getTime() <= horizonMs) {
-    if (CONFIG.WORK_DAYS.indexOf(day.getDay()) !== -1) {
-      for (
-        var mins = startHour * 60;
-        mins + CONFIG.SLOT_MINUTES <= endHour * 60;
-        mins += CONFIG.SLOT_MINUTES
-      ) {
-        var slotStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, mins);
-        var s = slotStart.getTime();
-        var eMs = s + CONFIG.SLOT_MINUTES * 60000;
-
-        if (s < minStartMs || s > horizonMs) continue;
-
-        var blocked = busy.some(function (b) { return s < b[1] && eMs > b[0]; });
-        if (!blocked) slots.push(slotStart.toISOString());
+    if (workDays.indexOf(day.getDay()) !== -1) {
+      var dayKey = day.getFullYear() + '-' + day.getMonth() + '-' + day.getDate();
+      var atCap = maxPerDay != null && (perDayCount[dayKey] || 0) >= maxPerDay;
+      if (!atCap) {
+        for (var mins = startHour * 60; mins + slotMin <= endHour * 60; mins += slotMin) {
+          var slotStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, mins);
+          var s = slotStart.getTime();
+          var eMs = s + slotMin * 60000;
+          if (s < minStartMs || s > horizonMs) continue;
+          var blocked = busy.some(function (b) { return s < b[1] && eMs > b[0]; });
+          if (!blocked) slots.push(slotStart.toISOString());
+        }
       }
     }
     day.setDate(day.getDate() + 1);

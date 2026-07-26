@@ -143,6 +143,44 @@ export const emailsDefaults = {
     zoomLine: 'Michael Deem Jr. will email you the Zoom link before the call.',
     phoneLine: 'Michael Deem Jr. will call the number you provided at the scheduled time.',
   },
+  networking: {
+    confirmation: {
+      subject: "You're booked — networking chat with Michael Deem Jr.",
+      heading: "You're booked!",
+      intro: 'Thanks for setting up a networking chat with Michael Deem Jr. Looking forward to connecting. Here are the details:',
+    },
+    reminderDayBefore: {
+      subject: 'Reminder: your networking chat with Michael Deem Jr. is tomorrow',
+      heading: 'See you tomorrow',
+      intro: 'A friendly reminder that your networking chat with Michael Deem Jr. is tomorrow:',
+    },
+    reminderDayOf: {
+      subject: 'Reminder: your networking chat with Michael Deem Jr. is today',
+      heading: 'See you today',
+      intro: 'A friendly reminder that your networking chat with Michael Deem Jr. is today:',
+    },
+    zoomLine: 'Michael Deem Jr. will email you the Zoom link before the chat.',
+    phoneLine: 'Michael Deem Jr. will call the number you provided at the scheduled time.',
+  },
+  strategy: {
+    confirmation: {
+      subject: "You're booked — Deem Creative Strategy Deep-Dive",
+      heading: "You're booked!",
+      intro: 'Thanks for scheduling a Strategy Deep-Dive with Deem Creative. Here are the details:',
+    },
+    reminderDayBefore: {
+      subject: 'Reminder: your Deem Creative Strategy Deep-Dive is tomorrow',
+      heading: 'See you tomorrow',
+      intro: 'A friendly reminder that your Strategy Deep-Dive with Deem Creative is tomorrow:',
+    },
+    reminderDayOf: {
+      subject: 'Reminder: your Deem Creative Strategy Deep-Dive is today',
+      heading: 'See you today',
+      intro: 'A friendly reminder that your Strategy Deep-Dive with Deem Creative is today:',
+    },
+    zoomLine: 'Michael Deem Jr. will email you the Zoom link before the session.',
+    inPersonLine: 'Michael Deem Jr. will confirm the exact location with you (South Jersey area) before the session.',
+  },
 }
 
 // Full default content, keyed by section.

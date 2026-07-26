@@ -120,6 +120,44 @@ var TPL_DEFAULTS = {
     zoomLine: 'Michael Deem Jr. will email you the Zoom link before the call.',
     phoneLine: 'Michael Deem Jr. will call the number you provided at the scheduled time.',
   },
+  networking: {
+    confirmation: {
+      subject: "You're booked — networking chat with Michael Deem Jr.",
+      heading: "You're booked!",
+      intro: 'Thanks for setting up a networking chat with Michael Deem Jr. Looking forward to connecting. Here are the details:',
+    },
+    reminderDayBefore: {
+      subject: 'Reminder: your networking chat with Michael Deem Jr. is tomorrow',
+      heading: 'See you tomorrow',
+      intro: 'A friendly reminder that your networking chat with Michael Deem Jr. is tomorrow:',
+    },
+    reminderDayOf: {
+      subject: 'Reminder: your networking chat with Michael Deem Jr. is today',
+      heading: 'See you today',
+      intro: 'A friendly reminder that your networking chat with Michael Deem Jr. is today:',
+    },
+    zoomLine: 'Michael Deem Jr. will email you the Zoom link before the chat.',
+    phoneLine: 'Michael Deem Jr. will call the number you provided at the scheduled time.',
+  },
+  strategy: {
+    confirmation: {
+      subject: "You're booked — Deem Creative Strategy Deep-Dive",
+      heading: "You're booked!",
+      intro: 'Thanks for scheduling a Strategy Deep-Dive with Deem Creative. Here are the details:',
+    },
+    reminderDayBefore: {
+      subject: 'Reminder: your Deem Creative Strategy Deep-Dive is tomorrow',
+      heading: 'See you tomorrow',
+      intro: 'A friendly reminder that your Strategy Deep-Dive with Deem Creative is tomorrow:',
+    },
+    reminderDayOf: {
+      subject: 'Reminder: your Deem Creative Strategy Deep-Dive is today',
+      heading: 'See you today',
+      intro: 'A friendly reminder that your Strategy Deep-Dive with Deem Creative is today:',
+    },
+    zoomLine: 'Michael Deem Jr. will email you the Zoom link before the session.',
+    inPersonLine: 'Michael Deem Jr. will confirm the exact location with you (South Jersey area) before the session.',
+  },
 };
 
 var MEETING_LABELS = { zoom: 'Zoom', 'in-person': 'In person', phone: 'Phone' };
@@ -832,17 +870,22 @@ function sendClientEmail(kind, d) {
     'reminder-day-of': 'reminderDayOf',
   };
 
-  // Recruiter bookings use their own template set (T.recruiter.*); reschedule
-  // line and sign-off are shared across both types.
-  var isRecruiter = d.bookingType === 'recruiter';
-  var src = isRecruiter && T.recruiter ? T.recruiter : T;
+  // Each non-consultation type may have its own template block (T.networking,
+  // T.strategy, T.recruiter). Consultation uses the top-level T.*.
+  var typeBlock = T[d.bookingType];
+  var src = (typeBlock && typeof typeBlock === 'object') ? typeBlock : T;
   var t = src[keyMap[kind]] || src.confirmation || T.confirmation;
 
   var when = formatRange(d.start, d.end);
   var typeLabel = MEETING_LABELS[d.meetingType] || 'Meeting';
-  var meetLine = isRecruiter
-    ? (d.meetingType === 'phone' ? src.phoneLine : src.zoomLine)
-    : (d.meetingType === 'zoom' ? T.zoomLine : T.inPersonLine);
+  var meetLine;
+  if (d.meetingType === 'phone') {
+    meetLine = src.phoneLine || (T.recruiter && T.recruiter.phoneLine) || '';
+  } else if (d.meetingType === 'in-person') {
+    meetLine = src.inPersonLine || T.inPersonLine;
+  } else {
+    meetLine = src.zoomLine || T.zoomLine;
+  }
 
   // "Add to calendar" links for the major providers (the attached .ics covers
   // Apple Calendar and anything else).
@@ -868,7 +911,7 @@ function sendClientEmail(kind, d) {
         '<p style="margin:0 0 20px;color:#42526b">' + escapeHtml(t.intro) + '</p>' +
         '<table style="width:100%;border-collapse:collapse;margin-bottom:20px">' +
           row('When', when) +
-          row('Duration', CONFIG.SLOT_MINUTES + ' minutes') +
+          row('Duration', Math.max(1, Math.round((d.end.getTime() - d.start.getTime()) / 60000)) + ' minutes') +
           row('Format', typeLabel) +
         '</table>' +
         calBtn +

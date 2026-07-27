@@ -129,3 +129,24 @@ Deploy**. The URL stays the same, so the website needs no changes.
 If `BOOKING_API_URL` is empty (or the script is unreachable), the booking page
 automatically falls back to a button linking to your existing Google Calendar
 appointment page — so the site is never broken.
+
+## Post-meeting follow-up emails (automatic)
+
+About an hour after each site-booked meeting, a scheduled assistant emails the
+client a follow-up — personalized from the Granola notes if the meeting was
+recorded, otherwise a general thank-you. It sends as you, so copies are in your
+Sent folder.
+
+**Setup:**
+1. In the "Deem Creative Booking" Apps Script → ⚙ Project Settings → Script
+   Properties, add `FOLLOWUP_SECRET` = a long random string.
+2. Re-deploy (Deploy → Manage deployments → Edit → New version).
+3. The scheduled routine on your Claude account holds the same secret and calls
+   the booking web app to fetch pending meetings and send follow-ups.
+
+**Controls:**
+- It only ever sends ONE follow-up per meeting (tracked on the calendar event).
+- To pause it, disable the scheduled routine on your Claude account.
+- To change the wording/behavior, edit `automation/granola-followup-routine.md`
+  and update the routine prompt.
+- It only touches meetings booked through your site.

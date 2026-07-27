@@ -21,6 +21,10 @@ You run on a schedule. Do exactly this each run, then stop. Never invent facts.
         NO match (use the general email in step d).
    b. If a single note matched: `get_meetings([id])` for the AI summary, and
       `get_meeting_transcript(id)` for specifics.
+      - GRANOLA FAIL-SAFE: if any Granola tool is unavailable in this run, errors,
+        or returns nothing usable, treat it as NO match and fall through to the
+        general email (still honoring the Zoom deferral in step c). Do not retry in
+        a loop, do not stall, and never improvise meeting content from memory.
    c. DEFERRAL: if `m.meetingType === "zoom"` AND no note matched AND it is LESS
       than 2.5 hours after `m.endIso` → SKIP this meeting this run (do not send;
       it will reappear next run). For phone/in-person, or once ≥2.5 h past end,
@@ -44,3 +48,6 @@ You run on a schedule. Do exactly this each run, then stop. Never invent facts.
 - Never send twice — the endpoint tags the event, but also don't re-POST on ok.
 - Never quote a meeting you're not confident is THIS booking (ambiguous → general).
 - Never fabricate details, numbers, names, or commitments.
+- Granola unreachable is NOT a reason to skip a client: fall back to the general
+  thank-you (Zoom deferral still applies). Every eligible meeting gets exactly one
+  email — personalized when Granola is available and matched, general otherwise.

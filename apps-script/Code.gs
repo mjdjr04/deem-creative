@@ -216,6 +216,13 @@ function doPost(e) {
       return jsonResponse({ ok: verifyTurnstile(f.token) });
     }
 
+    if (f.action === 'pendingFollowups') {
+      return handlePendingFollowups(f);
+    }
+    if (f.action === 'sendFollowup') {
+      return handleSendFollowup(f);
+    }
+
     if (f.action !== 'book') {
       return jsonResponse({ ok: false, error: 'Unknown action' });
     }
@@ -546,6 +553,87 @@ function verifyTurnstile(token) {
     }
   } catch (err) { /* network issue — fall through to fail open */ }
   return true;   // couldn't reach Cloudflare → don't block a real submission
+}
+
+// ─── Post-meeting follow-ups ────────────────────────────────────────────────
+
+/** Follow-up endpoints send email, so they FAIL CLOSED: no secret set, or a
+ *  mismatch, means deny. The secret lives in Script Property FOLLOWUP_SECRET
+ *  and is shared only with the scheduled routine that calls these endpoints. */
+function followupSecretOk(secret) {
+  var want = PropertiesService.getScriptProperties().getProperty('FOLLOWUP_SECRET');
+  return !!want && String(secret || '') === want;
+}
+
+/** List site-booked meetings that ended >=60 min ago (within the last ~2 days)
+ *  and have not been followed up yet. The routine matches each to a Granola note. */
+function handlePendingFollowups(f) {
+  if (!followupSecretOk(f.secret)) return jsonResponse({ ok: false, error: 'unauthorized' });
+  var now = new Date();
+  var endedBefore = now.getTime() - 60 * 60000;             // must have ended >= 60 min ago
+  var lookbackStart = new Date(now.getTime() - 2 * 24 * 60 * 60000);
+  var cal = CalendarApp.getDefaultCalendar();
+  var out = [];
+  cal.getEvents(lookbackStart, now).forEach(function (ev) {
+    if (ev.getTag('deemBooking') !== 'true') return;
+    if (ev.getTag('followupSent') === 'true') return;
+    if (ev.getEndTime().getTime() > endedBefore) return;    // not yet 60 min past end
+    var email = ev.getTag('clientEmail');
+    if (!email) return;
+    out.push({
+      eventId: ev.getId(),
+      firstName: ev.getTag('clientFirstName') || 'there',
+      email: email,
+      bookingType: ev.getTag('bookingType') || 'consultation',
+      meetingType: ev.getTag('meetingType') || '',
+      startIso: ev.getStartTime().toISOString(),
+      endIso: ev.getEndTime().toISOString(),
+      title: ev.getTitle(),
+    });
+  });
+  return jsonResponse({ ok: true, meetings: out });
+}
+
+/** Send one follow-up. Recipient is the EVENT'S OWN clientEmail tag (never a
+ *  payload-supplied address). Idempotent via the followupSent tag. */
+function handleSendFollowup(f) {
+  if (!followupSecretOk(f.secret)) return jsonResponse({ ok: false, error: 'unauthorized' });
+  var eventId = clean(f.eventId, 300);
+  var subject = clean(f.subject, 300);
+  var body = clean(f.body, 8000);
+  if (!eventId || !subject || !body) return jsonResponse({ ok: false, error: 'Missing fields.' });
+
+  var cal = CalendarApp.getDefaultCalendar();
+  var ev = null;
+  try { ev = cal.getEventById(eventId); } catch (e) { ev = null; }
+  if (!ev) return jsonResponse({ ok: false, error: 'Event not found.' });
+  if (ev.getTag('deemBooking') !== 'true') return jsonResponse({ ok: false, error: 'Not a booking.' });
+  if (ev.getTag('followupSent') === 'true') return jsonResponse({ ok: true, alreadySent: true });
+
+  var to = ev.getTag('clientEmail');
+  if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+    return jsonResponse({ ok: false, error: 'No valid recipient on event.' });
+  }
+
+  MailApp.sendEmail({
+    to: to,
+    subject: subject,
+    htmlBody: buildFollowupHtml(body),
+    body: body,
+    name: CONFIG.BUSINESS_NAME,
+    replyTo: CONFIG.OWNER_EMAIL,
+  });
+  ev.setTag('followupSent', 'true');
+  return jsonResponse({ ok: true });
+}
+
+/** Wrap the routine-composed plain-text body in the branded email shell.
+ *  The body already contains greeting + sign-off; this only escapes + nl2br. */
+function buildFollowupHtml(body) {
+  return '<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;' +
+    'color:#1a2e4a;line-height:1.55;font-size:14px">' +
+    escapeHtml(body).replace(/\n/g, '<br>') +
+  '</div>';
 }
 
 // ─── Zoom (Server-to-Server OAuth) ──────────────────────────────────────────

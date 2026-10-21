@@ -24,7 +24,7 @@ const shell = readFileSync(join(DIST, 'index.html'), 'utf8')
 copyFileSync(join(DIST, 'index.html'), join(DIST, '404.html'))
 
 for (const [route, title] of Object.entries(ROUTES)) {
-  const url = `${SITE}/${route}`
+  const url = `${SITE}/${route}/`
   const html = shell
     .replace(/(<meta property="og:url" content=")[^"]*/, `$1${url}`)
     .replace(/(<meta property="og:title" content=")[^"]*/, `$1${title}`)

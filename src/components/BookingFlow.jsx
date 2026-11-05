@@ -238,8 +238,13 @@ export default function BookingFlow({ config }) {
       const res = await fetch(`${BOOKING_API_URL}?action=availability&type=${encodeURIComponent(apiType)}`)
       const data = await res.json()
       if (!data.ok) throw new Error(data.error || 'Bad response')
+      // Validate the response SHAPE, not just its ok flag. If this deployment URL ever
+      // points at the wrong Apps Script project, it answers {ok:true} with no slots —
+      // which used to put undefined into state and white-screen the page in slotsByDay.
+      // Throwing here routes it to the 'error' FallbackCard (retry + email fallback).
+      if (!Array.isArray(data.slots)) throw new Error('Bad response: missing slots array')
       setSlots(data.slots)
-      const first = (data.slots || [])
+      const first = data.slots
         .map(iso => new Date(iso))
         .filter(d => d > new Date())
         .sort((a, b) => a - b)[0]
@@ -265,7 +270,8 @@ export default function BookingFlow({ config }) {
 
   const slotsByDay = useMemo(() => {
     const grouped = {}
-    for (const iso of slots) {
+    // Belt and braces: never let a non-array in state crash the render.
+    for (const iso of Array.isArray(slots) ? slots : []) {
       const d = new Date(iso)
       if (d <= new Date()) continue
       const key = dateKeyInTz(iso, timezone)

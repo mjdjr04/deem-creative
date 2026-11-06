@@ -83,7 +83,7 @@ export const settingsDefaults = {
     lastName: 'Deem Jr.',
     title: 'Creative Producer & Content Strategist',
     company: 'Deem Creative',
-    phone: '(929) 831-7254',
+    phone: '(609) 381-1176',
     email: 'michael@deemcreative.com',
     website: 'https://deemcreative.com',
     address: '',

@@ -199,13 +199,13 @@ export default function VideoShowcase({ items = SHOWCASE, onProjectSelect }) {
       <div className="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
           <p className="text-brand-light text-sm font-semibold tracking-widest uppercase mb-4">
-            01 · Video
+            Now Playing
           </p>
           <h2 id="video-showcase-heading" className="text-3xl md:text-4xl font-bold text-white mb-3">
-            Watch the work
+            Stories that move people
           </h2>
           <p className="text-white/70 text-lg">
-            {n} films for nonprofits, schools and community partners.
+            {n} films for nonprofits, schools, and community partners — from a gala tribute to student-made commercials.
           </p>
         </div>
 

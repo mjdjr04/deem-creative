@@ -6,7 +6,7 @@ import {
   saveDraft,
   publishAll as publishAllApi,
   hasUnpublishedChanges,
-} from '../lib/contentApi'
+} from '../lib/siteContent'
 import { SECTIONS } from '../data/defaults'
 
 const AdminContext = createContext(null)

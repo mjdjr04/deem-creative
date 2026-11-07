@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { fetchPublishedContent } from '../lib/contentApi'
+import { fetchPublishedContent } from '../lib/siteContent'
 import { defaultContent } from '../data/defaults'
 
 const ContentContext = createContext({ content: defaultContent, loading: true })

@@ -42,7 +42,7 @@ export const projects = [
     year: '2026',
     role: 'Director of Special Projects · Filmmaker & Developer',
     brief: 'The 22nd Anniversary Brighter Futures Gala, end to end: the tribute film, the registration site, the program book, gala-night check-in, and the thank-you page. I built all of it myself.',
-    description: 'For the Club’s 22nd Anniversary Brighter Futures Gala on October 23, 2026, I made the tribute film that played for 120+ guests, built the registration site guests used to buy tickets and sponsorships, and handled the program book and sponsor ads. On gala night I ran check-in from a phone, and afterward I built the thank-you page and sent the follow-ups. One person, start to finish.',
+    description: 'For the Club’s 22nd Anniversary Brighter Futures Gala on October 23, 2026, I made the tribute film that played for 120+ guests, built the registration site where guests bought tickets and sponsors signed up, and handled the program book and sponsor ads. On gala night I ran check-in from a phone, and afterward I built the thank-you page and sent the follow-ups. One person, start to finish.',
     outcomes: [
       'Tribute film shown to 120+ guests on gala night',
       'Registration site for tickets and 12 sponsors, with confirmations sent automatically',
@@ -50,7 +50,7 @@ export const projects = [
       'Phone check-in on gala night, so the front door ran from one device',
       'Thank-you page and follow-up emails after the event',
     ],
-    tools: ['React', 'Vite', 'Google Apps Script', 'Vercel', 'Adobe Premiere Pro', 'After Effects'],
+    tools: ['React', 'Vite', 'Google Apps Script', 'Vercel'],
     mediaType: 'video',
     mediaUrl: 'https://www.youtube.com/embed/8yVfb2hg0tk',
     mediaCaption: '2026 Gala Tribute Film',

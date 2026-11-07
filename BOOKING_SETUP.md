@@ -195,7 +195,7 @@ A time-driven trigger checks Supabase every 5 minutes.
    replaces any old alert trigger with a single every-5-minutes one.
 
 **First run:** the first time `notifyNewMessages` runs, it only records the
-current time in the `LAST_ALERTED_AT` script property and sends nothing, so
+newest existing message (script properties `LAST_ALERTED_AT` and `LAST_ALERTED_ID`) and sends nothing, so
 old messages don't flood your inbox. After that, each new message sends one
 email (reply goes straight to the sender). If a send fails, that message is
 retried on the next run.

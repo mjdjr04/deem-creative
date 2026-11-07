@@ -1407,38 +1407,60 @@ function sendOwnerEmail(d) {
 
 /** Build the owner alert for one `messages` row. */
 function formatMessageAlert(row) {
-  var name = clean(row.name, 200) || 'Unknown';
+  // The table is anon-writable: sanitize everything that reaches headers.
+  var name = String(row.name == null ? '' : row.name).replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, 80) || 'Unknown';
+  var email = String(row.email == null ? '' : row.email).trim();
+  var validEmail = /^[^\s,;<>()"]+@[^\s,;<>()"@]+\.[^\s,;<>()"@]+$/.test(email) && email.length <= 254;
   var received = '';
   try {
     received = Utilities.formatDate(new Date(row.created_at), 'America/New_York', 'EEEE, MMMM d, yyyy h:mm a') + ' ET';
   } catch (e) { received = String(row.created_at || ''); }
-  var lines = ['Name: ' + name, 'Email: ' + (row.email || '')];
+  var text = String(row.message == null ? '' : row.message);
+  if (text.length > 5000) text = text.slice(0, 5000) + '\n\u2026 (truncated \u2014 full message in /admin)';
+  var lines = ['Name: ' + name, 'Email: ' + email + (validEmail ? '' : ' (no valid reply-to)')];
   if (row.phone) lines.push('Phone: ' + row.phone);
   if (row.company) lines.push('Company: ' + row.company);
-  lines.push('Received: ' + received, '', String(row.message || ''), '', 'Admin: https://deemcreative.com/admin');
+  lines.push('Received: ' + received, '', text, '', 'Admin: https://deemcreative.com/admin');
   return {
     subject: 'New message from ' + name + ' \u2014 deemcreative.com',
     body: lines.join('\n'),
-    replyTo: row.email || ''
+    replyTo: validEmail ? email : ''
   };
 }
 
-/** Email the owner about messages newer than LAST_ALERTED_AT. */
+/** Email the owner about messages after the (created_at, id) cursor. */
 function notifyNewMessages() {
   var props = PropertiesService.getScriptProperties();
   var key = props.getProperty('SUPABASE_SERVICE_KEY');
   if (!key) { console.warn('notifyNewMessages: SUPABASE_SERVICE_KEY not set'); return; }
 
-  var last = props.getProperty('LAST_ALERTED_AT');
-  if (!last) { props.setProperty('LAST_ALERTED_AT', new Date().toISOString()); return; }
-
-  var url = CONFIG.SUPABASE_URL + '/rest/v1/messages?created_at=gt.' + encodeURIComponent(last) +
-    '&order=created_at.asc&limit=20';
-  var res = UrlFetchApp.fetch(url, {
+  var opts = {
     method: 'get',
     muteHttpExceptions: true,
     headers: { apikey: key, Authorization: 'Bearer ' + key }
-  });
+  };
+  var base = CONFIG.SUPABASE_URL + '/rest/v1/messages';
+  var last = props.getProperty('LAST_ALERTED_AT');
+  var lastId = props.getProperty('LAST_ALERTED_ID');
+
+  if (!last) {
+    // First run: seed from the newest existing row; send nothing.
+    var seedAt = new Date().toISOString();
+    var seedId = null;
+    var sres = UrlFetchApp.fetch(base + '?select=id,created_at&order=created_at.desc,id.desc&limit=1', opts);
+    if (sres.getResponseCode() === 200) {
+      var newest = JSON.parse(sres.getContentText());
+      if (newest && newest[0]) { seedAt = newest[0].created_at; seedId = newest[0].id; }
+    }
+    props.setProperty('LAST_ALERTED_AT', seedAt);
+    if (seedId) props.setProperty('LAST_ALERTED_ID', seedId);
+    return;
+  }
+
+  var filter = lastId
+    ? '&or=' + encodeURIComponent('(created_at.gt.' + last + ',and(created_at.eq.' + last + ',id.gt.' + lastId + '))')
+    : '&created_at=gt.' + encodeURIComponent(last);
+  var res = UrlFetchApp.fetch(base + '?order=created_at.asc,id.asc&limit=20' + filter, opts);
   if (res.getResponseCode() !== 200) {
     console.warn('notifyNewMessages: fetch failed with HTTP ' + res.getResponseCode());
     return;
@@ -1446,19 +1468,16 @@ function notifyNewMessages() {
   var rows = JSON.parse(res.getContentText());
   for (var i = 0; i < rows.length; i++) {
     var m = formatMessageAlert(rows[i]);
+    var mail = { to: CONFIG.OWNER_EMAIL, subject: m.subject, body: m.body, name: 'Deem Creative site' };
+    if (m.replyTo) mail.replyTo = m.replyTo;
     try {
-      MailApp.sendEmail({
-        to: CONFIG.OWNER_EMAIL,
-        subject: m.subject,
-        body: m.body,
-        replyTo: m.replyTo,
-        name: 'Deem Creative site'
-      });
+      MailApp.sendEmail(mail);
     } catch (err) {
       console.warn('notifyNewMessages: send failed, will retry next run');
       return;
     }
     props.setProperty('LAST_ALERTED_AT', rows[i].created_at);
+    if (rows[i].id) props.setProperty('LAST_ALERTED_ID', rows[i].id);
   }
 }
 

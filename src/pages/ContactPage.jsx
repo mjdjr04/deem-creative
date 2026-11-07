@@ -22,18 +22,21 @@ export default function ContactPage() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.15 })
   const { open } = useBooking()
-  const { hash } = useLocation()
+  const { hash, key } = useLocation()
   const { settings } = useContent()
   const vc = settings.vcard || {}
 
   // /contact#message lands on the form (the page transition delays mount, so wait a beat).
   useEffect(() => {
     if (hash !== '#message') return
+    // location.key changes on every navigation, so clicking "Get in touch"
+    // while already on /contact#message scrolls again.
     const t = setTimeout(() => {
-      document.getElementById('message')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+      document.getElementById('message')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
     }, 120)
     return () => clearTimeout(t)
-  }, [hash])
+  }, [hash, key])
 
   const contactMethods = [
     settings.email && {

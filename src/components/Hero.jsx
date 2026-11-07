@@ -2,14 +2,11 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { ArrowRight, ChevronDown } from 'lucide-react'
 import { DeemCreativeLogoFull } from './DeemCreativeMark'
-import HeroBackdrop, { WatchReelButton } from './HeroBackdrop'
+import { WatchReelButton } from './HeroBackdrop'
 
 export default function Hero() {
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-hero-gradient">
-      {/* Tribute still (or loop) behind everything */}
-      <HeroBackdrop />
-
       {/* Faint blueprint grid */}
       <div aria-hidden="true" className="absolute inset-0 bg-grid" />
 

@@ -3,15 +3,20 @@
  * ────────────────────────────────────────────────────────────────────────────
  * Connects deemcreative.com/#/booking directly to your Google Calendar.
  *
- * • Shows only times you're actually free (checks your PRIMARY calendar)
+ * • Shows only times you're actually free: your PRIMARY calendar, plus per-type
+ *   extra calendars read via free/busy (05 Schedule for public types, BGCCC
+ *   work calendar for hiring calls)
  * • Books straight onto your calendar + sends the client a calendar invite
  * • Client chooses Zoom or in-person; no Google Meet link is created
  * • Sends an instant confirmation email + reminders the day before and day of
  *
- * Hours, buffer, and booking-window limits are all in CONFIG below.
+ * Per-type hours (windows), buffer, and booking-window limits are in CONFIG below.
  * Setup walkthrough: see BOOKING_SETUP.md in the website repo.
  * ────────────────────────────────────────────────────────────────────────────
  */
+
+var SCHEDULE_CAL_ID = '133016e4b280b14123b432346527fd165d3f9096fa52dd9df0a13268e72d2dc4@group.calendar.google.com';
+var BGCCC_CAL_ID = 'mdeem@bgccumberland.org';
 
 var CONFIG = {
   BUSINESS_NAME: 'Deem Creative',
@@ -24,14 +29,15 @@ var CONFIG = {
 
   // Extra calendars read through free/busy only (never subscribed). Needs the
   // Advanced Calendar service enabled; see BOOKING_SETUP.md.
-  SCHEDULE_CAL_ID: '133016e4b280b14123b432346527fd165d3f9096fa52dd9df0a13268e72d2dc4@group.calendar.google.com',
-  BGCCC_CAL_ID: 'mdeem@bgccumberland.org',
+  SCHEDULE_CAL_ID: SCHEDULE_CAL_ID,
+  BGCCC_CAL_ID: BGCCC_CAL_ID,
 
   SLOT_MINUTES: 30,        // length of each consultation
 
   // Bookable window, in THIS SCRIPT'S time zone (set it to America/New_York
   // under Project Settings ⚙ → Time zone). 11 = 11 AM, 15 = 3 PM.
-  // These are the defaults; per-booking-type hours live in TYPES below.
+  // Fallback only: used when a type has no `windows`. Each type's real hours
+  // are its `windows` map in TYPES below (weekday -> [startHour, endHour]).
   WORK_START_HOUR: 11,
   WORK_END_HOUR: 15,       // last slot ends by 3:00 PM → last start 2:30 PM
   WORK_DAYS: [1, 2, 3, 4, 5],   // Mon–Fri (0 = Sun … 6 = Sat)
@@ -43,7 +49,7 @@ var CONFIG = {
   TYPES: {
     networking: {
       slotMinutes: 20, windows: { 5: [11, 18], 6: [10, 15] },
-      extraBusyCalendars: ['133016e4b280b14123b432346527fd165d3f9096fa52dd9df0a13268e72d2dc4@group.calendar.google.com'],
+      extraBusyCalendars: [SCHEDULE_CAL_ID],
       maxPerDay: 2, bufferMinutes: 15,
       eventLabel: 'Networking Chat',
       calTitle: 'Networking Chat with Michael Deem Jr.',
@@ -51,7 +57,7 @@ var CONFIG = {
     },
     consultation: {
       slotMinutes: 30, windows: { 5: [11, 18], 6: [10, 15] },
-      extraBusyCalendars: ['133016e4b280b14123b432346527fd165d3f9096fa52dd9df0a13268e72d2dc4@group.calendar.google.com'],
+      extraBusyCalendars: [SCHEDULE_CAL_ID],
       maxPerDay: 3, bufferMinutes: 30,
       eventLabel: 'Deem Creative Consultation',
       calTitle: 'Deem Creative Consultation',
@@ -59,7 +65,7 @@ var CONFIG = {
     },
     strategy: {
       slotMinutes: 60, windows: { 5: [11, 18], 6: [10, 15] },
-      extraBusyCalendars: ['133016e4b280b14123b432346527fd165d3f9096fa52dd9df0a13268e72d2dc4@group.calendar.google.com'],
+      extraBusyCalendars: [SCHEDULE_CAL_ID],
       maxPerDay: 1, bufferMinutes: 30,
       eventLabel: 'Strategy Deep-Dive',
       calTitle: 'Deem Creative Strategy Deep-Dive',
@@ -67,7 +73,7 @@ var CONFIG = {
     },
     recruiter: {
       slotMinutes: 30, windows: { 1: [10, 17], 2: [10, 17], 3: [10, 17], 4: [10, 17], 5: [10, 17] },
-      extraBusyCalendars: ['mdeem@bgccumberland.org'],
+      extraBusyCalendars: [BGCCC_CAL_ID],
       maxPerDay: null, bufferMinutes: 30,
       eventLabel: 'Hiring Call',
       calTitle: 'Call with Michael Deem Jr.',
@@ -426,7 +432,8 @@ function computeSlots(opts) {
 function extraBusy(calendarIds, fromMs, toMs) {
   var busy = [];
   var bad = {};
-  if (!calendarIds || !calendarIds.length) return { busy: busy, unreadable: [] };
+  var errors = {};
+  if (!calendarIds || !calendarIds.length) return { busy: busy, unreadable: [], errors: errors };
   var CHUNK = 30 * 86400000;
   for (var start = fromMs; start < toMs; start += CHUNK) {
     var end = Math.min(start + CHUNK, toMs);
@@ -441,6 +448,8 @@ function extraBusy(calendarIds, fromMs, toMs) {
         var c = res && res.calendars && res.calendars[id];
         if (!c || (c.errors && c.errors.length)) {
           bad[id] = true;
+          errors[id] = (errors[id] || []).concat((c && c.errors || []).map(function (e) { return e.reason || String(e); }));
+          if (!errors[id].length) errors[id].push('no data returned');
           console.warn('Freebusy unreadable for ' + id + ': ' + JSON.stringify(c && c.errors));
           return;
         }
@@ -449,24 +458,22 @@ function extraBusy(calendarIds, fromMs, toMs) {
         });
       });
     } catch (err) {
-      calendarIds.forEach(function (id) { bad[id] = true; });
+      calendarIds.forEach(function (id) { bad[id] = true; (errors[id] = errors[id] || []).push(String(err)); });
       console.warn('Freebusy query failed: ' + err);
     }
   }
-  return { busy: busy, unreadable: calendarIds.filter(function (id) { return bad[id]; }) };
+  return { busy: busy, unreadable: calendarIds.filter(function (id) { return bad[id]; }), errors: errors };
 }
 
 /** Run once from the editor: authorizes the Calendar service and logs, per
  *  extra calendar, the busy-block count for the next 14 days or its error. */
 function probeBusyCalendars() {
-  var ids = [CONFIG.SCHEDULE_CAL_ID, CONFIG.BGCCC_CAL_ID];
   var now = Date.now();
-  var r = extraBusy(ids, now, now + 14 * 86400000);
-  ids.forEach(function (id) {
-    if (r.unreadable.indexOf(id) >= 0) Logger.log(id + ': ERROR (see warnings above)');
-    else Logger.log(id + ': readable');
+  [CONFIG.SCHEDULE_CAL_ID, CONFIG.BGCCC_CAL_ID].forEach(function (id) {
+    var r = extraBusy([id], now, now + 14 * 86400000);
+    if (r.unreadable.length) Logger.log(id + ': ERROR ' + (r.errors[id] || []).join(', '));
+    else Logger.log(id + ': ' + r.busy.length + ' busy blocks in the next 14 days');
   });
-  Logger.log('Total busy blocks, next 14 days: ' + r.busy.length);
 }
 
 /** Open slot start times (ISO strings) for one booking type, honoring that

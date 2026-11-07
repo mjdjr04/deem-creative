@@ -96,3 +96,23 @@ describe('getAvailableSlots with extra calendars', () => {
     expect(after.length).toBeLessThan(before.length)
   })
 })
+
+describe('probeBusyCalendars', () => {
+  it('logs per-calendar busy count or error reason', () => {
+    const log = vi.fn()
+    const gs = loadGs(path, {
+      Logger: { log },
+      console: { warn() {}, log() {} },
+      Calendar: { Freebusy: { query: (req) => {
+        const id = req.items[0].id
+        return { calendars: { [id]: id === 'mdeem@bgccumberland.org'
+          ? { errors: [{ reason: 'notFound' }] }
+          : ok([[Date.now() + 1000, Date.now() + 2000], [Date.now() + 5000, Date.now() + 6000]]) } }
+      } } },
+    })
+    gs.probeBusyCalendars()
+    const lines = log.mock.calls.map((c) => c[0])
+    expect(lines.some((l) => l.startsWith(gs.CONFIG.SCHEDULE_CAL_ID) && l.includes('2 busy'))).toBe(true)
+    expect(lines.some((l) => l.startsWith('mdeem@bgccumberland.org') && l.includes('notFound'))).toBe(true)
+  })
+})

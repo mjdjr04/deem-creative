@@ -951,16 +951,30 @@ var CHAT_PERSONA = [
   'Only discuss Michael, his work, Deem Creative side projects, and related professional topics. Politely decline anything unrelated.',
 ].join(' ');
 
+// Keep the last 30 turns, and make sure the window starts on a user turn (the
+// API rejects a conversation that opens with an assistant message). If no user
+// turn remains in the window, fall back to the last user message overall.
+function trimChatHistory(messages) {
+  var out = messages.length > 30 ? messages.slice(-30) : messages.slice();
+  while (out.length && out[0].role !== 'user') out.shift();
+  if (!out.length) {
+    for (var i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') { out = [messages[i]]; break; }
+    }
+  }
+  return out;
+}
+
 function handleChat(f) {
   var key = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
   if (!key) return jsonResponse({ ok: false, error: 'The assistant is not set up yet.' });
 
   var messages = (f.messages && f.messages.length) ? f.messages : [];
   if (!messages.length) return jsonResponse({ ok: false, error: 'No message provided.' });
-  if (messages.length > 30) messages = messages.slice(-30);
   messages = messages.map(function (m) {
     return { role: (m.role === 'assistant' ? 'assistant' : 'user'), content: String(m.content || '').slice(0, 2000) };
   });
+  messages = trimChatHistory(messages);
 
   if (!chatRateOk()) {
     return jsonResponse({ ok: false, error: "I'm getting a lot of questions right now — please try again in a moment." });

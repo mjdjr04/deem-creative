@@ -60,3 +60,22 @@ describe('chat copy', () => {
     expect(gs.GREETING_INTENTS.booking_unfinished).toBe('They started booking a Creative Consult and never finished it.')
   })
 })
+
+describe('trimChatHistory', () => {
+  const turn = (i) => ({ role: i % 2 === 0 ? 'user' : 'assistant', content: 'm' + i })
+  it('leaves short histories alone', () => {
+    const m = [turn(0), turn(1), turn(2)]
+    expect(gs.trimChatHistory(m).map((x) => x.content)).toEqual(['m0', 'm1', 'm2'])
+  })
+  it('starts the 30-turn window on a user turn', () => {
+    const m = Array.from({ length: 33 }, (_, i) => turn(i)) // slice(-30) starts at m3 (assistant)
+    const out = gs.trimChatHistory(m)
+    expect(out[0].role).toBe('user')
+    expect(out[0].content).toBe('m4')
+    expect(out[out.length - 1].content).toBe('m32')
+  })
+  it('falls back to the last user message when the window has none', () => {
+    const m = [{ role: 'user', content: 'q' }, ...Array.from({ length: 30 }, () => ({ role: 'assistant', content: 'a' }))]
+    expect(gs.trimChatHistory(m)).toEqual([{ role: 'user', content: 'q' }])
+  })
+})

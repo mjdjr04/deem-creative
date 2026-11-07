@@ -19,11 +19,15 @@ describe('extractMessageDraft', () => {
   })
   it('strips an unclosed marker running to the end', () => {
     const r = extractMessageDraft('Here you go. [[MESSAGE_DRAFT]]{"name":"Jo","email":"jo@x.com","mess')
-    expect(r).toEqual({ text: 'Here you go.', draft: null, truncated: false })
+    expect(r).toEqual({ text: 'Here you go.', draft: null, truncated: true })
   })
   it('strips a trailing partial opening tag', () => {
     expect(extractMessageDraft('Here you go. [[MESSAGE_DR').text).toBe('Here you go.')
     expect(extractMessageDraft('Here you go. [[').text).toBe('Here you go.')
+  })
+  it('flags truncated when prose precedes a cut-off marker', () => {
+    const r = extractMessageDraft('Here is a draft you can review and send. [[MESSAGE_DRAFT]]{"name":"Jo","ema')
+    expect(r).toEqual({ text: 'Here is a draft you can review and send.', draft: null, truncated: true })
   })
   it('flags truncated when nothing but a broken marker remains', () => {
     expect(extractMessageDraft('[[MESSAGE_DRAFT]]{"name":"Jo"').truncated).toBe(true)

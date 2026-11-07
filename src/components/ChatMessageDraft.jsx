@@ -40,8 +40,9 @@ export default function ChatMessageDraft({ draft, sent, sending, onSending, onSe
     setBusy(true)
     onSending(true)
     setError(null)
+    const values = { name: form.name.trim(), email: form.email.trim(), message: form.message.trim() }
     const result = await sendContactMessage(
-      { name: form.name.trim(), email: form.email.trim(), phone: '', company: '', message: form.message.trim() },
+      { ...values, phone: '', company: '' },
       { turnstileToken: tsToken, source: 'chat', formspreeEndpoint: contact.formspreeEndpoint },
     )
     setBusy(false)
@@ -49,7 +50,7 @@ export default function ChatMessageDraft({ draft, sent, sending, onSending, onSe
     turnstile.current?.reset()
     if (result.ok) {
       trackEvent(ANALYTICS_EVENTS.CONTACT_SUBMIT, { form: 'chat' })
-      onSent()
+      onSent(values)
     } else {
       setError(result.error)
     }

@@ -35,5 +35,5 @@ export function extractMessageDraft(text) {
     }
   }
   const result = out === src ? src : out.trim()
-  return { text: result, draft, truncated: opened && !draft && result === '' }
+  return { text: result, draft, truncated: opened && !draft }
 }

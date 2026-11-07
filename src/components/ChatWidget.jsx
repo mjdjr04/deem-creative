@@ -54,7 +54,10 @@ const DRAFT_FAILED = "I couldn't finish that draft — try again, or use the [co
 
 // Site-authored notes appended to the API history only (never displayed), so the
 // model knows what became of a draft card.
-const NOTE_SENT = '[Visitor sent the message draft.]'
+// The sent note carries the values actually sent (the visitor may have edited
+// them), so later revisions build on those.
+const noteSent = ({ name, email, message }) =>
+  `[Visitor sent the message draft: name=${name}, email=${email}, message=${message.length > 300 ? message.slice(0, 300) + '…' : message}]`
 const NOTE_CANCELLED = '[Visitor cancelled the message draft.]'
 
 // One id per page visit, so an admin can read a conversation as a thread.
@@ -241,10 +244,10 @@ export default function ChatWidget({ onOpenProject }) {
       // Strip the draft marker: history and logs keep only the display text, so
       // a reload or a later API turn never carries raw JSON.
       const parsed = extractMessageDraft(raw)
-      const reply = parsed.truncated ? DRAFT_FAILED : parsed.text
+      const reply = parsed.truncated ? [parsed.text, DRAFT_FAILED].filter(Boolean).join(' ') : parsed.text
       const draft = parsed.draft
       // `raw` goes back to the model (display and logs use the stripped text).
-      setMessages((m) => [...m, { role: 'assistant', content: reply, raw: draft ? raw : undefined, draft, draftSent: false }])
+      setMessages((m) => [...m, { role: 'assistant', content: reply, raw: draft || parsed.truncated ? raw : undefined, draft, draftSent: false }])
       // Best-effort log of the exchange for the admin panel — never blocks the UI.
       if (data.ok) logChat({ sessionId: sessionId.current, question: text, answer: reply })
     } catch {
@@ -341,12 +344,12 @@ export default function ChatWidget({ onOpenProject }) {
                         sent={m.draftSent}
                         sending={m.draftSending}
                         onSending={(v) => setMessages((all) => all.map((x, j) => (j === i ? { ...x, draftSending: v } : x)))}
-                        onSent={() => setMessages((all) => [
+                        onSent={(sentValues) => setMessages((all) => [
                           ...all.map((x, j) => (j === i ? { ...x, draftSent: true, draftSending: false } : x)),
-                          { role: 'user', content: NOTE_SENT, hidden: true },
+                          { role: 'user', content: noteSent(sentValues), hidden: true },
                         ])}
                         onCancel={() => setMessages((all) => [
-                          ...all.map((x, j) => (j === i ? { ...x, draft: null } : x)),
+                          ...all.map((x, j) => (j === i ? { ...x, draft: null, raw: undefined } : x)),
                           { role: 'user', content: NOTE_CANCELLED, hidden: true },
                         ])}
                       />

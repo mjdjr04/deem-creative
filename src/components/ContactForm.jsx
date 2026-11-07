@@ -56,7 +56,7 @@ export default function ContactForm() {
     setBusy(true)
     setError(null)
 
-    // Blocklists, blocklists, Turnstile and the save all live in the shared pipeline.
+    // Blocklists, Turnstile and the save all live in the shared pipeline.
     const result = await sendContactMessage(form, {
       turnstileToken: tsToken,
       source: 'form',

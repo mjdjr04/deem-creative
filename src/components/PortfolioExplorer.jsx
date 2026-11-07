@@ -3,9 +3,9 @@ import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { useContent } from '../context/ContentContext'
 import ProjectCard from './ProjectCard'
 
-export default function PortfolioExplorer({ onProjectSelect }) {
+export default function PortfolioExplorer({ onProjectSelect, excludeIds = [] }) {
   const content = useContent()
-  const projects = content.projects.items
+  const projects = content.projects.items.filter(p => !excludeIds.includes(p.id))
   const CATEGORIES = content.projects.categories
   const [activeCategory, setActiveCategory] = useState('All')
   const ref = useRef(null)

@@ -4,6 +4,10 @@ import { motion, useInView } from 'framer-motion'
 import PortfolioExplorer from '../components/PortfolioExplorer'
 import Feed from '../components/Feed'
 import SocialMedia from '../components/SocialMedia'
+import VideoShowcase from '../components/VideoShowcase'
+import BuiltForBGCCC from '../components/BuiltForBGCCC'
+import HeroBackdrop, { WatchReelButton } from '../components/HeroBackdrop'
+import { SHOWCASE, BGCCC_GROUP_IDS } from '../data/showcase'
 
 export default function PortfolioPage({ onProjectSelect }) {
   const ref = useRef(null)
@@ -27,6 +31,7 @@ export default function PortfolioPage({ onProjectSelect }) {
         className="relative pt-24 pb-12 md:pt-32 md:pb-16 overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #060f1e 0%, #0D3472 50%, #060f1e 100%)' }}
       >
+        <HeroBackdrop />
         <div
           aria-hidden="true"
           className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl opacity-15"
@@ -48,6 +53,7 @@ export default function PortfolioPage({ onProjectSelect }) {
               A look at the creative work — video production, social media strategy,
               nonprofit storytelling, digital systems, and more.
             </p>
+            <WatchReelButton className="mt-6" />
           </motion.div>
         </div>
         {/* Bottom fade */}
@@ -58,8 +64,11 @@ export default function PortfolioPage({ onProjectSelect }) {
         />
       </section>
 
+      <VideoShowcase items={SHOWCASE} onProjectSelect={onProjectSelect} />
+      <BuiltForBGCCC onProjectSelect={onProjectSelect} />
+
       <div id="projects" className="scroll-mt-20">
-        <PortfolioExplorer onProjectSelect={onProjectSelect} />
+        <PortfolioExplorer onProjectSelect={onProjectSelect} excludeIds={BGCCC_GROUP_IDS} />
       </div>
       <Feed />
       <div id="social" className="scroll-mt-20">

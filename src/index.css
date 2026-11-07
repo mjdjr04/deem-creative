@@ -95,8 +95,20 @@
   }
 }
 
+/* Slow push-in on the hero still while no loop video exists */
+@keyframes hero-drift {
+  from { transform: scale(1); }
+  to   { transform: scale(1.1); }
+}
+.hero-drift {
+  animation: hero-drift 40s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  .hero-drift {
+    animation: none;
   }
 }

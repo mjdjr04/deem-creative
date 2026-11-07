@@ -1,4 +1,5 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
 import { Mail, Calendar, ExternalLink, MapPin, Phone } from 'lucide-react'
 import { useBooking } from '../context/BookingContext'
@@ -21,8 +22,18 @@ export default function ContactPage() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.15 })
   const { open } = useBooking()
+  const { hash } = useLocation()
   const { settings } = useContent()
   const vc = settings.vcard || {}
+
+  // /contact#message lands on the form (the page transition delays mount, so wait a beat).
+  useEffect(() => {
+    if (hash !== '#message') return
+    const t = setTimeout(() => {
+      document.getElementById('message')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 120)
+    return () => clearTimeout(t)
+  }, [hash])
 
   const contactMethods = [
     settings.email && {
@@ -78,6 +89,8 @@ export default function ContactPage() {
               initial={{ opacity: 0, x: -24 }}
               animate={isInView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.6 }}
+              id="message"
+              className="scroll-mt-28"
             >
               <ContactForm />
             </motion.div>

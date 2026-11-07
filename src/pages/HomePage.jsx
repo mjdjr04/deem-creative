@@ -1,9 +1,10 @@
 import Hero from '../components/Hero'
+import VideoShowcase from '../components/VideoShowcase'
+import BuiltForBGCCC from '../components/BuiltForBGCCC'
 import About from '../components/About'
-import FeaturedWork from '../components/FeaturedWork'
 import Experience from '../components/Experience'
 import Skills from '../components/Skills'
-import ConsultCTA from '../components/ConsultCTA'
+import { SHOWCASE } from '../data/showcase'
 
 export default function HomePage({ onProjectSelect }) {
   return (
@@ -11,13 +12,13 @@ export default function HomePage({ onProjectSelect }) {
       <section id="home">
         <Hero />
       </section>
+      <VideoShowcase items={SHOWCASE} onProjectSelect={onProjectSelect} />
+      <BuiltForBGCCC onProjectSelect={onProjectSelect} />
       <section id="about">
         <About />
       </section>
-      <FeaturedWork onProjectSelect={onProjectSelect} />
       <Experience />
       <Skills />
-      <ConsultCTA />
     </>
   )
 }

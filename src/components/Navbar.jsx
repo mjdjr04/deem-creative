@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, ChevronDown } from 'lucide-react'
 import { DeemCreativeMark } from './DeemCreativeMark'
-import { useBooking } from '../context/BookingContext'
 
 const LINKEDIN_URL = 'https://linkedin.com/in/michael-deem-jr'
 
@@ -24,7 +23,6 @@ const navLinks = [
       { label: 'Social Media', to: '/portfolio?section=social' },
     ],
   },
-  { label: 'Services',  to: '/services' },
   { label: 'Contact',   to: '/contact' },
 ]
 
@@ -32,7 +30,6 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const location = useLocation()
-  const { open } = useBooking()
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 50)
@@ -140,15 +137,15 @@ export default function Navbar() {
               <span>LinkedIn</span>
             </motion.a>
 
-            {/* Book CTA */}
-            <motion.button
-              onClick={open}
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              className="ml-2 px-5 py-2.5 rounded-lg bg-white text-brand-dark text-sm font-bold hover:bg-brand-light hover:text-white transition-all cursor-pointer"
-            >
-              Book a Consultation
-            </motion.button>
+            {/* Contact CTA */}
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} className="ml-2">
+              <Link
+                to="/contact#message"
+                className="block px-5 py-2.5 rounded-lg bg-white text-brand-dark text-sm font-bold hover:bg-brand-light hover:text-white transition-colors"
+              >
+                Get in touch
+              </Link>
+            </motion.div>
           </div>
 
           {/* Mobile hamburger */}
@@ -211,12 +208,13 @@ export default function Navbar() {
               >
                 <LinkedInIcon /> Connect on LinkedIn
               </a>
-              <button
-                onClick={() => { setIsMenuOpen(false); open() }}
-                className="mt-4 w-full py-3 rounded-lg bg-white text-brand-dark font-bold hover:bg-brand-light hover:text-white transition-all"
+              <Link
+                to="/contact#message"
+                onClick={closeMenu}
+                className="mt-4 block w-full py-3 rounded-lg bg-white text-brand-dark text-center font-bold hover:bg-brand-light hover:text-white transition-colors"
               >
-                Book a Consultation
-              </button>
+                Get in touch
+              </Link>
             </div>
           </motion.div>
         )}

@@ -7,7 +7,6 @@ import { ConsentProvider } from './context/ConsentContext'
 import Navbar from './components/Navbar'
 import Contact from './components/Contact'
 import ProjectModal from './components/ProjectModal'
-import FloatingCTA from './components/FloatingCTA'
 import ChatWidget from './components/ChatWidget'
 import ScrollProgress from './components/ScrollProgress'
 import AnalyticsManager from './components/AnalyticsManager'
@@ -55,7 +54,7 @@ function AnimatedRoutes({ onProjectSelect }) {
   )
 }
 
-// The public-facing site (navbar, contact, floating CTA, project modal).
+// The public-facing site (navbar, contact, project modal).
 function PublicSite() {
   const [selectedProject, setSelectedProject] = useState(null)
   return (
@@ -78,7 +77,6 @@ function PublicSite() {
         project={selectedProject}
         onClose={() => setSelectedProject(null)}
       />
-      <FloatingCTA />
       <ChatWidget onOpenProject={setSelectedProject} />
     </BookingProvider>
   )

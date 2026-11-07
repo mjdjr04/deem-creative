@@ -1,6 +1,6 @@
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { Mail, Calendar, FileText } from 'lucide-react'
+import { Mail, Calendar, FileText, Send } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DeemCreativeMark } from './DeemCreativeMark'
 import { useBooking } from '../context/BookingContext'
@@ -11,7 +11,6 @@ import VCardButton from './VCardButton'
 const navLinks = [
   { label: 'Home',      to: '/' },
   { label: 'Portfolio', to: '/portfolio' },
-  { label: 'Services',  to: '/services' },
   { label: 'Contact',   to: '/contact' },
 ]
 
@@ -111,23 +110,33 @@ export default function Contact() {
 
           {/* Column 3: CTA */}
           <div>
-            <h3 className="text-white/55 text-xs font-semibold tracking-widest uppercase mb-5">
-              Work Together
+            <h3 className="text-white text-xl font-semibold mb-3">
+              Like what you see?
             </h3>
-            <p className="text-white/60 text-sm leading-relaxed mb-5">
-              Ready to build something? Book a consultation and let's talk through your goals.
+            <p className="text-white/65 text-sm leading-relaxed mb-5">
+              Happy to talk shop, collaborate, or walk through a project.
             </p>
-            <motion.button
-              onClick={open}
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-navy border border-brand-accent text-white text-sm font-semibold hover:bg-brand-accent transition-colors cursor-pointer"
-            >
-              <Calendar size={15} /> Book a Consultation
-            </motion.button>
+            <div className="flex flex-wrap items-center gap-3">
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+                <Link
+                  to="/contact#message"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white text-brand-dark text-sm font-bold hover:bg-brand-light hover:text-white transition-colors"
+                >
+                  <Send size={15} aria-hidden="true" /> Send a message
+                </Link>
+              </motion.div>
+              <motion.button
+                onClick={open}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-brand-accent text-white text-sm font-semibold hover:bg-brand-navy transition-colors cursor-pointer"
+              >
+                <Calendar size={15} aria-hidden="true" /> Book a creative consult
+              </motion.button>
+            </div>
 
             <div className="mt-6 pt-6 border-t border-brand-border">
-              <p className="text-white/55 text-xs">{settings.email}</p>
+              <p className="text-white/55 text-xs">Or email {settings.email}</p>
               <p className="text-white/55 text-xs mt-1">@deemcreative</p>
             </div>
           </div>

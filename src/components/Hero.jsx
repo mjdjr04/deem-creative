@@ -3,12 +3,16 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Calendar, ChevronDown } from 'lucide-react'
 import { DeemCreativeLogoFull } from './DeemCreativeMark'
 import { useBooking } from '../context/BookingContext'
+import HeroBackdrop, { WatchReelButton } from './HeroBackdrop'
 
 export default function Hero() {
   const { open } = useBooking()
 
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-hero-gradient">
+      {/* Tribute still (or loop) behind everything */}
+      <HeroBackdrop />
+
       {/* Faint blueprint grid */}
       <div aria-hidden="true" className="absolute inset-0 bg-grid" />
 
@@ -87,6 +91,7 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.5 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
         >
+          <WatchReelButton />
           <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
             <Link
               to="/portfolio"

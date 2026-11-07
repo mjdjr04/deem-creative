@@ -13,3 +13,7 @@ export const SHOWCASE = [
 
 export const HERO_LOOP_SRC = null
 export const REEL_YOUTUBE_ID = null
+
+// Records shown together in the "Built for BGCCC" group; the portfolio grid
+// below it leaves them out so nothing appears twice.
+export const BGCCC_GROUP_IDS = ['bgccc-gala', 'bgccc-connect', 'bgccc-letter-builder', 'boys-girls-clubs']

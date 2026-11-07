@@ -23,6 +23,7 @@ const navLinks = [
       { label: 'Social Media', to: '/portfolio?section=social' },
     ],
   },
+  { label: 'Experience', to: '/experience' },
   { label: 'Contact',   to: '/contact' },
 ]
 

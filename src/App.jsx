@@ -15,6 +15,7 @@ import HomePage from './pages/HomePage'
 import PortfolioPage from './pages/PortfolioPage'
 import ServicesPage from './pages/ServicesPage'
 import ContactPage from './pages/ContactPage'
+import ExperiencePage from './pages/ExperiencePage'
 import BookingLanding from './pages/BookingLanding'
 import BookingPage from './pages/BookingPage'
 import RecruiterBookingPage from './pages/RecruiterBookingPage'
@@ -41,6 +42,7 @@ function AnimatedRoutes({ onProjectSelect }) {
         <Routes location={location}>
           <Route path="/" element={<HomePage onProjectSelect={onProjectSelect} />} />
           <Route path="/portfolio" element={<PortfolioPage onProjectSelect={onProjectSelect} />} />
+          <Route path="/experience" element={<ExperiencePage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/booking" element={<BookingLanding />} />

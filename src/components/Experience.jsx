@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { ExternalLink, Paperclip, ChevronDown } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
 
-const typeLabel = {
+export const typeLabel = {
   current:   { label: 'Current',   color: 'text-green-400 border-green-400/30 bg-green-400/10' },
   past:      { label: 'Past',      color: 'text-brand-light border-brand-border bg-brand-surface' },
   education: { label: 'Education', color: 'text-purple-400 border-purple-400/30 bg-purple-400/10' },
@@ -153,15 +153,16 @@ function ExperienceCard({ exp, index, collapsible = false }) {
   )
 }
 
-export default function Experience({ collapsible = false }) {
+export default function Experience({ collapsible = false, showHeading = true }) {
   const experiences = useContent().experience.items
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.1 })
 
   return (
-    <section className="py-20 sm:py-24 md:py-32 bg-section-gradient section-divider">
+    <section className={`${showHeading ? 'py-20 sm:py-24 md:py-32' : 'pt-4 pb-20 sm:pb-24'} bg-section-gradient section-divider`}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
+        {showHeading && (
         <motion.div
           ref={ref}
           initial={{ opacity: 0, y: 24 }}
@@ -176,6 +177,7 @@ export default function Experience({ collapsible = false }) {
             Experience Highlights
           </h2>
         </motion.div>
+        )}
 
         {/* Timeline */}
         <div className="relative">

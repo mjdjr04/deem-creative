@@ -12,6 +12,10 @@ const ROUTES = {
   portfolio: 'Portfolio | Deem Creative',
   services: 'Services | Deem Creative',
   contact: 'Contact | Deem Creative',
+  experience: {
+    title: 'Experience | Michael Deem Jr.',
+    description: "Michael Deem Jr.'s full timeline: every role, internship, and degree, newest first.",
+  },
   booking: 'Book a Meeting | Deem Creative',
   'booking/networking': 'Book a Networking Chat | Deem Creative',
   'booking/consultation': 'Book a Creative Consult | Deem Creative',
@@ -26,15 +30,22 @@ const ROUTES = {
 const shell = readFileSync(join(DIST, 'index.html'), 'utf8')
 copyFileSync(join(DIST, 'index.html'), join(DIST, '404.html'))
 
-for (const [route, title] of Object.entries(ROUTES)) {
+for (const [route, entry] of Object.entries(ROUTES)) {
+  const { title, description } = typeof entry === 'string' ? { title: entry } : entry
   const url = `${SITE}/${route}/`
   const html = shell
     .replace(/(<meta property="og:url" content=")[^"]*/, `$1${url}`)
     .replace(/(<meta property="og:title" content=")[^"]*/, `$1${title}`)
     .replace(/(<meta name="twitter:title" content=")[^"]*/, `$1${title}`)
     .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
+  const page = description
+    ? html
+        .replace(/(<meta name="description" content=")[^"]*/, `$1${description}`)
+        .replace(/(<meta property="og:description" content=")[^"]*/, `$1${description}`)
+        .replace(/(<meta name="twitter:description" content=")[^"]*/, `$1${description}`)
+    : html
   mkdirSync(join(DIST, route), { recursive: true })
-  writeFileSync(join(DIST, route, 'index.html'), html)
+  writeFileSync(join(DIST, route, 'index.html'), page)
 }
 
 console.log(`prerendered ${Object.keys(ROUTES).length} routes + 404.html`)

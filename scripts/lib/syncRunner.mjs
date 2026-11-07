@@ -3,6 +3,7 @@
 // `store` so the flow is testable without a network:
 //   store.readSections(sections) -> { [section]: { draft_data, updated_at } }
 //   store.updateDraft(section, data, expectedUpdatedAt)
+//   store.listSections() -> [{ section, draft_data, published_data }] (every row)
 //   store.publishAll()
 
 import { mergeProjects } from './mergeProjects.mjs'
@@ -66,12 +67,43 @@ function report(p, log) {
   for (const s of p.emails.skipped) log(`  LEFT ALONE ${s.path} (admin-edited, differs from old and new default): ${s.value}`)
 }
 
-export async function runSync({ store, projectDefaults, ids, emailsOld, emailsNew, write = false, publish = false, log = console.log }) {
+// publish_all promotes every section's draft, not just ours, so list the other
+// sections whose draft differs from what is live.
+function otherDrafts(allRows) {
+  return allRows
+    .filter((r) => !SECTIONS.includes(r.section) && r.draft_data != null && !same(r.draft_data, r.published_data))
+    .map((r) => r.section)
+}
+
+export async function runSync({
+  store,
+  projectDefaults,
+  ids,
+  emailsOld,
+  emailsNew,
+  write = false,
+  publish = false,
+  allowOtherDrafts = false,
+  log = console.log,
+}) {
   if (publish && !write) throw new Error('--publish requires --write.')
 
   const rows = await store.readSections(SECTIONS)
   const p = plan(rows, { projectDefaults, ids, emailsOld, emailsNew })
   report(p, log)
+
+  const others = otherDrafts(await store.listSections())
+  if (others.length) {
+    log(`\nUnpublished drafts in other sections (publish_all would push them live): ${others.join(', ')}`)
+  } else {
+    log('\nNo unpublished drafts in other sections.')
+  }
+  if (publish && others.length && !allowOtherDrafts) {
+    throw new Error(
+      `--publish refused: unpublished drafts exist in ${others.join(', ')}. ` +
+        'Publish or discard them in the admin first, or pass --allow-other-drafts. Nothing was written.',
+    )
+  }
 
   if (!write) {
     log('\nDry run only. Re-run with --write to update the drafts (and --publish to go live).')

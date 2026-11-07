@@ -4,6 +4,8 @@
 //   node scripts/sync-projects.mjs                  dry run: prints the diff only
 //   node scripts/sync-projects.mjs --write          update draft_data (aborts if updated_at moved)
 //   node scripts/sync-projects.mjs --write --publish   then call RPC publish_all
+//                                                   (refuses if other sections have unpublished
+//                                                   drafts, unless --allow-other-drafts)
 //
 // Reads VITE_SUPABASE_URL and SUPABASE_SECRET_KEY from .env.local. The secret
 // key is only ever handed to the Supabase client; it is never printed.
@@ -48,6 +50,11 @@ function makeStore(url, key) {
       if (error) throw new Error(`update ${section} failed: ${error.message}`)
       if (!data?.length) throw new StaleWriteError(section, expectedUpdatedAt, '(changed during write)')
     },
+    async listSections() {
+      const { data, error } = await db.from('site_content').select('section, draft_data, published_data')
+      if (error) throw new Error(`read failed: ${error.message}`)
+      return data ?? []
+    },
     async publishAll() {
       const { error } = await db.rpc('publish_all')
       if (error) throw new Error(`publish_all failed: ${error.message}`)
@@ -56,7 +63,7 @@ function makeStore(url, key) {
 }
 
 const args = new Set(process.argv.slice(2))
-const unknown = [...args].filter((a) => a !== '--write' && a !== '--publish')
+const unknown = [...args].filter((a) => a !== '--write' && a !== '--publish' && a !== '--allow-other-drafts')
 if (unknown.length) {
   console.error(`Unknown option: ${unknown.join(' ')}`)
   process.exit(2)
@@ -83,6 +90,7 @@ try {
     emailsNew: emailsDefaults,
     write: args.has('--write'),
     publish: args.has('--publish'),
+    allowOtherDrafts: args.has('--allow-other-drafts'),
   })
 } catch (err) {
   console.error(`${err.name === 'Error' ? 'Error' : err.name}: ${err.message}`)

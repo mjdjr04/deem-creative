@@ -114,13 +114,17 @@ describe('mergeEmails', () => {
   })
 })
 
-function fakeStore({ rows, recheck }) {
+function fakeStore({ rows, recheck, others = [] }) {
   let reads = 0
   const store = {
     readSections: vi.fn(async () => {
       reads += 1
       return reads === 1 || !recheck ? structuredClone(rows) : recheck
     }),
+    listSections: vi.fn(async () => [
+      ...Object.entries(rows).map(([section, r]) => ({ section, draft_data: r.draft_data, published_data: r.draft_data })),
+      ...others,
+    ]),
     updateDraft: vi.fn(async () => {}),
     publishAll: vi.fn(async () => {}),
   }
@@ -182,6 +186,38 @@ describe('runSync', () => {
     const store = fakeStore({ rows: baseRows() })
     await expect(run(store, { publish: true })).rejects.toThrow(/--write/)
     expect(store.publishAll).not.toHaveBeenCalled()
+  })
+
+  it('refuses --publish when another section has an unpublished draft', async () => {
+    const others = [{ section: 'about', draft_data: { a: 2 }, published_data: { a: 1 } }]
+    const store = fakeStore({ rows: baseRows(), others })
+    const lines = []
+    await expect(run(store, { write: true, publish: true, log: (l) => lines.push(l) })).rejects.toThrow(/about/)
+    expect(store.updateDraft).not.toHaveBeenCalled()
+    expect(store.publishAll).not.toHaveBeenCalled()
+    expect(lines.join('\n')).toMatch(/about/)
+  })
+
+  it('publishes past other drafts with allowOtherDrafts', async () => {
+    const others = [{ section: 'about', draft_data: { a: 2 }, published_data: { a: 1 } }]
+    const store = fakeStore({ rows: baseRows(), others })
+    await run(store, { write: true, publish: true, allowOtherDrafts: true })
+    expect(store.publishAll).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores other sections whose draft equals the published data', async () => {
+    const others = [{ section: 'about', draft_data: { a: 1 }, published_data: { a: 1 } }]
+    const store = fakeStore({ rows: baseRows(), others })
+    await run(store, { write: true, publish: true })
+    expect(store.publishAll).toHaveBeenCalledTimes(1)
+  })
+
+  it('dry run lists other drafts but does not throw', async () => {
+    const others = [{ section: 'about', draft_data: { a: 2 }, published_data: { a: 1 } }]
+    const store = fakeStore({ rows: baseRows(), others })
+    const lines = []
+    await run(store, { log: (l) => lines.push(l) })
+    expect(lines.join('\n')).toMatch(/other sections.*about/)
   })
 
   it('skips the write when nothing changes', async () => {

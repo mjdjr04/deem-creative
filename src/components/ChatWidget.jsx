@@ -11,15 +11,15 @@ const BOT_NAME = 'Deemo'
 
 const GREETING = {
   role: 'assistant',
-  content: `Hey, I'm ${BOT_NAME} 🤖 — Michael's AI assistant. Ask me anything about his work, experience, services, or how to get in touch.`,
+  content: `Hey, I'm ${BOT_NAME} 🤖 — Michael's AI assistant. Ask me anything about his videos, projects, experience, or how to get in touch.`,
 }
 
 // Shown as tappable chips before the visitor's first message.
 const SUGGESTIONS = [
-  'What services does Michael offer?',
+  'Show me his best video',
+  'What did he build for the gala?',
   'Tell me about his experience',
-  'Can I see some of his work?',
-  'How do I book a consultation?',
+  'How can I get in touch?',
 ]
 
 // Proactive nudges keyed by route. When a visitor lingers on a page, Deemo peeks
@@ -33,16 +33,10 @@ const NUDGES = {
     delay: 14000,
   },
   '/portfolio': {
-    text: "🎬 Want to see Michael's most recent video?",
+    text: "🎬 Curious how the BGCCC gala came together?",
     cta: 'Show me',
-    prompt: "What's Michael's most recent video project, and where can I watch it?",
+    prompt: 'Tell me about the BGCCC gala project and where I can see it.',
     delay: 6000,
-  },
-  '/services': {
-    text: "Not sure which service fits your project? I can point you in the right direction — or you can grab a free consult.",
-    cta: 'Help me choose',
-    prompt: 'Which service is the best fit for my project, and how do I book a free consultation?',
-    delay: 8000,
   },
   '/contact': {
     text: 'Got a quick question before reaching out? Ask me right here.',
@@ -180,7 +174,7 @@ export default function ChatWidget({ onOpenProject }) {
       if (seg.type === 'bold') return <strong key={i} className="font-semibold text-white">{seg.value}</strong>
 
       if (seg.type === 'url') {
-        if (isBookingTarget(seg.target)) return bookingButton('Book a free consultation', i)
+        if (isBookingTarget(seg.target)) return bookingButton('Book a creative consult', i)
         return (
           <a
             key={i}

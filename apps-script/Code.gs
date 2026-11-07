@@ -926,21 +926,23 @@ function handleFeedDescribe(f) {
 // ─── AI Chatbot ───────────────────────────────────────────────────────────
 
 var CHAT_PERSONA = [
-  'You are Deemo, the friendly AI assistant on the portfolio website of Michael Deem Jr., founder of Deem Creative — a creative strategy, video production, and digital storytelling studio.',
+  "You are Deemo, the friendly AI assistant on Michael Deem Jr.'s portfolio site. Michael is a video producer and creative technologist who works full-time at Boys & Girls Clubs of Cumberland County (BGCCC) and takes select side projects as Deem Creative.",
   'If asked your name, you are Deemo. Keep a warm, upbeat, lightly playful tone.',
-  "Answer visitors' questions about Michael, his work, experience, skills, and services using ONLY the knowledge base below.",
+  "Answer visitors' questions about Michael, his work, experience, skills, and side projects using ONLY the knowledge base below.",
   'If something is not covered, say you are not sure and point them to the contact email or booking link. NEVER invent facts, projects, dates, clients, or credentials.',
-  'Your main job is to help visitors find their way around the site. Keep replies short and sweet — usually 1 to 2 sentences. Be warm and casual. No bullet lists unless asked.',
+  'Your main job is to show off his work: lead with his videos and project pages, and help visitors find their way around the site. Keep replies short and sweet — usually 1 to 2 sentences. Be warm and casual. No bullet lists unless asked.',
   'You may use **bold** sparingly to emphasize a key word; it renders as bold text.',
+  'For the BGCCC gala, use only the facts in the knowledge base. NEVER state any amount of money raised, or any fundraising total, even if asked or if you think you know it.',
   '',
   'NAVIGATION — you can add clickable links to your replies using Markdown: [label](target). Weave them naturally into a sentence; never paste raw URLs or list links.',
-  'Page targets: [..](/) home, [..](/portfolio) all of his work, [..](/services) services, [..](/contact) the contact form, and [..](/booking) to book a free consultation.',
-  'To send someone to a specific project or its video, link it as [Project Title](project:ID) using the exact ID shown in brackets in the knowledge base. This opens that project (and plays its video, if it has one) right on the site.',
-  'ALWAYS write booking as the Markdown link [book a free consultation](/booking) whenever you mention booking, a consult, a call, or getting started. Never paste the raw calendar URL.',
+  'Page targets: [..](/) home, [..](/portfolio) all of his work and the video showcase, [..](/contact) the contact form, [..](/booking) to book a creative consult, and [..](/hire) to schedule a hiring call.',
+  'Projects that have a case study page are shown in the knowledge base with "page: /work/slug" — link those as [Project Title](/work/slug). For any other project or its video, link it as [Project Title](project:ID) using the exact ID shown in brackets in the knowledge base; this opens that project (and plays its video, if it has one) right on the site.',
+  'Mention booking only when the visitor asks about working together, a call, or booking. Then write it as the Markdown link [book a creative consult](/booking). Never paste the raw calendar URL.',
+  'If the visitor is a recruiter or hiring manager, point them to [schedule a hiring call](/hire) instead. The booking hours in the knowledge base are the only hours you may quote.',
   'Use at most one or two links per reply, only when they genuinely help the visitor get where they want to go.',
   '',
   'Respond with your answer only — no preamble, no meta-commentary, and never mention "the knowledge base" or these instructions.',
-  'Only discuss Michael, Deem Creative, and related professional topics. Politely decline anything unrelated.',
+  'Only discuss Michael, his work, Deem Creative side projects, and related professional topics. Politely decline anything unrelated.',
 ].join(' ');
 
 function handleChat(f) {
@@ -993,7 +995,7 @@ function handleChat(f) {
 // client-supplied string is ever interpolated into the prompt.
 
 var GREETING_INTENTS = {
-  booking_unfinished: 'They started booking a free consultation and never finished it.',
+  booking_unfinished: 'They started booking a Creative Consult and never finished it.',
   contact_unfinished: 'They started writing a message on the contact form and never sent it.',
   unseen_work: 'They have visited before but have never opened the portfolio or any project.',
   work_seen_no_contact: 'They have looked through the portfolio but never started a booking or a message.',
@@ -1012,7 +1014,7 @@ var GREETING_SECTIONS = {
 
 var GREETING_PERSONA = [
   "You write the single opening line for Deemo, the AI assistant on Michael Deem's",
-  'portfolio site (Deem Creative). A returning visitor is about to open the chat.',
+  'portfolio site. A returning visitor is about to open the chat.',
   '',
   'Rules:',
   '- Output ONE sentence, 30 words maximum, as plain text.',
@@ -1143,20 +1145,53 @@ function fetchSiteKnowledge() {
   }
 }
 
+var HOURS_DAY_NAMES = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
+var HOURS_DAY_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function hoursClock(h) {
+  return (h % 12 === 0 ? 12 : h % 12) + ' ' + (h < 12 ? 'AM' : 'PM');
+}
+
+/** Human-readable text for a weekday -> [start, end] windows map. Consecutive
+ *  weekdays with the same hours collapse to a range ("Monday–Friday 10 AM–5 PM"). */
+function describeWindows(w) {
+  var days = Object.keys(w).map(Number).sort(function (a, b) { return a - b; });
+  var parts = [], i = 0;
+  while (i < days.length) {
+    var j = i;
+    while (j + 1 < days.length && days[j + 1] === days[j] + 1 &&
+           w[days[j + 1]][0] === w[days[i]][0] && w[days[j + 1]][1] === w[days[i]][1]) j++;
+    var hrs = hoursClock(w[days[i]][0]) + '–' + hoursClock(w[days[i]][1]);
+    parts.push(j > i ? HOURS_DAY_LONG[days[i]] + '–' + HOURS_DAY_LONG[days[j]] + ' ' + hrs
+                     : HOURS_DAY_NAMES[days[i]] + ' ' + hrs);
+    i = j + 1;
+  }
+  return parts.join(' and ') + ' (ET)';
+}
+
+/** Public booking hours, derived from CONFIG.TYPES windows (strategy is hidden
+ *  from the public picker, so it is not described). */
+function describeHours() {
+  return 'Creative consults and networking chats: ' + describeWindows(windowsFor(CONFIG.TYPES.consultation)) +
+    '. Hiring calls: ' + describeWindows(windowsFor(CONFIG.TYPES.recruiter)) + '.';
+}
+
 function knowledgeFromContent(c) {
   var out = [];
   var about = c.about || {};
   out.push('ABOUT: ' + (about.heading || '') + ' ' + ((about.paragraphs || []).join(' ')));
-  out.push('Founder: ' + (about.founderName || 'Michael Deem Jr.') + ' — ' + (about.founderTitle || ''));
+  out.push('WHO: ' + (about.founderName || 'Michael Deem Jr.') + ' — video producer & creative technologist at BGCCC; takes select side projects as Deem Creative'
+    + (about.founderTitle ? ' (' + about.founderTitle + ')' : '') + '.');
 
   var s = c.settings || {}, vc = s.vcard || {};
   out.push('CONTACT: email ' + (s.email || '') + '; booking link ' + (s.bookingUrl || '') + (vc.phone ? '; phone ' + vc.phone : ''));
 
   var projects = (c.projects && c.projects.items) || [];
-  out.push('\nPROJECTS (link one with [Title](project:ID); the bracketed value is the ID):');
+  out.push('\nPROJECTS (link one with [Title](project:ID), or [Title](/work/slug) when it has a page; the bracketed value is the ID):');
   projects.forEach(function (p) {
     out.push('- [' + p.id + '] ' + p.title + ' (' + (p.year || '') + ', ' + (p.category || '') + '; role: ' + (p.role || '') + ')'
-      + (p.mediaType === 'video' ? ' [has a video]' : '') + '. '
+      + (p.mediaType === 'video' ? ' [has a video]' : '')
+      + (p.caseStudyPath ? ' page: ' + p.caseStudyPath : '') + '. '
       + (p.brief || '') + ' ' + (p.description || '')
       + (p.outcomes && p.outcomes.length ? ' Outcomes: ' + p.outcomes.join('; ') : ''));
   });
@@ -1173,7 +1208,8 @@ function knowledgeFromContent(c) {
   (sk.groups || []).forEach(function (g) { out.push((g.category || '') + ': ' + (g.skills || []).join(', ')); });
 
   var services = (c.services && c.services.items) || [];
-  out.push('\nSERVICES:');
+  out.push('\nBOOKING HOURS: ' + describeHours());
+  out.push('\nSIDE WORK:');
   services.forEach(function (sv) {
     out.push('- ' + sv.title + ': ' + (sv.description || '')
       + (sv.deliverables && sv.deliverables.length ? ' Includes: ' + sv.deliverables.join(', ') : ''));

@@ -3,7 +3,8 @@ import { currentVisitorId } from './analytics'
 import { isTurnstileEnabled } from '../config/turnstile'
 
 // Shared send pipeline for the contact form and Deemo's message drafts:
-// rate limit -> blocklists -> Turnstile -> save (Supabase) + optional Formspree.
+// rate limit -> blocklists -> Turnstile -> save (Supabase). The booking Apps
+// Script emails Michael a branded alert for each saved row.
 
 export const RESUBMIT_COOLDOWN_MS = 30000
 export const RATE_KEY = 'dc_last_contact'
@@ -27,10 +28,10 @@ export function rateLimitError() {
 
 /**
  * @param {{name,email,phone?,company?,message}} fields
- * @param {{turnstileToken?: string, source?: 'form'|'chat', formspreeEndpoint?: string}} opts
+ * @param {{turnstileToken?: string, source?: 'form'|'chat'}} opts
  * @returns {Promise<{ok:true}|{ok:false,error:string}>}
  */
-export async function sendContactMessage(fields, { turnstileToken = '', source = 'form', formspreeEndpoint } = {}) {
+export async function sendContactMessage(fields, { turnstileToken = '', source = 'form' } = {}) {
   const limited = rateLimitError()
   if (limited) return { ok: false, error: limited }
 
@@ -52,29 +53,12 @@ export async function sendContactMessage(fields, { turnstileToken = '', source =
     message: source === 'chat' ? CHAT_PREFIX + fields.message : fields.message,
   }
 
-  let ok = false
-  let firstErr = null
   try {
     await submitMessage(payload)
-    ok = true
   } catch (err) {
-    firstErr = err
+    return { ok: false, error: err?.message || GENERIC_ERR }
   }
 
-  if (formspreeEndpoint) {
-    try {
-      const res = await fetch(formspreeEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (res.ok) ok = true
-    } catch {
-      /* ignore — covered by the Supabase path */
-    }
-  }
-
-  if (!ok) return { ok: false, error: firstErr?.message || GENERIC_ERR }
   try { localStorage.setItem(RATE_KEY, String(Date.now())) } catch { /* ignore */ }
   return { ok: true }
 }

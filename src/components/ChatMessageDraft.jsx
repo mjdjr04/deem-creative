@@ -1,6 +1,5 @@
 import { useId, useRef, useState } from 'react'
 import { Send, Loader2, CheckCircle2 } from 'lucide-react'
-import { useContent } from '../context/ContentContext'
 import { sendContactMessage } from '../lib/sendContactMessage'
 import { trackEvent } from '../lib/analytics'
 import { ANALYTICS_EVENTS } from '../config/analytics'
@@ -12,7 +11,6 @@ const fieldClass =
 // Deemo's draft of a message to Michael. The visitor edits and sends it; nothing
 // leaves the browser until they press "Send to Michael".
 export default function ChatMessageDraft({ draft, sent, sending, onSending, onSent, onCancel }) {
-  const contact = useContent().settings.contact || {}
   const uid = useId()
   const [form, setForm] = useState({ name: draft.name, email: draft.email, message: draft.message })
   const [localBusy, setBusy] = useState(false)
@@ -43,7 +41,7 @@ export default function ChatMessageDraft({ draft, sent, sending, onSending, onSe
     const values = { name: form.name.trim(), email: form.email.trim(), message: form.message.trim() }
     const result = await sendContactMessage(
       { ...values, phone: '', company: '' },
-      { turnstileToken: tsToken, source: 'chat', formspreeEndpoint: contact.formspreeEndpoint },
+      { turnstileToken: tsToken, source: 'chat' },
     )
     setBusy(false)
     onSending(false)

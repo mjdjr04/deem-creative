@@ -55,9 +55,6 @@ export default function SettingsEditor() {
             <>
               <Field label="Form heading"><TextInput value={c.heading || ''} onChange={(e) => setC('heading', e.target.value)} /></Field>
               <Field label="Form subtext"><TextArea value={c.subtext || ''} onChange={(e) => setC('subtext', e.target.value)} rows={2} /></Field>
-              <Field label="Formspree endpoint" hint="Paste your Formspree form URL to also get submissions emailed to you. Leave empty to use the Messages inbox only.">
-                <TextInput value={c.formspreeEndpoint || ''} onChange={(e) => setC('formspreeEndpoint', e.target.value)} placeholder="https://formspree.io/f/xxxxxxx" />
-              </Field>
             </>
           )
         })()}

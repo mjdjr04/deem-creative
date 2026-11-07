@@ -1441,11 +1441,70 @@ function formatMessageAlert(row) {
   if (row.phone) lines.push('Phone: ' + row.phone);
   if (row.company) lines.push('Company: ' + row.company);
   lines.push('Received: ' + received, '', text, '', 'Admin: https://deemcreative.com/admin');
+  var viaChat = text.indexOf('(Sent through Deemo, the site chat)') === 0;
+  var shown = viaChat ? text.replace(/^\(Sent through Deemo, the site chat\)\s*/, '') : text;
   return {
     subject: 'New message from ' + name + ' \u2014 deemcreative.com',
     body: lines.join('\n'),
+    htmlBody: buildMessageAlertHtml({
+      name: name, email: email, validEmail: validEmail,
+      phone: row.phone ? String(row.phone) : '', company: row.company ? String(row.company) : '',
+      received: received, message: shown, viaChat: viaChat
+    }),
     replyTo: validEmail ? email : ''
   };
+}
+
+/** Branded HTML version of the owner alert (inline styles only, email-safe). */
+function buildMessageAlertHtml(a) {
+  var navy = '#0A1628', accent = '#2B5BA8', ink = '#1a2e4a', muted = '#5b6b82', line = '#e3e8ef';
+  var row = function (label, valueHtml) {
+    return '<tr>' +
+      '<td style="padding:8px 0;border-bottom:1px solid ' + line + ';color:' + muted + ';font-size:13px;width:96px;vertical-align:top">' + label + '</td>' +
+      '<td style="padding:8px 0;border-bottom:1px solid ' + line + ';color:' + ink + ';font-size:14px;vertical-align:top">' + valueHtml + '</td>' +
+    '</tr>';
+  };
+  var emailCell = a.validEmail
+    ? '<a href="mailto:' + escapeHtml(a.email) + '" style="color:' + accent + ';text-decoration:none">' + escapeHtml(a.email) + '</a>'
+    : escapeHtml(a.email || '\u2014') + ' <span style="color:#b4541a;font-size:12px">(no valid reply-to)</span>';
+  var pill = 'display:inline-block;padding:11px 20px;border-radius:999px;font-size:14px;font-weight:bold;text-decoration:none';
+  var source = a.viaChat
+    ? '<span style="display:inline-block;background:#eaf1fc;color:' + accent + ';font-size:12px;font-weight:bold;padding:4px 10px;border-radius:999px">Sent through Deemo, the site chat</span>'
+    : '<span style="display:inline-block;background:#eef1f5;color:' + muted + ';font-size:12px;font-weight:bold;padding:4px 10px;border-radius:999px">Contact form</span>';
+  return '' +
+    '<div style="background:#f3f5f8;padding:24px 12px;font-family:Arial,Helvetica,sans-serif">' +
+    '<div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid ' + line + ';border-radius:14px;overflow:hidden">' +
+      '<div style="padding:22px 28px 18px;border-bottom:4px solid ' + accent + '">' +
+        '<img src="https://deemcreative.com/assets/signature/logo.png" width="72" height="48" alt="Deem Creative" style="display:block;border:0;width:72px;height:48px">' +
+      '</div>' +
+      '<div style="background:' + navy + ';padding:20px 28px">' +
+        '<p style="margin:0 0 4px;color:#8DB3F0;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:bold">New message</p>' +
+        '<h1 style="margin:0;color:#ffffff;font-size:20px;line-height:1.3">' + escapeHtml(a.name) + ' wrote to you on deemcreative.com</h1>' +
+      '</div>' +
+      '<div style="padding:24px 28px 8px">' +
+        '<p style="margin:0 0 16px">' + source + '</p>' +
+        '<table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 20px">' +
+          row('Name', escapeHtml(a.name)) +
+          row('Email', emailCell) +
+          (a.phone ? row('Phone', escapeHtml(a.phone)) : '') +
+          (a.company ? row('Company', escapeHtml(a.company)) : '') +
+          row('Received', escapeHtml(a.received)) +
+        '</table>' +
+        '<div style="background:#f7f9fc;border-left:4px solid ' + accent + ';border-radius:8px;padding:16px 18px;margin:0 0 22px;color:' + ink + ';font-size:15px;line-height:1.55;white-space:pre-wrap;word-break:break-word">' +
+          escapeHtml(a.message) +
+        '</div>' +
+        '<div style="margin:0 0 24px">' +
+          (a.validEmail
+            ? '<a href="mailto:' + escapeHtml(a.email) + '?subject=' + encodeURIComponent('Re: your message to Deem Creative') + '" style="' + pill + ';background:' + navy + ';color:#ffffff;margin:0 8px 8px 0">Reply to ' + escapeHtml(a.name.split(' ')[0]) + '</a>'
+            : '') +
+          '<a href="https://deemcreative.com/admin" style="' + pill + ';background:#ffffff;color:' + navy + ';border:1px solid ' + navy + ';margin:0 0 8px">Open in admin</a>' +
+        '</div>' +
+      '</div>' +
+      '<div style="padding:14px 28px;border-top:1px solid ' + line + ';color:#90a0b7;font-size:12px">' +
+        'Hitting reply in your mail app goes straight to the sender. Sent automatically by your Deem Creative site.' +
+      '</div>' +
+    '</div>' +
+    '</div>';
 }
 
 /** Email the owner about messages after the (created_at, id) cursor. */
@@ -1488,7 +1547,7 @@ function notifyNewMessages() {
   var rows = JSON.parse(res.getContentText());
   for (var i = 0; i < rows.length; i++) {
     var m = formatMessageAlert(rows[i]);
-    var mail = { to: CONFIG.OWNER_EMAIL, subject: m.subject, body: m.body, name: 'Deem Creative site' };
+    var mail = { to: CONFIG.OWNER_EMAIL, subject: m.subject, body: m.body, htmlBody: m.htmlBody, name: 'Deem Creative site' };
     if (m.replyTo) mail.replyTo = m.replyTo;
     try {
       MailApp.sendEmail(mail);

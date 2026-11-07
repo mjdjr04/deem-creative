@@ -88,12 +88,11 @@ export const settingsDefaults = {
     website: 'https://deemcreative.com',
     address: '',
   },
-  // Contact form (on the Contact page). Submissions save to your admin inbox;
-  // if a Formspree endpoint is set, they're also emailed to you.
+  // Contact form (on the Contact page). Submissions save to your admin inbox
+  // and the booking Apps Script emails you a branded alert for each one.
   contact: {
     heading: 'Send a Message',
     subtext: "Fill out the form and I'll get back to you, usually within 24 hours.",
-    formspreeEndpoint: '',
   },
 }
 

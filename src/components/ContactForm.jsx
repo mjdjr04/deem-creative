@@ -60,7 +60,6 @@ export default function ContactForm() {
     const result = await sendContactMessage(form, {
       turnstileToken: tsToken,
       source: 'form',
-      formspreeEndpoint: contact.formspreeEndpoint,
     })
 
     setBusy(false)

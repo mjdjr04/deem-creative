@@ -137,3 +137,39 @@ describe('installMessageAlertTrigger', () => {
     expect(create).toHaveBeenCalled()
   })
 })
+
+describe('formatMessageAlert HTML', () => {
+  it('escapes visitor input and includes reply + admin buttons', () => {
+    const { gs } = setup()
+    const m = gs.formatMessageAlert({ ...R2, name: 'Ann <b>', message: '<script>x</script>\nline 2' })
+    expect(m.htmlBody).not.toContain('<script>')
+    expect(m.htmlBody).toContain('&lt;script&gt;')
+    expect(m.htmlBody).toContain('Ann &lt;b&gt;')
+    expect(m.htmlBody).toContain('mailto:bob@x.com')
+    expect(m.htmlBody).toContain('https://deemcreative.com/admin')
+    expect(m.htmlBody).toContain('Contact form')
+  })
+  it('tags Deemo messages and strips the prefix from the shown text', () => {
+    const { gs } = setup()
+    const m = gs.formatMessageAlert({ ...R1, message: '(Sent through Deemo, the site chat)\n\nHello there' })
+    expect(m.htmlBody).toContain('Sent through Deemo, the site chat')
+    expect(m.htmlBody).toContain('Hello there')
+    expect(m.htmlBody.match(/Sent through Deemo/g).length).toBe(1)
+  })
+  it('omits the reply button without a valid email', () => {
+    const { gs } = setup()
+    const m = gs.formatMessageAlert({ ...R1, email: 'not-an-email' })
+    expect(m.htmlBody).not.toContain('Reply to')
+    expect(m.htmlBody).toContain('no valid reply-to')
+  })
+})
+
+describe('notifyNewMessages HTML', () => {
+  it('sends the HTML body with the plain-text fallback', () => {
+    const { gs, sendEmail } = setup({ props: { SUPABASE_SERVICE_KEY: 'k', LAST_ALERTED_AT: '2026-11-08T00:00:00+00:00' }, rows: [R1] })
+    gs.notifyNewMessages()
+    const mail = sendEmail.mock.calls[0][0]
+    expect(mail.htmlBody).toContain('wrote to you on deemcreative.com')
+    expect(mail.body).toContain('Name: Ann')
+  })
+})

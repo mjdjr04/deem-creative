@@ -11,11 +11,14 @@ const fieldClass =
 
 // Deemo's draft of a message to Michael. The visitor edits and sends it; nothing
 // leaves the browser until they press "Send to Michael".
-export default function ChatMessageDraft({ draft, sent, onSent, onCancel }) {
+export default function ChatMessageDraft({ draft, sent, sending, onSending, onSent, onCancel }) {
   const contact = useContent().settings.contact || {}
   const uid = useId()
   const [form, setForm] = useState({ name: draft.name, email: draft.email, message: draft.message })
-  const [busy, setBusy] = useState(false)
+  const [localBusy, setBusy] = useState(false)
+  // `sending` lives on the parent message, so closing and reopening the panel
+  // mid-send can't start a second submit.
+  const busy = localBusy || Boolean(sending)
   const [error, setError] = useState(null)
   const [tsToken, setTsToken] = useState('')
   const turnstile = useRef(null)
@@ -35,12 +38,14 @@ export default function ChatMessageDraft({ draft, sent, onSent, onCancel }) {
     e.preventDefault()
     if (busy) return
     setBusy(true)
+    onSending(true)
     setError(null)
     const result = await sendContactMessage(
       { name: form.name.trim(), email: form.email.trim(), phone: '', company: '', message: form.message.trim() },
       { turnstileToken: tsToken, source: 'chat', formspreeEndpoint: contact.formspreeEndpoint },
     )
     setBusy(false)
+    onSending(false)
     turnstile.current?.reset()
     if (result.ok) {
       trackEvent(ANALYTICS_EVENTS.CONTACT_SUBMIT, { form: 'chat' })

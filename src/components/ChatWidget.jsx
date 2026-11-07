@@ -49,6 +49,14 @@ const NUDGES = {
   },
 }
 
+// Shown when Deemo's draft was cut off before it finished.
+const DRAFT_FAILED = "I couldn't finish that draft — try again, or use the [contact form](/contact#message)."
+
+// Site-authored notes appended to the API history only (never displayed), so the
+// model knows what became of a draft card.
+const NOTE_SENT = '[Visitor sent the message draft.]'
+const NOTE_CANCELLED = '[Visitor cancelled the message draft.]'
+
 // One id per page visit, so an admin can read a conversation as a thread.
 function newSessionId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
@@ -218,7 +226,9 @@ export default function ChatWidget({ onOpenProject }) {
     setBusy(true)
 
     // API history must start with a user turn — drop the greeting (index 0).
-    const apiMessages = next.slice(1).map((m) => ({ role: m.role, content: m.content }))
+    // Assistant turns go back with their raw text (draft marker intact) so the
+    // model can revise its own draft; hidden notes record send/cancel outcomes.
+    const apiMessages = next.slice(1).map((m) => ({ role: m.role, content: m.raw ?? m.content }))
 
     try {
       const res = await fetch(BOOKING_API_URL, {
@@ -230,8 +240,11 @@ export default function ChatWidget({ onOpenProject }) {
       const raw = data.ok ? data.reply : (data.error || 'Something went wrong. Please email michael@deemcreative.com.')
       // Strip the draft marker: history and logs keep only the display text, so
       // a reload or a later API turn never carries raw JSON.
-      const { text: reply, draft } = extractMessageDraft(raw)
-      setMessages((m) => [...m, { role: 'assistant', content: reply, draft, draftSent: false }])
+      const parsed = extractMessageDraft(raw)
+      const reply = parsed.truncated ? DRAFT_FAILED : parsed.text
+      const draft = parsed.draft
+      // `raw` goes back to the model (display and logs use the stripped text).
+      setMessages((m) => [...m, { role: 'assistant', content: reply, raw: draft ? raw : undefined, draft, draftSent: false }])
       // Best-effort log of the exchange for the admin panel — never blocks the UI.
       if (data.ok) logChat({ sessionId: sessionId.current, question: text, answer: reply })
     } catch {
@@ -312,7 +325,7 @@ export default function ChatWidget({ onOpenProject }) {
 
             {/* Messages */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
-              {messages.map((m, i) => (
+              {messages.map((m, i) => m.hidden ? null : (
                 <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div
                     className={`${m.draft ? 'w-full' : 'max-w-[85%]'} px-3.5 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-line ${
@@ -326,8 +339,16 @@ export default function ChatWidget({ onOpenProject }) {
                       <ChatMessageDraft
                         draft={m.draft}
                         sent={m.draftSent}
-                        onSent={() => setMessages((all) => all.map((x, j) => (j === i ? { ...x, draftSent: true } : x)))}
-                        onCancel={() => setMessages((all) => all.map((x, j) => (j === i ? { ...x, draft: null } : x)))}
+                        sending={m.draftSending}
+                        onSending={(v) => setMessages((all) => all.map((x, j) => (j === i ? { ...x, draftSending: v } : x)))}
+                        onSent={() => setMessages((all) => [
+                          ...all.map((x, j) => (j === i ? { ...x, draftSent: true, draftSending: false } : x)),
+                          { role: 'user', content: NOTE_SENT, hidden: true },
+                        ])}
+                        onCancel={() => setMessages((all) => [
+                          ...all.map((x, j) => (j === i ? { ...x, draft: null } : x)),
+                          { role: 'user', content: NOTE_CANCELLED, hidden: true },
+                        ])}
                       />
                     )}
                   </div>

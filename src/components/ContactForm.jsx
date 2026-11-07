@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Send, Loader2, CheckCircle2 } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
-import { sendContactMessage, FLAGGED_MSG } from '../lib/sendContactMessage'
+import { sendContactMessage, rateLimitError, FLAGGED_MSG } from '../lib/sendContactMessage'
 import { trackEvent } from '../lib/analytics'
 import { ANALYTICS_EVENTS } from '../config/analytics'
 import Turnstile from './Turnstile'
@@ -46,10 +46,17 @@ export default function ContactForm() {
       setError(FLAGGED_MSG)
       return
     }
+    // Rate limit: same browser submitting again within the cooldown.
+    const limited = rateLimitError()
+    if (limited) {
+      setError(limited)
+      return
+    }
+
     setBusy(true)
     setError(null)
 
-    // Rate limit, blocklists, Turnstile and the save all live in the shared pipeline.
+    // Blocklists, blocklists, Turnstile and the save all live in the shared pipeline.
     const result = await sendContactMessage(form, {
       turnstileToken: tsToken,
       source: 'form',

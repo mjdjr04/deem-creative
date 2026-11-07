@@ -16,17 +16,23 @@ export const TURNSTILE_MSG = 'Please complete the "I’m human" check below.'
 export const GENERIC_ERR = 'Something went wrong. Please email me directly.'
 export const CHAT_PREFIX = '(Sent through Deemo, the site chat)\n\n'
 
+/** RATE_MSG when this browser sent a message within the cooldown, else null. */
+export function rateLimitError() {
+  try {
+    const last = Number(localStorage.getItem(RATE_KEY) || 0)
+    if (last && Date.now() - last < RESUBMIT_COOLDOWN_MS) return RATE_MSG
+  } catch { /* localStorage unavailable — skip rate limit */ }
+  return null
+}
+
 /**
  * @param {{name,email,phone?,company?,message}} fields
  * @param {{turnstileToken?: string, source?: 'form'|'chat', formspreeEndpoint?: string}} opts
  * @returns {Promise<{ok:true}|{ok:false,error:string}>}
  */
 export async function sendContactMessage(fields, { turnstileToken = '', source = 'form', formspreeEndpoint } = {}) {
-  // Rate limit: same browser submitting again within the cooldown.
-  try {
-    const last = Number(localStorage.getItem(RATE_KEY) || 0)
-    if (last && Date.now() - last < RESUBMIT_COOLDOWN_MS) return { ok: false, error: RATE_MSG }
-  } catch { /* localStorage unavailable — skip rate limit */ }
+  const limited = rateLimitError()
+  if (limited) return { ok: false, error: limited }
 
   // Soft block: blocked by anonymous visitor id OR (reliably) by email.
   const [blockedById, blockedByEmail] = await Promise.all([

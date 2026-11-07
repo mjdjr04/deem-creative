@@ -1,25 +1,16 @@
 import { useRef, useState } from 'react'
 import { Send, Loader2, CheckCircle2 } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
-import { submitMessage, isVisitorBlocked, isEmailBlocked, verifyTurnstile } from '../lib/contentApi'
-import { trackEvent, currentVisitorId } from '../lib/analytics'
+import { sendContactMessage, FLAGGED_MSG } from '../lib/sendContactMessage'
+import { trackEvent } from '../lib/analytics'
 import { ANALYTICS_EVENTS } from '../config/analytics'
-import { isTurnstileEnabled } from '../config/turnstile'
 import Turnstile from './Turnstile'
 
 const inputClass =
   'w-full px-4 py-3 rounded-lg bg-brand-mid border border-brand-border text-white text-sm placeholder-white/30 focus:outline-none focus:border-brand-accent'
 
-// Spam thresholds. A human takes more than a couple seconds to fill the form,
-// and won't legitimately submit twice within a short window.
+// A human takes more than a couple seconds to fill the form.
 const MIN_FILL_MS = 3000
-const RESUBMIT_COOLDOWN_MS = 30000
-const RATE_KEY = 'dc_last_contact'
-
-// Shown when a submission is blocked (by the admin or the spam filter). Kept
-// generic so it doesn't reveal exactly why, and offers a path for real people.
-const FLAGGED_MSG = "This message couldn't be sent — it was flagged by our spam filter. If this is a mistake, please email me directly at michael@deemcreative.com."
-const RATE_MSG = 'You just sent a message a moment ago — please wait a bit before sending another.'
 
 export default function ContactForm() {
   const contact = useContent().settings.contact || {}
@@ -55,81 +46,25 @@ export default function ContactForm() {
       setError(FLAGGED_MSG)
       return
     }
-    // 3) Rate limit: same browser submitting again within the cooldown.
-    try {
-      const last = Number(localStorage.getItem(RATE_KEY) || 0)
-      if (last && Date.now() - last < RESUBMIT_COOLDOWN_MS) {
-        setError(RATE_MSG)
-        return
-      }
-    } catch { /* localStorage unavailable — skip rate limit */ }
-
     setBusy(true)
     setError(null)
 
-    // 4) Soft block: blocked by anonymous visitor id OR (reliably) by email.
-    const [blockedById, blockedByEmail] = await Promise.all([
-      isVisitorBlocked(currentVisitorId()),
-      isEmailBlocked(form.email),
-    ])
-    if (blockedById || blockedByEmail) {
-      setBusy(false)
-      setError(FLAGGED_MSG)
-      return
-    }
-
-    // 5) Turnstile: require a solved, server-verified token when enabled.
-    if (isTurnstileEnabled) {
-      if (!tsToken) {
-        setBusy(false)
-        setError('Please complete the "I’m human" check below.')
-        return
-      }
-      const human = await verifyTurnstile(tsToken)
-      if (!human) {
-        setBusy(false)
-        setError(FLAGGED_MSG)
-        turnstile.current?.reset()
-        return
-      }
-    }
-
-    let ok = false
-    let firstErr = null
-
-    // 1) Save to the admin inbox (Supabase).
-    try {
-      await submitMessage(form)
-      ok = true
-    } catch (err) {
-      firstErr = err
-    }
-
-    // 2) Email via Formspree, if an endpoint is configured.
-    const endpoint = contact.formspreeEndpoint
-    if (endpoint) {
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify(form),
-        })
-        if (res.ok) ok = true
-      } catch {
-        /* ignore — covered by the Supabase path */
-      }
-    }
+    // Rate limit, blocklists, Turnstile and the save all live in the shared pipeline.
+    const result = await sendContactMessage(form, {
+      turnstileToken: tsToken,
+      source: 'form',
+      formspreeEndpoint: contact.formspreeEndpoint,
+    })
 
     setBusy(false)
     // The Turnstile token is single-use — clear it for any subsequent attempt.
     turnstile.current?.reset()
-    if (ok) {
+    if (result.ok) {
       trackEvent(ANALYTICS_EVENTS.CONTACT_SUBMIT, { form: 'contact' })
-      try { localStorage.setItem(RATE_KEY, String(Date.now())) } catch { /* ignore */ }
       setDone(true)
       setForm({ name: '', email: '', phone: '', company: '', message: '' })
     } else {
-      setError(firstErr?.message || 'Something went wrong. Please email me directly.')
+      setError(result.error)
     }
   }
 

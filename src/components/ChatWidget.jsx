@@ -5,6 +5,8 @@ import { Bot, X, Send, Loader2, CalendarCheck, ExternalLink, Play } from 'lucide
 import { BOOKING_API_URL } from '../config/booking'
 import { logChat } from '../lib/contentApi'
 import { useContent } from '../context/ContentContext'
+import { extractMessageDraft } from '../lib/messageDraft'
+import ChatMessageDraft from './ChatMessageDraft'
 
 // The assistant's name — change it here and it updates everywhere.
 const BOT_NAME = 'Deemo'
@@ -20,6 +22,7 @@ const SUGGESTIONS = [
   'What did he build for the gala?',
   'Tell me about his experience',
   'How can I get in touch?',
+  'Send Michael a message',
 ]
 
 // Proactive nudges keyed by route. When a visitor lingers on a page, Deemo peeks
@@ -224,8 +227,11 @@ export default function ChatWidget({ onOpenProject }) {
         body: JSON.stringify({ action: 'chat', messages: apiMessages }),
       })
       const data = await res.json()
-      const reply = data.ok ? data.reply : (data.error || 'Something went wrong. Please email michael@deemcreative.com.')
-      setMessages((m) => [...m, { role: 'assistant', content: reply }])
+      const raw = data.ok ? data.reply : (data.error || 'Something went wrong. Please email michael@deemcreative.com.')
+      // Strip the draft marker: history and logs keep only the display text, so
+      // a reload or a later API turn never carries raw JSON.
+      const { text: reply, draft } = extractMessageDraft(raw)
+      setMessages((m) => [...m, { role: 'assistant', content: reply, draft, draftSent: false }])
       // Best-effort log of the exchange for the admin panel — never blocks the UI.
       if (data.ok) logChat({ sessionId: sessionId.current, question: text, answer: reply })
     } catch {
@@ -309,13 +315,21 @@ export default function ChatWidget({ onOpenProject }) {
               {messages.map((m, i) => (
                 <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div
-                    className={`max-w-[85%] px-3.5 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-line ${
+                    className={`${m.draft ? 'w-full' : 'max-w-[85%]'} px-3.5 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-line ${
                       m.role === 'user'
                         ? 'bg-brand-navy text-white rounded-br-sm'
                         : 'bg-brand-surface text-white/85 border border-brand-border rounded-bl-sm'
                     }`}
                   >
                     {m.role === 'assistant' ? renderReply(m.content) : m.content}
+                    {m.draft && (
+                      <ChatMessageDraft
+                        draft={m.draft}
+                        sent={m.draftSent}
+                        onSent={() => setMessages((all) => all.map((x, j) => (j === i ? { ...x, draftSent: true } : x)))}
+                        onCancel={() => setMessages((all) => all.map((x, j) => (j === i ? { ...x, draft: null } : x)))}
+                      />
+                    )}
                   </div>
                 </div>
               ))}

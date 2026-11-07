@@ -153,7 +153,10 @@ export default function ChatWidget({ onOpenProject }) {
     if (proj) {
       const id = proj[1].trim()
       const match = (content?.projects?.items || []).find((p) => p.id === id)
-      if (match && onOpenProject) {
+      if (match?.caseStudyPath) {
+        navigate(match.caseStudyPath)
+        setOpen(false)
+      } else if (match && onOpenProject) {
         onOpenProject(match)
         setOpen(false)
       } else {

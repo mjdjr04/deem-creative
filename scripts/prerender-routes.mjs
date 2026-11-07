@@ -18,6 +18,9 @@ const ROUTES = {
   'booking/strategy': 'Book a Strategy Session | Deem Creative',
   hire: 'Book a Recruiter Call | Deem Creative',
   privacy: 'Privacy | Deem Creative',
+  'work/bgccc-gala': 'The 2026 Gala: From Film to Front Door | Deem Creative',
+  'work/bgccc-connect': 'BGCCC Connect | Deem Creative',
+  'work/bgccc-letter-builder': 'BGCCC Letter Builder | Deem Creative',
 }
 
 const shell = readFileSync(join(DIST, 'index.html'), 'utf8')

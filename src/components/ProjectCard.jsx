@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
 import { DeemCreativeMark } from './DeemCreativeMark'
 
@@ -63,6 +64,8 @@ function CardMedia({ project }) {
 }
 
 export default function ProjectCard({ project, onClick }) {
+  const navigate = useNavigate()
+  const open = () => (project.caseStudyPath ? navigate(project.caseStudyPath) : onClick(project))
   return (
     <motion.article
       layout
@@ -72,12 +75,12 @@ export default function ProjectCard({ project, onClick }) {
       transition={{ duration: 0.25 }}
       whileHover={{ scale: 1.02, y: -4 }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => onClick(project)}
+      onClick={open}
       className="card-glow cursor-pointer rounded-2xl bg-card-gradient border border-brand-border overflow-hidden hover:border-brand-accent group flex flex-col h-full"
       tabIndex={0}
       role="button"
       aria-label={`View details for ${project.title}`}
-      onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onClick(project)}
+      onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && open()}
     >
       <CardMedia project={project} />
 

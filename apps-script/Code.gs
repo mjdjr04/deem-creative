@@ -205,6 +205,11 @@ function doPost(e) {
       return handleChat(f);
     }
 
+    // Public: rewrite the chatbot's opening line for a returning visitor.
+    if (f.action === 'chatGreeting') {
+      return handleChatGreeting(f);
+    }
+
     // Admin-only: AI-generate a short description of a feed post from its photos.
     if (f.action === 'feedDescribe') {
       return handleFeedDescribe(f);
@@ -869,6 +874,128 @@ function handleChat(f) {
   var text = '';
   (data.content || []).forEach(function (b) { if (b.type === 'text') text += b.text; });
   return jsonResponse({ ok: true, reply: text.trim() || "Sorry, I didn't catch that — could you rephrase?" });
+}
+
+// ─── Personalised greeting ──────────────────────────────────────────────────
+// The site picks WHAT to say from the visitor's own local history and renders a
+// hand-written line immediately; this endpoint only rewrites that line so it
+// doesn't read identically on every visit. If anything here fails the visitor
+// keeps the hand-written version, so failing closed costs nothing.
+//
+// Everything from the browser is untrusted. The intent must be one of the keys
+// below, and the facts are re-read field by field into a fresh object — no
+// client-supplied string is ever interpolated into the prompt.
+
+var GREETING_INTENTS = {
+  booking_unfinished: 'They started booking a free consultation and never finished it.',
+  contact_unfinished: 'They started writing a message on the contact form and never sent it.',
+  unseen_work: 'They have visited before but have never opened the portfolio or any project.',
+  work_seen_no_contact: 'They have looked through the portfolio but never started a booking or a message.',
+  welcome_back: 'They are a returning visitor with no unfinished business.'
+};
+
+// Mirrors SECTION_LABELS in src/lib/deemoGreeting.js.
+var GREETING_SECTIONS = {
+  'the home page': 1,
+  'the portfolio': 1,
+  'the services page': 1,
+  'the contact page': 1,
+  'the booking page': 1,
+  "Michael's profile": 1
+};
+
+var GREETING_PERSONA = [
+  "You write the single opening line for Deemo, the AI assistant on Michael Deem's",
+  'portfolio site (Deem Creative). A returning visitor is about to open the chat.',
+  '',
+  'Rules:',
+  '- Output ONE sentence, 30 words maximum, as plain text.',
+  '- Second person, warm and direct. Never salesy, never fawning.',
+  '- At most one emoji, and only where it genuinely helps. Usually none.',
+  '- Use ONLY the facts in the JSON provided. Never invent history, project names,',
+  '  dates, or anything the facts do not state.',
+  '- Never quote a precise visit count or number of days. Stay vague: "a while back".',
+  '  Acknowledge what they were doing; do not recite a dossier back at them.',
+  '- Close by offering help with the stated intent.',
+  '- Do not include internal or system XML tags in your response.',
+  '- Output the sentence and nothing else: no quotes, preamble, or explanation.'
+].join('\n');
+
+// Plain `map[key]` walks the prototype chain, so 'constructor', 'toString' and
+// '__proto__' all come back truthy and slip past an allowlist check. Every
+// lookup keyed on client input goes through this instead.
+function ownValue(map, key) {
+  return Object.prototype.hasOwnProperty.call(map, String(key)) ? map[String(key)] : null;
+}
+
+/** Re-read the client's facts into a fresh object of known shape. */
+function safeGreetingFacts(raw) {
+  var f = raw || {};
+  var days = null;
+  if (f.daysAway !== null && f.daysAway !== undefined && isFinite(Number(f.daysAway))) {
+    days = Math.max(0, Math.min(999, Math.floor(Number(f.daysAway))));
+  }
+  return {
+    visits: Math.max(0, Math.min(99, Math.floor(Number(f.visits) || 0))),
+    daysAway: days,
+    lastSection: ownValue(GREETING_SECTIONS, f.lastSection) ? String(f.lastSection) : null,
+    sawPortfolio: f.sawPortfolio === true,
+    startedBooking: f.startedBooking === true,
+    completedBooking: f.completedBooking === true,
+    startedContactForm: f.startedContactForm === true,
+    sentContactForm: f.sentContactForm === true,
+    downloadedResume: f.downloadedResume === true
+  };
+}
+
+function handleChatGreeting(f) {
+  var description = ownValue(GREETING_INTENTS, f.intent || '');
+  if (typeof description !== 'string' || !description) return jsonResponse({ ok: false });
+
+  var key = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
+  if (!key) return jsonResponse({ ok: false });
+
+  // Shares the chat budget deliberately — one ceiling on total assistant spend.
+  if (!chatRateOk()) return jsonResponse({ ok: false });
+
+  var payload = {
+    model: 'claude-opus-5',
+    max_tokens: 100,
+    // A one-line greeting needs no deliberation, and the browser gives up after
+    // 2.5s — thinking off at low effort keeps this inside that budget. Disabling
+    // thinking is only permitted at effort 'high' or below.
+    thinking: { type: 'disabled' },
+    output_config: { effort: 'low' },
+    system: [{ type: 'text', text: GREETING_PERSONA, cache_control: { type: 'ephemeral' } }],
+    messages: [{
+      role: 'user',
+      content: 'Situation: ' + description + '\nFacts: ' + JSON.stringify(safeGreetingFacts(f.facts))
+    }]
+  };
+
+  var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post',
+    contentType: 'application/json',
+    muteHttpExceptions: true,
+    headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    payload: JSON.stringify(payload)
+  });
+  if (res.getResponseCode() !== 200) return jsonResponse({ ok: false });
+
+  var data = JSON.parse(res.getContentText());
+  if (data.stop_reason === 'refusal') return jsonResponse({ ok: false });
+
+  var text = '';
+  (data.content || []).forEach(function (b) { if (b.type === 'text') text += b.text; });
+
+  // Collapse whitespace and drop any wrapping quotes the model added.
+  var greeting = String(text).replace(/\s+/g, ' ').trim().replace(/^["'](.*)["']$/, '$1').trim();
+  // Reject anything long enough to be a paragraph, or containing markup — with
+  // thinking disabled this model can occasionally leak internal tags.
+  if (!greeting || greeting.length > 240 || greeting.indexOf('<') !== -1) {
+    return jsonResponse({ ok: false });
+  }
+  return jsonResponse({ ok: true, greeting: greeting });
 }
 
 /** Simple global throttle: cap chat calls per rolling minute to limit abuse/cost. */

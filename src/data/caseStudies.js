@@ -32,10 +32,10 @@ export const CASE_STUDIES = {
       {
         id: 'registration',
         label: 'Registration',
-        heading: 'Tickets, tables and sponsorships in one form',
+        heading: 'Tickets and sponsorships in one form',
         problem: 'RSVPs and payments were scattered across email and paper.',
         built:
-          'I built a registration site where guests pick tickets or a table and pay through DonorDock. Every registration logs to a Google Sheet and sends a confirmation automatically.',
+          'I built a registration site where guests choose tickets or a sponsorship level, and ticket payment runs through DonorDock. Every registration logs to a Google Sheet and sends a confirmation.',
         images: [{ src: `${G}/registration.jpg`, alt: 'The gala registration site on a phone and a laptop' }],
         link: { label: 'Visit the registration site', href: 'https://gala.bgccumberland.org' },
       },
@@ -43,16 +43,16 @@ export const CASE_STUDIES = {
         id: 'program-book',
         label: 'Program Book',
         heading: 'Sponsor ads without the chasing',
-        problem: 'Collecting ad artwork from a dozen sponsors by email meant a lot of follow-up.',
+        problem: 'Collecting ad artwork from sponsors by email meant a lot of follow-up.',
         built:
-          'Each sponsor got a prefilled form, and the sheet tracks what has arrived and what is missing. Reminders go out on their own, and I laid out the book from what came in.',
+          'Each sponsor got a prefilled ad form, and the sheet tracks which ads have arrived. I sent reminders from an admin menu to the ones still missing, and the program book itself is a page on the site.',
         images: [{ src: `${G}/program-book.jpg`, alt: 'Pages from the gala program book' }],
       },
       {
         id: 'gala-night',
         label: 'Gala Night',
         heading: 'Check-in on a phone at the door',
-        problem: 'A paper list at the door is slow, and it falls apart when a party arrives in pieces.',
+        problem: 'The front door needed one live guest list that every staff member could see.',
         built:
           'I built a check-in screen that works on a phone, with every guest listed by name and parties merged. Staff tapped people in and every phone stayed in sync. Demo data shown.',
         images: [{ src: `${G}/check-in.jpg`, alt: 'Phone check-in screen with demo guest data' }],
@@ -63,7 +63,7 @@ export const CASE_STUDIES = {
         heading: 'Thanking everyone, with the film and photos',
         problem: 'Thank-yous after an event are the first thing to slip.',
         built:
-          'I turned the registration site into a thank-you page with the tribute film and the photo album. Then I sent the post-gala emails and a certificate to each sponsor.',
+          'I turned the registration site into a thank-you page with the tribute film and the photo album. I also sent the post-gala emails, with certificates of appreciation for sponsors.',
         images: [{ src: `${G}/thank-you.jpg`, alt: 'The gala thank-you page with the tribute video' }],
       },
     ],
@@ -96,10 +96,10 @@ export const CASE_STUDIES = {
       {
         id: 'save-contact',
         label: 'Save Contact',
-        heading: 'A contact card that works on iPhone and Android',
-        problem: 'Most phones will not add a contact without the right file type and a tap.',
+        heading: 'One tap to save the contact card',
+        problem: 'Typing a phone number from a business card is slow, and it is easy to get wrong.',
         built:
-          'The save button opens a contact card with a photo and both phone lines, built to work on iPhone and Android.',
+          'The save button opens a contact card with the staff member’s photo, so one tap adds them to your phone’s contacts.',
         images: [{ src: `${C}/save-contact.jpg`, alt: 'Phone prompt to create a new contact' }],
       },
       {
@@ -125,7 +125,7 @@ export const CASE_STUDIES = {
     hero: { image: `${L}/hero.jpg`, alt: 'A letter set on the Club letterhead' },
     stats: [
       { value: '3', label: 'optional helpers' },
-      { value: '1', label: 'page, no template to touch' },
+      { value: '1', label: 'page, no build step' },
     ],
     chapters: [
       {
@@ -134,7 +134,7 @@ export const CASE_STUDIES = {
         heading: 'Paste a draft, get a letter on brand',
         problem: 'Setting a letter on the letterhead by hand took time and left room for mistakes.',
         built:
-          'I built a single-page tool that sets pasted text on the letterhead. Nobody has to open or edit a template.',
+          'I built a single-page tool that sets pasted text on the letterhead.',
         images: [{ src: `${L}/letterhead.jpg`, alt: 'Draft text set on the letterhead' }],
       },
       {
@@ -152,7 +152,7 @@ export const CASE_STUDIES = {
         heading: 'Three optional AI buttons',
         problem: 'Long drafts need splitting, and subject lines and proofreading take time.',
         built:
-          'Optional buttons split a long draft, suggest a subject line and proofread. Each is off until someone clicks it.',
+          'Three optional buttons split a long draft, suggest a subject line and proofread.',
         images: [{ src: `${L}/helpers.jpg`, alt: 'The split, subject-line and proofread buttons' }],
       },
     ],

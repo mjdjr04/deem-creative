@@ -215,18 +215,18 @@ export default function CaseStudyPage() {
         {stats.length > 0 && (
           <dl className="flex flex-wrap gap-x-10 gap-y-4 mt-8 py-5 border-y border-white/10">
             {stats.map(s => (
-              <div key={s.label}>
-                <dd className="text-white text-3xl font-bold order-first">{s.value}</dd>
+              <div key={s.label} className="flex flex-col-reverse">
                 <dt className="text-white/55 text-sm">{s.label}</dt>
+                <dd className="text-white text-3xl font-bold">{s.value}</dd>
               </div>
             ))}
           </dl>
         )}
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 grid md:grid-cols-[11rem_1fr] gap-6 md:gap-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 md:grid md:grid-cols-[11rem_1fr] md:gap-10">
         <ChapterNav chapters={study.chapters} active={active} />
-        <div className="grid gap-14 md:gap-20 min-w-0">
+        <div className="grid gap-14 md:gap-20 min-w-0 mt-6 md:mt-0">
           {study.chapters.map((c, i) => (
             <Chapter key={c.id} chapter={c} index={i} slug={slug} />
           ))}

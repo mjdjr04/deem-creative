@@ -1,13 +1,10 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Calendar, ChevronDown } from 'lucide-react'
+import { ArrowRight, ChevronDown } from 'lucide-react'
 import { DeemCreativeLogoFull } from './DeemCreativeMark'
-import { useBooking } from '../context/BookingContext'
 import HeroBackdrop, { WatchReelButton } from './HeroBackdrop'
 
 export default function Hero() {
-  const { open } = useBooking()
-
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-hero-gradient">
       {/* Tribute still (or loop) behind everything */}
@@ -58,8 +55,8 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.15 }}
           className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight tracking-tight mb-6"
         >
-          Creative strategy, content, and storytelling{' '}
-          <span className="text-gradient">for brands that want to connect with people.</span>
+          Films, campaigns, and digital tools{' '}
+          <span className="text-gradient">for organizations that serve their communities.</span>
         </motion.h1>
 
         {/* Subheadline */}
@@ -67,21 +64,11 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-lg md:text-xl text-white/70 max-w-3xl mx-auto mb-4 leading-relaxed"
+          className="text-lg md:text-xl text-white/70 max-w-3xl mx-auto mb-10 leading-relaxed"
         >
-          Deem Creative helps startups, small businesses, nonprofits, and community-centered
-          organizations turn stories, ideas, and missions into polished content, video assets,
-          social campaigns, and digital systems.
-        </motion.p>
-
-        {/* Founder byline */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="text-sm text-brand-light mb-10 font-medium tracking-wide"
-        >
-          Founded by <span className="text-white">Michael Deem Jr.</span>
+          I'm Michael Deem Jr., a creative producer and content strategist. Recent work includes a
+          gala tribute film and the event system built around it, staff contact pages, and a
+          letterhead tool, all for the Boys &amp; Girls Clubs of Cumberland County.
         </motion.p>
 
         {/* CTA buttons */}
@@ -100,24 +87,16 @@ export default function Hero() {
               View My Work <ArrowRight size={18} />
             </Link>
           </motion.div>
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={open}
-            className="flex items-center gap-2 px-8 py-3.5 rounded-lg bg-brand-navy border-2 border-brand-accent text-white font-semibold text-base hover:bg-brand-accent transition-all cursor-pointer"
-          >
-            <Calendar size={18} /> Book a Creative Consult
-          </motion.button>
         </motion.div>
 
-        {/* Service tags row */}
+        {/* Work areas row */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.7 }}
           className="flex flex-wrap items-center justify-center gap-2 text-xs text-white/55 font-medium"
         >
-          {['Video Production', 'Social Media Strategy', 'Digital Storytelling', 'Website Support', 'Creative Operations'].map((item, i) => (
+          {['Film & Video', 'Social Campaigns', 'Digital Storytelling', 'Web Tools', 'Event Systems'].map((item, i) => (
             <span key={item} className="flex items-center gap-2">
               {item}
               {i < 4 && <span className="text-brand-border">·</span>}

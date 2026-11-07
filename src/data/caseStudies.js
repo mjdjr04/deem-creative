@@ -46,7 +46,7 @@ export const CASE_STUDIES = {
         problem: 'Collecting ad artwork from sponsors by email meant a lot of follow-up.',
         built:
           'Each sponsor got a prefilled ad form, and the sheet tracks which ads have arrived. I sent reminders from an admin menu to the ones still missing, and the program book itself is a page on the site.',
-        images: [{ src: `${G}/program-book.jpg`, alt: 'Pages from the gala program book' }],
+        images: [{ src: `${G}/program-book.jpg`, alt: 'The digital program book, open to the front cover' }],
       },
       {
         id: 'gala-night',
@@ -64,7 +64,7 @@ export const CASE_STUDIES = {
         problem: 'Thank-yous after an event are the first thing to slip.',
         built:
           'I turned the registration site into a thank-you page with the tribute film and the photo album. I also sent the post-gala emails, with certificates of appreciation for sponsors.',
-        images: [{ src: `${G}/thank-you.jpg`, alt: 'The gala thank-you page with the tribute video' }],
+        images: [{ src: `${G}/thank-you.jpg`, alt: 'The gala thank-you page, with links to the program book, tribute and photos' }],
       },
     ],
     quote: null,
@@ -144,7 +144,7 @@ export const CASE_STUDIES = {
         problem: 'A screenshot of a letter cannot be searched, copied or read aloud.',
         built:
           'It downloads a PDF with selectable text, not a flattened image. A leadership roster is built in and feeds the signature dropdown.',
-        images: [{ src: `${L}/pdf.jpg`, alt: 'The finished PDF with the signature dropdown' }],
+        images: [{ src: `${L}/pdf.jpg`, alt: 'The sign-off section, with the signer picked from a dropdown' }],
       },
       {
         id: 'helpers',
@@ -153,7 +153,7 @@ export const CASE_STUDIES = {
         problem: 'Long drafts need splitting, and subject lines and proofreading take time.',
         built:
           'Three optional buttons split a long draft, suggest a subject line and proofread.',
-        images: [{ src: `${L}/helpers.jpg`, alt: 'The split, subject-line and proofread buttons' }],
+        images: [{ src: `${L}/helpers.jpg`, alt: 'Pasting a full draft and splitting it into fields' }],
       },
     ],
     quote: null,

@@ -26,7 +26,7 @@ export const CASE_STUDIES = {
         heading: 'A tribute film that opened the night',
         problem: 'The gala needed one piece that told the room why the Club matters before anyone spoke.',
         built:
-          'I made the tribute film in Premiere Pro and After Effects. It played for 120+ guests, and it lives on the thank-you page afterward.',
+          'I made the tribute film. It played for 120+ guests, and it lives on the thank-you page afterward.',
         images: [{ src: `${G}/film-still.jpg`, alt: 'Still frame from the 2026 gala tribute film' }],
       },
       {

@@ -80,7 +80,7 @@ export const projects = [
     ],
     tools: ['React', 'Vite', 'Tailwind CSS', 'Google Apps Script', 'Vercel'],
     mediaType: 'image',
-    mediaUrl: null,
+    mediaUrl: '/assets/work/bgccc-connect/hero.jpg',
     accentColor: '#1A4A9A',
     socialLinks: [
       { label: 'connect.bgccumberland.org', url: 'https://connect.bgccumberland.org' },
@@ -107,7 +107,7 @@ export const projects = [
     ],
     tools: ['JavaScript', 'HTML', 'Vercel', 'Claude API'],
     mediaType: 'image',
-    mediaUrl: null,
+    mediaUrl: '/assets/work/bgccc-letter-builder/hero.jpg',
     accentColor: '#1A4A9A',
   },
   {

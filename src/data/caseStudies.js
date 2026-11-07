@@ -100,7 +100,7 @@ export const CASE_STUDIES = {
         problem: 'Typing a phone number from a business card is slow, and it is easy to get wrong.',
         built:
           'The save button opens a contact card with the staff member’s photo, so one tap adds them to your phone’s contacts.',
-        images: [{ src: `${C}/save-contact.jpg`, alt: 'Phone prompt to create a new contact' }],
+        images: [{ src: `${C}/save-contact.jpg`, alt: 'The save-contact button on a staff contact page' }],
       },
       {
         id: 'share-back',

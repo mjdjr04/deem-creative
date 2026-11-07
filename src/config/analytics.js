@@ -30,7 +30,7 @@ export const CUSTOM_ANALYTICS_ENABLED = true
 export const GA4_DASHBOARD_URL = import.meta.env.VITE_GA4_DASHBOARD_URL || ''
 export const CLOUDFLARE_DASHBOARD_URL = import.meta.env.VITE_CLOUDFLARE_DASHBOARD_URL || ''
 
-// High-intent events worth tracking on a hiring-focused portfolio. Used by the
+// High-intent events worth tracking on the portfolio. Used by the
 // custom tracker and forwarded to GA4 when enabled.
 export const ANALYTICS_EVENTS = {
   RESUME_DOWNLOAD: 'resume_download',

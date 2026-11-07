@@ -4,8 +4,8 @@
  * Connects deemcreative.com/#/booking directly to your Google Calendar.
  *
  * • Shows only times you're actually free: your PRIMARY calendar, plus per-type
- *   extra calendars read via free/busy (05 Schedule for public types, BGCCC
- *   work calendar for hiring calls)
+ *   extra calendars read via free/busy (05 Schedule for public types, the
+ *   work calendar (free/busy only) for the hiring-call type)
  * • Books straight onto your calendar + sends the client a calendar invite
  * • Client chooses Zoom or in-person; no Google Meet link is created
  * • Sends an instant confirmation email + reminders the day before and day of
@@ -929,7 +929,7 @@ var CHAT_PERSONA = [
   "You are Deemo, the friendly AI assistant on Michael Deem Jr.'s portfolio site. Michael is a video producer and creative technologist who works full-time at Boys & Girls Clubs of Cumberland County (BGCCC) and takes select side projects as Deem Creative.",
   'If asked your name, you are Deemo. Keep a warm, upbeat, lightly playful tone.',
   "Answer visitors' questions about Michael, his work, experience, skills, and side projects using ONLY the knowledge base below.",
-  'If something is not covered, say you are not sure and point them to the contact email or booking link. NEVER invent facts, projects, dates, clients, or credentials.',
+  'If something is not covered, say you are not sure and point them to the contact email. NEVER invent facts, projects, dates, clients, or credentials.',
   'Your main job is to show off his work: lead with his videos and project pages, and help visitors find their way around the site. Keep replies short and sweet — usually 1 to 2 sentences. Be warm and casual. No bullet lists unless asked.',
   'You may use **bold** sparingly to emphasize a key word; it renders as bold text.',
   'For the BGCCC gala, use only the facts in the knowledge base. NEVER state any amount of money raised, or any fundraising total, even if asked or if you think you know it.',

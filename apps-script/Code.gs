@@ -22,6 +22,11 @@ var CONFIG = {
   //  set the script up on the account that owns michael@deemcreative.com.)
   OWNER_EMAIL: 'michael@deemcreative.com',
 
+  // Extra calendars read through free/busy only (never subscribed). Needs the
+  // Advanced Calendar service enabled; see BOOKING_SETUP.md.
+  SCHEDULE_CAL_ID: '133016e4b280b14123b432346527fd165d3f9096fa52dd9df0a13268e72d2dc4@group.calendar.google.com',
+  BGCCC_CAL_ID: 'mdeem@bgccumberland.org',
+
   SLOT_MINUTES: 30,        // length of each consultation
 
   // Bookable window, in THIS SCRIPT'S time zone (set it to America/New_York
@@ -37,28 +42,32 @@ var CONFIG = {
   // src/config/booking.js → MEETING_KINDS[*].session.durationMinutes.
   TYPES: {
     networking: {
-      slotMinutes: 20, startHour: 15, endHour: 17, workDays: [1, 2, 3, 4, 5],
+      slotMinutes: 20, windows: { 5: [11, 18], 6: [10, 15] },
+      extraBusyCalendars: ['133016e4b280b14123b432346527fd165d3f9096fa52dd9df0a13268e72d2dc4@group.calendar.google.com'],
       maxPerDay: 2, bufferMinutes: 15,
       eventLabel: 'Networking Chat',
       calTitle: 'Networking Chat with Michael Deem Jr.',
       meetingTypes: ['zoom', 'phone'],
     },
     consultation: {
-      slotMinutes: 30, startHour: 11, endHour: 15, workDays: [1, 2, 3, 4, 5],
+      slotMinutes: 30, windows: { 5: [11, 18], 6: [10, 15] },
+      extraBusyCalendars: ['133016e4b280b14123b432346527fd165d3f9096fa52dd9df0a13268e72d2dc4@group.calendar.google.com'],
       maxPerDay: 3, bufferMinutes: 30,
       eventLabel: 'Deem Creative Consultation',
       calTitle: 'Deem Creative Consultation',
       meetingTypes: ['zoom', 'in-person'],
     },
     strategy: {
-      slotMinutes: 60, startHour: 11, endHour: 14, workDays: [1, 3, 5],
+      slotMinutes: 60, windows: { 5: [11, 18], 6: [10, 15] },
+      extraBusyCalendars: ['133016e4b280b14123b432346527fd165d3f9096fa52dd9df0a13268e72d2dc4@group.calendar.google.com'],
       maxPerDay: 1, bufferMinutes: 30,
       eventLabel: 'Strategy Deep-Dive',
       calTitle: 'Deem Creative Strategy Deep-Dive',
       meetingTypes: ['zoom', 'in-person'],
     },
     recruiter: {
-      slotMinutes: 30, startHour: 10, endHour: 17, workDays: [1, 2, 3, 4, 5],
+      slotMinutes: 30, windows: { 1: [10, 17], 2: [10, 17], 3: [10, 17], 4: [10, 17], 5: [10, 17] },
+      extraBusyCalendars: ['mdeem@bgccumberland.org'],
       maxPerDay: null, bufferMinutes: 30,
       eventLabel: 'Hiring Call',
       calTitle: 'Call with Michael Deem Jr.',
@@ -410,6 +419,56 @@ function computeSlots(opts) {
   return slots;
 }
 
+/** Busy blocks for other calendars via the Advanced Calendar service's
+ *  Freebusy (events marked free/transparent are ignored). Queries in chunks of
+ *  <= 30 days. A calendar with errors in any chunk, or a thrown query, is
+ *  listed in `unreadable` and contributes no busy for that chunk (fail open). */
+function extraBusy(calendarIds, fromMs, toMs) {
+  var busy = [];
+  var bad = {};
+  if (!calendarIds || !calendarIds.length) return { busy: busy, unreadable: [] };
+  var CHUNK = 30 * 86400000;
+  for (var start = fromMs; start < toMs; start += CHUNK) {
+    var end = Math.min(start + CHUNK, toMs);
+    try {
+      var res = Calendar.Freebusy.query({
+        timeMin: new Date(start).toISOString(),
+        timeMax: new Date(end).toISOString(),
+        timeZone: 'America/New_York',
+        items: calendarIds.map(function (id) { return { id: id }; }),
+      });
+      calendarIds.forEach(function (id) {
+        var c = res && res.calendars && res.calendars[id];
+        if (!c || (c.errors && c.errors.length)) {
+          bad[id] = true;
+          console.warn('Freebusy unreadable for ' + id + ': ' + JSON.stringify(c && c.errors));
+          return;
+        }
+        (c.busy || []).forEach(function (b) {
+          busy.push([new Date(b.start).getTime(), new Date(b.end).getTime()]);
+        });
+      });
+    } catch (err) {
+      calendarIds.forEach(function (id) { bad[id] = true; });
+      console.warn('Freebusy query failed: ' + err);
+    }
+  }
+  return { busy: busy, unreadable: calendarIds.filter(function (id) { return bad[id]; }) };
+}
+
+/** Run once from the editor: authorizes the Calendar service and logs, per
+ *  extra calendar, the busy-block count for the next 14 days or its error. */
+function probeBusyCalendars() {
+  var ids = [CONFIG.SCHEDULE_CAL_ID, CONFIG.BGCCC_CAL_ID];
+  var now = Date.now();
+  var r = extraBusy(ids, now, now + 14 * 86400000);
+  ids.forEach(function (id) {
+    if (r.unreadable.indexOf(id) >= 0) Logger.log(id + ': ERROR (see warnings above)');
+    else Logger.log(id + ': readable');
+  });
+  Logger.log('Total busy blocks, next 14 days: ' + r.busy.length);
+}
+
 /** Open slot start times (ISO strings) for one booking type, honoring that
  *  type's duration, hours, days, buffer, and per-day cap plus the global
  *  notice/window. */
@@ -429,6 +488,8 @@ function getAvailableSlots(type) {
   var busy = events.map(function (ev) {
     return [ev.getStartTime().getTime(), ev.getEndTime().getTime()];
   });
+  // Extra calendars (free/busy only). Unpadded: computeSlots pads by buffer.
+  busy = busy.concat(extraBusy(tc.extraBusyCalendars || [], now.getTime(), horizonMs + 86400000).busy);
 
   // Count existing bookings OF THIS TYPE per calendar day, for the per-day cap.
   var perDayCount = {};

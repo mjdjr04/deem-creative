@@ -118,6 +118,34 @@ Google Calendar Zoom button does, but automatic):
 If these properties are absent, or Zoom is unreachable, bookings still succeed
 and simply use the "link to follow by email" wording — nothing breaks.
 
+## Work schedule and BGCCC free/busy (Advanced Calendar service)
+
+Public bookings (consultation, networking, strategy) are offered only Fri/Sat
+and avoid your "05 Schedule" calendar. Hiring calls can fall in work hours but
+avoid real BGCCC meetings. Both are read with free/busy only; nothing is
+subscribed or added to your calendar list.
+
+1. In the Apps Script editor: **Services → + → Google Calendar API**, set the
+   identifier to `Calendar`, then **Add**. Or add this to `appsscript.json`
+   (**Project Settings → Show "appsscript.json"**):
+
+   ```json
+   "dependencies": {
+     "enabledAdvancedServices": [
+       { "userSymbol": "Calendar", "serviceId": "calendar", "version": "v3" }
+     ]
+   }
+   ```
+
+2. Run `probeBusyCalendars` once from the editor (▷ Run) and approve the new
+   permissions. The log shows, per calendar, whether it is readable.
+3. On the BGCCC work calendar, share **free/busy** (see only when busy) with
+   michael@deemcreative.com. Do not subscribe to or add that calendar.
+4. Re-deploy (Deploy → Manage deployments → Edit → New version).
+
+If a calendar can't be read, booking still works but ignores that calendar
+(a warning is logged); re-run `probeBusyCalendars` to diagnose.
+
 ## 7. Changing settings later
 
 Edit `CONFIG` in `Code.gs` (hours, buffer, 48-hour notice, 60-day window, reminder

@@ -357,30 +357,77 @@ function doPost(e) {
 
 // ─── Availability ───────────────────────────────────────────────────────────
 
+/** Weekday -> [startHour, endHour] map for a booking type. Uses tc.windows when
+ *  present; otherwise builds it from workDays x startHour/endHour. */
+function windowsFor(tc) {
+  if (tc.windows) return tc.windows;
+  var startHour = tc.startHour != null ? tc.startHour : CONFIG.WORK_START_HOUR;
+  var endHour = tc.endHour != null ? tc.endHour : CONFIG.WORK_END_HOUR;
+  var workDays = tc.workDays || CONFIG.WORK_DAYS;
+  var out = {};
+  workDays.forEach(function (d) { out[d] = [startHour, endHour]; });
+  return out;
+}
+
+/** Pure slot computation (no Apps Script services). opts:
+ *  nowMs, windowsByDay {weekday: [startHour, endHour]}, slotMinutes,
+ *  bufferMinutes, busy [[startMs, endMs]] (unpadded), perDayCount
+ *  {'Y-M-D': n} (month 0-based), maxPerDay (or null), minNoticeHours,
+ *  maxDaysAhead. Returns ISO start strings. Days are built in script-local time. */
+function computeSlots(opts) {
+  var slotMin = opts.slotMinutes;
+  var windowsByDay = opts.windowsByDay;
+  var perDayCount = opts.perDayCount || {};
+  var maxPerDay = opts.maxPerDay != null ? opts.maxPerDay : null;
+  var minStartMs = opts.nowMs + opts.minNoticeHours * 3600000;
+  var horizonMs = opts.nowMs + opts.maxDaysAhead * 86400000;
+
+  // Pad every busy block by the buffer on both sides.
+  var pad = opts.bufferMinutes * 60000;
+  var busy = opts.busy.map(function (b) { return [b[0] - pad, b[1] + pad]; });
+
+  var now = new Date(opts.nowMs);
+  var slots = [];
+  var day = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  while (day.getTime() <= horizonMs) {
+    var win = windowsByDay[day.getDay()];
+    if (win) {
+      var dayKey = day.getFullYear() + '-' + day.getMonth() + '-' + day.getDate();
+      var atCap = maxPerDay != null && (perDayCount[dayKey] || 0) >= maxPerDay;
+      if (!atCap) {
+        for (var mins = win[0] * 60; mins + slotMin <= win[1] * 60; mins += slotMin) {
+          var slotStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, mins);
+          var s = slotStart.getTime();
+          var eMs = s + slotMin * 60000;
+          if (s < minStartMs || s > horizonMs) continue;
+          var blocked = busy.some(function (b) { return s < b[1] && eMs > b[0]; });
+          if (!blocked) slots.push(slotStart.toISOString());
+        }
+      }
+    }
+    day.setDate(day.getDate() + 1);
+  }
+  return slots;
+}
+
 /** Open slot start times (ISO strings) for one booking type, honoring that
  *  type's duration, hours, days, buffer, and per-day cap plus the global
  *  notice/window. */
 function getAvailableSlots(type) {
   var tc = typeConfig(type);
   var slotMin = tc.slotMinutes != null ? tc.slotMinutes : CONFIG.SLOT_MINUTES;
-  var startHour = tc.startHour != null ? tc.startHour : CONFIG.WORK_START_HOUR;
-  var endHour = tc.endHour != null ? tc.endHour : CONFIG.WORK_END_HOUR;
-  var workDays = tc.workDays || CONFIG.WORK_DAYS;
   var bufferMin = tc.bufferMinutes != null ? tc.bufferMinutes : CONFIG.BUFFER_MINUTES;
   var maxPerDay = tc.maxPerDay != null ? tc.maxPerDay : null;
 
   var now = new Date();
-  var minStartMs = now.getTime() + CONFIG.MIN_NOTICE_HOURS * 3600000;
   var horizonMs = now.getTime() + CONFIG.MAX_DAYS_AHEAD * 86400000;
 
   var cal = CalendarApp.getDefaultCalendar();
   var events = cal.getEvents(now, new Date(horizonMs + 86400000))
     .filter(function (ev) { return !ev.isAllDayEvent(); });
 
-  // Pad every real event by THIS TYPE's buffer on both sides.
-  var pad = bufferMin * 60000;
   var busy = events.map(function (ev) {
-    return [ev.getStartTime().getTime() - pad, ev.getEndTime().getTime() + pad];
+    return [ev.getStartTime().getTime(), ev.getEndTime().getTime()];
   });
 
   // Count existing bookings OF THIS TYPE per calendar day, for the per-day cap.
@@ -395,26 +442,17 @@ function getAvailableSlots(type) {
     });
   }
 
-  var slots = [];
-  var day = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  while (day.getTime() <= horizonMs) {
-    if (workDays.indexOf(day.getDay()) !== -1) {
-      var dayKey = day.getFullYear() + '-' + day.getMonth() + '-' + day.getDate();
-      var atCap = maxPerDay != null && (perDayCount[dayKey] || 0) >= maxPerDay;
-      if (!atCap) {
-        for (var mins = startHour * 60; mins + slotMin <= endHour * 60; mins += slotMin) {
-          var slotStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, mins);
-          var s = slotStart.getTime();
-          var eMs = s + slotMin * 60000;
-          if (s < minStartMs || s > horizonMs) continue;
-          var blocked = busy.some(function (b) { return s < b[1] && eMs > b[0]; });
-          if (!blocked) slots.push(slotStart.toISOString());
-        }
-      }
-    }
-    day.setDate(day.getDate() + 1);
-  }
-  return slots;
+  return computeSlots({
+    nowMs: now.getTime(),
+    windowsByDay: windowsFor(tc),
+    slotMinutes: slotMin,
+    bufferMinutes: bufferMin,
+    busy: busy,
+    perDayCount: perDayCount,
+    maxPerDay: maxPerDay,
+    minNoticeHours: CONFIG.MIN_NOTICE_HOURS,
+    maxDaysAhead: CONFIG.MAX_DAYS_AHEAD,
+  });
 }
 
 // ─── Reminders (daily time-driven trigger) ──────────────────────────────────

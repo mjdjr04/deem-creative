@@ -1400,6 +1400,76 @@ function sendOwnerEmail(d) {
   });
 }
 
+// ─── Message alerts ─────────────────────────────────────────────────────────
+// Time-driven poller: emails the owner when a row lands in Supabase `messages`
+// (site contact form, Deemo). Needs Script Property SUPABASE_SERVICE_KEY
+// (never logged). LAST_ALERTED_AT is the created_at of the last alerted row.
+
+/** Build the owner alert for one `messages` row. */
+function formatMessageAlert(row) {
+  var name = clean(row.name, 200) || 'Unknown';
+  var received = '';
+  try {
+    received = Utilities.formatDate(new Date(row.created_at), 'America/New_York', 'EEEE, MMMM d, yyyy h:mm a') + ' ET';
+  } catch (e) { received = String(row.created_at || ''); }
+  var lines = ['Name: ' + name, 'Email: ' + (row.email || '')];
+  if (row.phone) lines.push('Phone: ' + row.phone);
+  if (row.company) lines.push('Company: ' + row.company);
+  lines.push('Received: ' + received, '', String(row.message || ''), '', 'Admin: https://deemcreative.com/admin');
+  return {
+    subject: 'New message from ' + name + ' \u2014 deemcreative.com',
+    body: lines.join('\n'),
+    replyTo: row.email || ''
+  };
+}
+
+/** Email the owner about messages newer than LAST_ALERTED_AT. */
+function notifyNewMessages() {
+  var props = PropertiesService.getScriptProperties();
+  var key = props.getProperty('SUPABASE_SERVICE_KEY');
+  if (!key) { console.warn('notifyNewMessages: SUPABASE_SERVICE_KEY not set'); return; }
+
+  var last = props.getProperty('LAST_ALERTED_AT');
+  if (!last) { props.setProperty('LAST_ALERTED_AT', new Date().toISOString()); return; }
+
+  var url = CONFIG.SUPABASE_URL + '/rest/v1/messages?created_at=gt.' + encodeURIComponent(last) +
+    '&order=created_at.asc&limit=20';
+  var res = UrlFetchApp.fetch(url, {
+    method: 'get',
+    muteHttpExceptions: true,
+    headers: { apikey: key, Authorization: 'Bearer ' + key }
+  });
+  if (res.getResponseCode() !== 200) {
+    console.warn('notifyNewMessages: fetch failed with HTTP ' + res.getResponseCode());
+    return;
+  }
+  var rows = JSON.parse(res.getContentText());
+  for (var i = 0; i < rows.length; i++) {
+    var m = formatMessageAlert(rows[i]);
+    try {
+      MailApp.sendEmail({
+        to: CONFIG.OWNER_EMAIL,
+        subject: m.subject,
+        body: m.body,
+        replyTo: m.replyTo,
+        name: 'Deem Creative site'
+      });
+    } catch (err) {
+      console.warn('notifyNewMessages: send failed, will retry next run');
+      return;
+    }
+    props.setProperty('LAST_ALERTED_AT', rows[i].created_at);
+  }
+}
+
+/** Run once from the editor: (re)creates the 5-minute alert trigger. */
+function installMessageAlertTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'notifyNewMessages') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('notifyNewMessages').timeBased().everyMinutes(5).create();
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function row(label, value) {

@@ -178,3 +178,24 @@ Sent folder.
 - To change the wording/behavior, edit `automation/granola-followup-routine.md`
   and update the routine prompt.
 - It only touches meetings booked through your site.
+
+## New-message email alerts
+
+When someone sends a message through the site (contact form or Deemo), the
+"Deem Creative Booking" script emails you at `michael@deemcreative.com`.
+A time-driven trigger checks Supabase every 5 minutes.
+
+**Setup:**
+1. Apps Script → ⚙ Project Settings → Script Properties, add
+   `SUPABASE_SERVICE_KEY` = the Supabase service-role key (paste it yourself;
+   never commit it or share it).
+2. Paste the updated `Code.gs`, then Deploy → Manage deployments → Edit →
+   New version → Deploy.
+3. In the editor, pick `installMessageAlertTrigger` and click Run, once. It
+   replaces any old alert trigger with a single every-5-minutes one.
+
+**First run:** the first time `notifyNewMessages` runs, it only records the
+current time in the `LAST_ALERTED_AT` script property and sends nothing, so
+old messages don't flood your inbox. After that, each new message sends one
+email (reply goes straight to the sender). If a send fails, that message is
+retried on the next run.

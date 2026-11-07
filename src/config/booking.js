@@ -34,7 +34,7 @@ export const MEETING_KINDS = {
       description:
         "A relaxed 20-minute call to connect, swap ideas, or just say hi — no pitch, no pressure.",
     },
-    detailItemsText: ['Zoom or phone — your choice'],
+    detailItemsText: ['Zoom or phone — your choice', 'Fridays 11–6 & Saturdays 10–3 (ET)'],
     whatToExpect: [
       'Get to know each other',
       'Swap ideas, referrals, or advice',
@@ -61,22 +61,22 @@ export const MEETING_KINDS = {
   consultation: {
     apiType: 'consultation',
     inPicker: true,
-    pickerBlurb: 'A free 30-minute call to talk through your goals and next steps.',
+    pickerBlurb: 'A 30-minute call about a video, content, or digital project — evenings & weekends.',
     eyebrow: 'Deem Creative',
-    pageTitle: 'Book a Consultation',
+    pageTitle: 'Book a Creative Consult',
     pageSubtitle:
       "Pick a time that works for you — it goes straight onto the calendar, and you'll get a confirmation email right away.",
     session: {
-      title: 'Free Consultation',
+      title: 'Creative Consult',
       durationMinutes: 30,
       description:
-        "A 30-minute call to talk through your goals, current challenges, audience, and what kind of creative support would actually move the needle.",
+        "A 30-minute call about a video, content, or digital project you have in mind. I take on a few side projects a year for nonprofits, small businesses, and creators.",
     },
-    detailItemsText: ['Zoom or in person — your choice'],
+    detailItemsText: ['Zoom or in person — your choice', 'Fridays 11–6 & Saturdays 10–3 (ET)'],
     whatToExpect: [
-      'Clarify your goals and what success looks like',
-      'Review your current content, systems, or creative challenges',
-      'Walk away with clear next steps — no pressure',
+      "Tell me about your project and who it's for",
+      "I'll share honest thoughts on scope, timing, and fit",
+      'Leave with clear next steps — no pressure',
     ],
     meetingTypes: [
       { value: 'zoom', label: 'Zoom', blurb: 'Michael will email you the link beforehand' },
@@ -100,7 +100,7 @@ export const MEETING_KINDS = {
 
   strategy: {
     apiType: 'strategy',
-    inPicker: true,
+    inPicker: false,
     pickerBlurb: 'A focused 60-minute working session to go deep on strategy.',
     eyebrow: 'Deem Creative',
     pageTitle: 'Book a Strategy Deep-Dive',
@@ -180,7 +180,11 @@ export const MEETING_KINDS = {
   },
 }
 
-export const PICKER_KINDS = ['networking', 'consultation', 'strategy']
+export const PICKER_KINDS = ['networking', 'consultation']
+
+// Kinds that /booking/:type will render. Strategy stays routable (direct links)
+// but is hidden from the picker.
+export const BOOKABLE_KINDS = [...PICKER_KINDS, 'strategy']
 
 // ─── Back-compat aliases (derived from MEETING_KINDS) ────────────────────────
 export const SESSION = MEETING_KINDS.consultation.session

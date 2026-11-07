@@ -59,8 +59,8 @@ var CONFIG = {
       slotMinutes: 30, windows: { 5: [11, 18], 6: [10, 15] },
       extraBusyCalendars: [SCHEDULE_CAL_ID],
       maxPerDay: 3, bufferMinutes: 30,
-      eventLabel: 'Deem Creative Consultation',
-      calTitle: 'Deem Creative Consultation',
+      eventLabel: 'Creative Consult',
+      calTitle: 'Creative Consult',
       meetingTypes: ['zoom', 'in-person'],
     },
     strategy: {
@@ -98,19 +98,19 @@ var CONFIG = {
 // with src/data/defaults.js → emailsDefaults.
 var TPL_DEFAULTS = {
   confirmation: {
-    subject: "You're booked — Deem Creative Consultation",
+    subject: "You're booked — Creative Consult with Deem Creative",
     heading: "You're booked!",
-    intro: 'Thanks for scheduling a consultation with Deem Creative. Here are the details:',
+    intro: 'Thanks for scheduling a Creative Consult with Deem Creative. Here are the details:',
   },
   reminderDayBefore: {
-    subject: 'Reminder: your Deem Creative consultation is tomorrow',
+    subject: 'Reminder: your Creative Consult with Deem Creative is tomorrow',
     heading: 'See you tomorrow',
-    intro: 'A friendly reminder that your consultation with Deem Creative is tomorrow:',
+    intro: 'A friendly reminder that your Creative Consult with Deem Creative is tomorrow:',
   },
   reminderDayOf: {
-    subject: 'Reminder: your Deem Creative consultation is today',
+    subject: 'Reminder: your Creative Consult with Deem Creative is today',
     heading: 'See you today',
-    intro: 'A friendly reminder that your consultation with Deem Creative is today:',
+    intro: 'A friendly reminder that your Creative Consult with Deem Creative is today:',
   },
   zoomLine: 'Michael Deem Jr. will email you the Zoom link before your meeting.',
   inPersonLine: 'Michael Deem Jr. will confirm the exact location with you (South Jersey area) before your meeting.',
@@ -1338,7 +1338,7 @@ function buildIcs(d) {
 
 function sendOwnerEmail(d) {
   var isRecruiter = d.bookingType === 'recruiter';
-  var heading = isRecruiter ? 'New hiring call booked' : 'New consultation booked';
+  var heading = isRecruiter ? 'New hiring call booked' : 'New Creative Consult booked';
   var html =
     '<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;color:#1a2e4a">' +
       '<h2 style="margin:0 0 16px">' + heading + '</h2>' +

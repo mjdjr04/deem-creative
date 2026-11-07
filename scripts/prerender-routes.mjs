@@ -14,7 +14,7 @@ const ROUTES = {
   contact: 'Contact | Deem Creative',
   booking: 'Book a Meeting | Deem Creative',
   'booking/networking': 'Book a Networking Chat | Deem Creative',
-  'booking/consultation': 'Book a Consultation | Deem Creative',
+  'booking/consultation': 'Book a Creative Consult | Deem Creative',
   'booking/strategy': 'Book a Strategy Session | Deem Creative',
   hire: 'Book a Recruiter Call | Deem Creative',
   privacy: 'Privacy | Deem Creative',

@@ -86,7 +86,7 @@ function ServiceItem({ service, onChange, onRemove, onMove }) {
             onChange={(v) => set('deliverables', v)}
             placeholder="e.g. Monthly content calendars"
           />
-          <Field label="CTA button URL" hint="Where the 'Book a Consultation' button points.">
+          <Field label="CTA button URL" hint="Where the 'Book a Creative Consult' button points.">
             <TextInput value={service.ctaUrl} onChange={(e) => set('ctaUrl', e.target.value)} />
           </Field>
         </div>

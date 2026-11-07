@@ -89,7 +89,7 @@ export default function ContactPage() {
               transition={{ duration: 0.6, delay: 0.15 }}
               className="flex flex-col"
             >
-              <h2 className="text-2xl font-bold text-white mb-4">Book a Consultation</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">Book a Creative Consult</h2>
               <p className="text-white/65 leading-relaxed mb-6">
                 Prefer to talk it through? The best way to get started is a 30-minute consultation
                 call — we'll cover your goals, current challenges, audience, and what kind of
@@ -119,7 +119,7 @@ export default function ContactPage() {
                 whileTap={{ scale: 0.97 }}
                 className="flex items-center justify-center gap-3 w-full py-4 px-8 rounded-xl bg-white text-brand-dark font-bold text-base hover:bg-brand-light hover:text-white transition-all shadow-lg cursor-pointer"
               >
-                <Calendar size={20} /> Book a Free Consultation
+                <Calendar size={20} /> Book a Creative Consult
               </motion.button>
             </motion.div>
           </div>

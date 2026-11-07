@@ -70,7 +70,7 @@ export default function ServicesPage() {
               Let's build something worth talking about.
             </h2>
             <p className="text-white/60 text-lg mb-10 max-w-xl mx-auto">
-              Book a free consultation to talk through your project, goals, and how Deem Creative can help.
+              Book a Creative Consult to talk through your project, goals, and how Deem Creative can help.
             </p>
             <motion.button
               onClick={open}
@@ -78,7 +78,7 @@ export default function ServicesPage() {
               whileTap={{ scale: 0.97 }}
               className="inline-flex items-center gap-3 px-12 py-5 rounded-2xl bg-white text-brand-dark font-bold text-lg hover:bg-brand-light hover:text-white transition-all shadow-xl cursor-pointer"
             >
-              <Calendar size={22} /> Book a Free Consultation
+              <Calendar size={22} /> Book a Creative Consult
             </motion.button>
             <p className="mt-5 text-white/55 text-sm">No commitment required · Typically within 1–3 business days</p>
           </motion.div>

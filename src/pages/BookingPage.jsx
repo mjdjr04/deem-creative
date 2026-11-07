@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import { Video, MapPin, Phone } from 'lucide-react'
 import BookingFlow from '../components/BookingFlow'
-import { MEETING_KINDS, PICKER_KINDS } from '../config/booking'
+import { MEETING_KINDS, BOOKABLE_KINDS } from '../config/booking'
 import { ANALYTICS_EVENTS } from '../config/analytics'
 
 const MEETING_ICONS = { zoom: Video, 'in-person': MapPin, phone: Phone }
@@ -29,7 +29,7 @@ export function buildBookingConfig(kind) {
 export default function BookingPage() {
   const { type } = useParams()
   const kind = type && MEETING_KINDS[type]
-  const valid = kind && PICKER_KINDS.includes(type)
+  const valid = kind && BOOKABLE_KINDS.includes(type)
 
   useEffect(() => {
     if (valid) document.title = `${kind.session.title} — Deem Creative`

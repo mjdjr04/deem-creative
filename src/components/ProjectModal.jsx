@@ -225,7 +225,7 @@ export default function ProjectModal({ project, onClose }) {
                     whileTap={{ scale: 0.97 }}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-navy border border-brand-accent text-white font-semibold text-sm hover:bg-brand-accent transition-colors cursor-pointer"
                   >
-                    <Calendar size={16} /> Book a Consultation
+                    <Calendar size={16} /> Book a Creative Consult
                   </motion.button>
                 </div>
               </div>

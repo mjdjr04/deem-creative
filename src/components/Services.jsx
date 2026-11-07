@@ -71,7 +71,7 @@ function ServiceCard({ service }) {
                 whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-navy border border-brand-accent text-white text-sm font-semibold hover:bg-brand-accent transition-colors cursor-pointer"
               >
-                <Calendar size={15} /> Book a Consultation
+                <Calendar size={15} /> Book a Creative Consult
               </motion.button>
             </div>
           </motion.div>

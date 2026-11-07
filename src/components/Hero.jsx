@@ -101,7 +101,7 @@ export default function Hero() {
             onClick={open}
             className="flex items-center gap-2 px-8 py-3.5 rounded-lg bg-brand-navy border-2 border-brand-accent text-white font-semibold text-base hover:bg-brand-accent transition-all cursor-pointer"
           >
-            <Calendar size={18} /> Book a Consultation
+            <Calendar size={18} /> Book a Creative Consult
           </motion.button>
         </motion.div>
 

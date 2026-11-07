@@ -17,9 +17,8 @@ const reducedMotionQuery = () =>
 // so onError alone never fires; treat a tiny image as a failure too.
 function Still({ id, scale, active, eager, kenBurns }) {
   const [size, setSize] = useState('maxresdefault')
-  const fallback = (e) => {
+  const fallback = () => {
     if (size === 'maxresdefault') setSize('hqdefault')
-    else e.currentTarget.onerror = null
   }
   return (
     <img
@@ -139,6 +138,13 @@ export default function VideoShowcase({ items = SHOWCASE, onProjectSelect }) {
     return () => io.disconnect()
   }, [])
 
+  // The focused control can unmount on a slide change without a blur event.
+  useEffect(() => {
+    if (stageRef.current && !stageRef.current.contains(document.activeElement)) {
+      dispatch({ type: 'resume', reason: 'focus' })
+    }
+  }, [index])
+
   // Pause: overlay open
   useEffect(() => {
     dispatch({ type: overlay === null ? 'resume' : 'pause', reason: 'overlay' })
@@ -169,6 +175,7 @@ export default function VideoShowcase({ items = SHOWCASE, onProjectSelect }) {
     if (!e.currentTarget.contains(e.relatedTarget)) dispatch({ type: 'resume', reason: 'focus' })
   }
   const onKeyDown = (e) => {
+    if (!e.currentTarget.contains(e.target)) return // keys from the portaled overlay
     if (e.key === 'ArrowRight') dispatch({ type: 'next' })
     else if (e.key === 'ArrowLeft') dispatch({ type: 'prev' })
   }
@@ -208,8 +215,8 @@ export default function VideoShowcase({ items = SHOWCASE, onProjectSelect }) {
           aria-roledescription="carousel"
           aria-label="Featured films"
           className="relative aspect-video rounded-[14px] overflow-hidden bg-black shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
-          onMouseEnter={() => dispatch({ type: 'pause', reason: 'hover' })}
-          onMouseLeave={() => dispatch({ type: 'resume', reason: 'hover' })}
+          onPointerEnter={(e) => { if (e.pointerType === 'mouse') dispatch({ type: 'pause', reason: 'hover' }) }}
+          onPointerLeave={(e) => { if (e.pointerType === 'mouse') dispatch({ type: 'resume', reason: 'hover' }) }}
           onFocus={(e) => {
             // keyboard focus only; a mouse click must not leave the show frozen
             let visible = true
@@ -314,7 +321,7 @@ export default function VideoShowcase({ items = SHOWCASE, onProjectSelect }) {
           </div>
         </div>
 
-        <div className="mt-3.5 flex gap-2.5 overflow-x-auto snap-x scrollbar-hide min-[700px]:grid min-[700px]:grid-cols-7 min-[700px]:overflow-visible pb-1 pt-1">
+        <div className="mt-3.5 flex gap-2.5 overflow-x-auto snap-x scrollbar-hide min-[700px]:grid min-[700px]:[grid-template-columns:repeat(var(--n),minmax(0,1fr))] min-[700px]:overflow-visible pb-1 pt-1" style={{ '--n': n }}>
           {items.map((it, i) => (
             <button
               key={it.youtubeId}

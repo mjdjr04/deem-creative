@@ -56,4 +56,14 @@ describe('slideshowReducer', () => {
     expect(slideshowReducer(start({ index: 6 }), { type: 'next' }).index).toBe(0)
     expect(slideshowReducer(start({ index: 2, elapsedMs: 900 }), { type: 'next' }).elapsedMs).toBe(0)
   })
+  it('reducedMotion action toggles the flag', () => {
+    const s = slideshowReducer(start(), { type: 'reducedMotion', value: true })
+    expect(s.reducedMotion).toBe(true)
+    expect(slideshowReducer(s, { type: 'tick', dtMs: SLIDE_MS }).index).toBe(0)
+  })
+  it('a tick larger than SLIDE_MS advances once and discards the overshoot', () => {
+    const s = slideshowReducer(start(), { type: 'tick', dtMs: SLIDE_MS * 2.5 })
+    expect(s.index).toBe(1)
+    expect(s.elapsedMs).toBe(0)
+  })
 })

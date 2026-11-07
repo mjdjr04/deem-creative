@@ -60,7 +60,7 @@ var CONFIG = {
       extraBusyCalendars: [SCHEDULE_CAL_ID],
       maxPerDay: 3, bufferMinutes: 30,
       eventLabel: 'Creative Consult',
-      calTitle: 'Creative Consult',
+      calTitle: 'Creative Consult with Deem Creative',
       meetingTypes: ['zoom', 'in-person'],
     },
     strategy: {

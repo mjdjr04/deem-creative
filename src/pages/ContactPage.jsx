@@ -91,19 +91,18 @@ export default function ContactPage() {
             >
               <h2 className="text-2xl font-bold text-white mb-4">Book a Creative Consult</h2>
               <p className="text-white/65 leading-relaxed mb-6">
-                Prefer to talk it through? The best way to get started is a 30-minute consultation
-                call — we'll cover your goals, current challenges, audience, and what kind of
-                creative support would actually move the needle.
+                Prefer to talk it through? A Creative Consult is a 30-minute call about a video,
+                content, or digital project you have in mind. I take on a few side projects a year
+                for nonprofits, small businesses, and creators.
               </p>
 
               <div className="p-6 rounded-2xl bg-brand-mid border border-brand-border mb-6">
-                <h3 className="text-white font-semibold mb-4">What to expect on a consultation call:</h3>
+                <h3 className="text-white font-semibold mb-4">What to expect on a Creative Consult:</h3>
                 <ul className="space-y-3">
                   {[
-                    'Clarify your goals and what success looks like',
-                    'Review your current content, systems, or creative challenges',
-                    'Identify what type of support makes the most impact',
-                    'Walk away with clear next steps — no pressure',
+                    "Tell me about your project and who it's for",
+                    "I'll share honest thoughts on scope, timing, and fit",
+                    'Leave with clear next steps — no pressure',
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-2 text-white/65 text-sm">
                       <span className="flex-shrink-0 flex items-center" style={{paddingTop:"0.2em"}} aria-hidden="true"><svg width="6" height="6" viewBox="0 0 6 6" fill="none"><circle cx="3" cy="3" r="3" fill="#2B5BA8"/></svg></span>

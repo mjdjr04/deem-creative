@@ -21,9 +21,9 @@ describe('pickHighlights', () => {
     expect(new Set(r.map((x) => x.item)).size).toBe(r.length)
   })
 
-  it('bundled defaults: the bgcc entry fills the first slot', () => {
+  it('bundled defaults: the current Director entry fills the first slot', () => {
     const r = pickHighlights(experiences)
-    expect(r.map((x) => x.item.id)).toEqual(['bgcc', 'fox-sports', 'njccf', 'bonner'])
+    expect(r.map((x) => x.item.id)).toEqual(['exp-1791336650664', 'fox-sports', 'njccf', 'bonner'])
   })
 
   it('falls back to id bgcc when it is not marked current', () => {

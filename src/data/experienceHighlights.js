@@ -1,15 +1,16 @@
 // Home-page experience summary: a short bio, four headline numbers, and one
-// line each for the roles that best show the range. The full timeline lives
-// at /experience.
+// line each for the roles that best show the range. The summary and stats are
+// the defaults for the CMS experience section (editable in /admin); the full
+// timeline lives at /experience.
 
 export const EXPERIENCE_SUMMARY =
-  "I'm a Film & Television graduate of Rider University who has edited for FOX Sports, grown social channels for nonprofits, and run national programs for the Bonner Foundation. Today I lead special projects at the Boys & Girls Clubs of Cumberland County, where I make the films and build the tools behind the work."
+  "I'm a filmmaker and builder for organizations that serve their communities. I've edited for FOX Sports Digital, grown the NJ Chamber Foundation's Instagram views 462%, and helped run a 450-person national institute for the Bonner Foundation. Today I'm Director of Special Projects at the Boys & Girls Clubs of Cumberland County, where I make the films and build the tools behind the work."
 
 export const EXPERIENCE_STATS = [
-  { value: '462%', label: 'Instagram view growth in 6 months · NJ Chamber of Commerce Foundation' },
-  { value: '450+', label: 'attendees at the Bonner Summer Leadership Institute I helped run' },
-  { value: '18', label: 'partner programs onboarded to Notion · Bonner Foundation' },
-  { value: '2026', label: 'World Cup build-up, editing at FOX Sports Digital' },
+  { value: '462%', label: 'Instagram view growth, Sep–Dec 2025 · NJ Chamber of Commerce Foundation' },
+  { value: '125+', label: 'registered guests at a gala I produced end to end · Boys & Girls Clubs of Cumberland County' },
+  { value: '450+', label: 'students, faculty, and staff at a national institute I helped run · Bonner Foundation' },
+  { value: '5', label: 'in-house tools shipped in three months · Boys & Girls Clubs of Cumberland County' },
 ]
 
 // Ordered. `match` takes an experience item. The first entry also carries a
@@ -18,7 +19,7 @@ export const EXPERIENCE_HIGHLIGHTS = [
   {
     match: (it) => it.type === 'current' && /Boys & Girls/.test(it.organization || ''),
     fallback: (it) => it.id === 'bgcc',
-    line: 'Lead special projects across video, events, technology, and communications, including the 2026 Gala from tribute film to check-in.',
+    line: 'Produced the 2026 Gala end to end for 125+ registered guests, from the tribute film to check-in, and shipped five in-house tools in three months.',
   },
   {
     match: (it) => it.id === 'fox-sports',
@@ -26,7 +27,7 @@ export const EXPERIENCE_HIGHLIGHTS = [
   },
   {
     match: (it) => it.id === 'njccf',
-    line: "Grew Instagram views 462% and reach 317% in six months for the Foundation's workforce-development programs.",
+    line: "Grew Instagram views 462% and interactions 696% from September to December 2025 for the Foundation's workforce-development programs.",
   },
   {
     match: (it) => it.id === 'bonner',

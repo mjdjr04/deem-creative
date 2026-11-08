@@ -15,8 +15,20 @@ import {
   projects,
 } from './projects'
 import { experiences, featuredProjects } from './experience'
+import { EXPERIENCE_SUMMARY, EXPERIENCE_STATS } from './experienceHighlights'
 import { services } from './services'
 import { skillGroups, coreSkills } from './skills'
+
+// Home hero. The headline is the positioning line (it replaces a job title);
+// the accent is the part shown in the gradient. The subheadline opens with
+// the one-sentence summary.
+export const heroDefaults = {
+  headline: 'Filmmaker and builder',
+  headlineAccent: 'for organizations that serve their communities.',
+  subheadline:
+    "I tell stories that make people care, then build the systems that turn that care into action. I'm Michael Deem Jr.: FOX Sports Digital alum, Director of Special Projects at the Boys & Girls Clubs of Cumberland County, and founder of Deem Creative.",
+  chips: ['Story Films', 'Social That Grows', 'Events, Start to Finish', 'Small Tools', 'Systems & Workflow'],
+}
 
 export const aboutDefaults = {
   eyebrow: 'About',
@@ -26,7 +38,7 @@ export const aboutDefaults = {
     'Founded by Michael Deem Jr., Deem Creative combines experience in film and television, social media strategy, nonprofit communications, post-production, and creative operations — bringing polished execution and organized systems thinking to every engagement.',
   ],
   founderName: 'Michael Deem Jr.',
-  founderTitle: 'Founder / Creative Consultant',
+  founderTitle: 'Filmmaker & Builder · Founder, Deem Creative',
   linkedinUrl: 'https://linkedin.com/in/michael-deem-jr',
   // Empty = use the bundled headshot asset; admin can upload a replacement.
   headshot: '',
@@ -35,25 +47,27 @@ export const aboutDefaults = {
   // this block tells the personal/career story on the profile page.
   profile: {
     eyebrow: 'About Me',
-    heading: 'From the edit bay to the content calendar.',
+    // Shown under Michael's name in the profile header.
+    positioning: 'Filmmaker and builder for organizations that serve their communities.',
+    heading: 'I tell stories that make people care, then build the systems that turn that care into action.',
     paragraphs: [
-      "I'm a creative producer and content strategist who came up through film and television — and learned to tell stories that land just as well on a 60-foot screen as on a six-second scroll. I recently earned my B.A. in Film & Television from Rider University, with a concentration in production, directing, and post-production.",
-      'My work lives where storytelling meets strategy. At FOX Sports, I edited and delivered social-first content that reached millions of viewers across global soccer and motorsports, and helped prep archival footage for broadcast on projects like the 1994 World Cup Reunion. At the New Jersey Chamber of Commerce Foundation, I lead multi-platform social strategy that has driven 462% growth in views and nearly 700% growth in audience interactions.',
-      "What ties it together is a producer's instinct: I can hold the creative vision and the operational details at the same time — directing a shoot, cutting the edit, building the content calendar, and standing up the systems (Notion, Zapier, analytics) that keep it all running. I've brought that range to newsrooms, foundations, nonprofits, and small businesses, and I carry the same polish and structure into every team I join.",
+      "Small teams don't have a video person, a social person, a web person, and a project manager. They have one person who has to be all four. That's the job I've done everywhere I've worked, and it's the job I love.",
+      "I edited for FOX Sports Digital during the World Cup build-up, grew the NJ Chamber of Commerce Foundation's Instagram views 462% from September to December 2025, and helped run the Bonner Foundation's 450-person national leadership institute. Today, as Director of Special Projects at the Boys & Girls Clubs of Cumberland County, I carry the Club's biggest projects from idea to finish line, from the gala's tribute film to the registration site, check-in, and thank-yous around it.",
+      "I bring big-team craft and a small-team work ethic. I make the thing, I build the system behind it, and I follow up until it's done. I earned my B.A. in Film & Television with Honors from Rider University.",
     ],
     // Animated metric cards shown in the profile intro.
     stats: [
-      { value: '462%', label: 'Instagram view growth at the NJ Chamber Foundation' },
-      { value: 'Millions', label: 'Viewers reached through FOX Sports content' },
-      { value: '8+', label: 'Production & media roles across film and nonprofit' },
-      { value: 'B.A.', label: 'Film & Television — Rider University' },
+      { value: '462%', label: 'Instagram view growth, Sep–Dec 2025 · NJ Chamber Foundation' },
+      { value: '125+', label: 'Registered guests at a gala I produced end to end' },
+      { value: '450+', label: 'Attendees at a national institute I helped run' },
+      { value: '5', label: 'In-house tools shipped for a small nonprofit team' },
     ],
     // Quick-fact chips ("at a glance").
     quickFacts: [
       'Based in the NJ / Philadelphia area',
       'Open to creative production & content strategy roles',
       'Film • Social • Brand storytelling',
-      'Available immediately',
+      'Now: Director of Special Projects, BGCCC',
     ],
     // Recruiter call-to-action at the bottom of the profile page.
     cta: {
@@ -81,9 +95,9 @@ export const settingsDefaults = {
   vcard: {
     firstName: 'Michael',
     lastName: 'Deem Jr.',
-    title: 'Creative Producer & Content Strategist',
+    title: 'Filmmaker & Builder',
     company: 'Deem Creative',
-    phone: '(929) 831-7254',
+    phone: '(609) 381-1176',
     email: 'michael@deemcreative.com',
     website: 'https://deemcreative.com',
     address: '',
@@ -190,9 +204,12 @@ export const defaultContent = {
     categories: CATEGORIES,
     featuredIds: FEATURED_PROJECT_IDS,
   },
+  hero: heroDefaults,
   experience: {
     items: experiences,
     featuredProjects,
+    summary: EXPERIENCE_SUMMARY,
+    stats: EXPERIENCE_STATS,
   },
   services: {
     items: services,
@@ -209,4 +226,4 @@ export const defaultContent = {
 }
 
 // The list of editable sections, in admin-nav order.
-export const SECTIONS = ['about', 'projects', 'experience', 'services', 'skills', 'feed', 'emails', 'settings']
+export const SECTIONS = ['hero', 'about', 'projects', 'experience', 'services', 'skills', 'feed', 'emails', 'settings']

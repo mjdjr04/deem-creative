@@ -24,6 +24,8 @@ const navLinks = [
     ],
   },
   { label: 'Experience', to: '/experience' },
+  { label: 'Story',     to: '/story' },
+  { label: 'Work with me', to: '/services' },
   { label: 'Contact',   to: '/contact' },
 ]
 

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { AdminProvider, useAdmin } from '../../context/AdminContext'
 import Login from './Login'
 import AdminLayout from './AdminLayout'
+import HeroEditor from './editors/HeroEditor'
 import AboutEditor from './editors/AboutEditor'
 import ProjectsEditor from './editors/ProjectsEditor'
 import ExperienceEditor from './editors/ExperienceEditor'
@@ -73,6 +74,7 @@ function Gate() {
     <Routes>
       <Route element={<AdminLayout />}>
         <Route index element={<Navigate to="/admin/about" replace />} />
+        <Route path="hero" element={<HeroEditor />} />
         <Route path="about" element={<AboutEditor />} />
         <Route path="projects" element={<ProjectsEditor />} />
         <Route path="experience" element={<ExperienceEditor />} />

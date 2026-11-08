@@ -3,8 +3,13 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, ChevronDown } from 'lucide-react'
 import { DeemCreativeLogoFull } from './DeemCreativeMark'
 import { WatchReelButton } from './HeroBackdrop'
+import { useContent } from '../context/ContentContext'
+import { heroDefaults } from '../data/defaults'
 
 export default function Hero() {
+  const hero = useContent().hero || heroDefaults
+  const accent = (hero.headlineAccent || '').trim()
+  const chips = (hero.chips || []).map((c) => (c || '').trim()).filter(Boolean)
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-hero-gradient">
       {/* Faint blueprint grid */}
@@ -52,8 +57,13 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.15 }}
           className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight tracking-tight mb-6"
         >
-          Films, campaigns, and digital tools{' '}
-          <span className="text-gradient">for organizations that serve their communities.</span>
+          {hero.headline}
+          {accent && (
+            <>
+              {' '}
+              <span className="text-gradient">{accent}</span>
+            </>
+          )}
         </motion.h1>
 
         {/* Subheadline */}
@@ -63,9 +73,7 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-lg md:text-xl text-white/70 max-w-3xl mx-auto mb-10 leading-relaxed"
         >
-          I'm Michael Deem Jr., a creative producer and content strategist. Recent work includes a
-          gala tribute film and the event system built around it, staff contact pages, and a
-          letterhead tool, all for the Boys &amp; Girls Clubs of Cumberland County.
+          {hero.subheadline}
         </motion.p>
 
         {/* CTA buttons */}
@@ -93,10 +101,10 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.7 }}
           className="flex flex-wrap items-center justify-center gap-2 text-xs text-white/55 font-medium"
         >
-          {['Film & Video', 'Social Campaigns', 'Digital Storytelling', 'Web Tools', 'Event Systems'].map((item, i) => (
+          {chips.map((item, i) => (
             <span key={item} className="flex items-center gap-2">
               {item}
-              {i < 4 && <span className="text-brand-border">·</span>}
+              {i < chips.length - 1 && <span className="text-brand-border">·</span>}
             </span>
           ))}
         </motion.div>

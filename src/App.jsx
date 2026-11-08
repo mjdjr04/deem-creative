@@ -22,6 +22,8 @@ import RecruiterBookingPage from './pages/RecruiterBookingPage'
 import ProfilePage from './pages/ProfilePage'
 import PrivacyPage from './pages/PrivacyPage'
 import CaseStudyPage from './pages/CaseStudyPage'
+import StoryPage from './pages/StoryPage'
+import WhitepaperPage from './pages/WhitepaperPage'
 
 // Admin is code-split so its Supabase client + editors never load on the
 // public site — only when someone visits /#/admin.
@@ -50,6 +52,8 @@ function AnimatedRoutes({ onProjectSelect }) {
           <Route path="/hire" element={<RecruiterBookingPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/work/:slug" element={<CaseStudyPage />} />
+          <Route path="/story" element={<StoryPage />} />
+          <Route path="/writing/:slug" element={<WhitepaperPage />} />
         </Routes>
       </motion.div>
     </AnimatePresence>

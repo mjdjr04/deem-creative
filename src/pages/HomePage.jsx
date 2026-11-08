@@ -3,6 +3,7 @@ import VideoShowcase from '../components/VideoShowcase'
 import BuiltForBGCCC from '../components/BuiltForBGCCC'
 import About from '../components/About'
 import ExperienceHighlights from '../components/ExperienceHighlights'
+import StoryTeaser from '../components/StoryTeaser'
 import Skills from '../components/Skills'
 import { SHOWCASE } from '../data/showcase'
 
@@ -17,6 +18,7 @@ export default function HomePage({ onProjectSelect }) {
       <section id="about">
         <About />
       </section>
+      <StoryTeaser />
       <ExperienceHighlights />
       <Skills />
     </>

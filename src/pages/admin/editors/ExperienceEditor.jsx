@@ -63,6 +63,9 @@ export default function ExperienceEditor() {
 
   const setItems = (it) => setValue({ ...value, items: it })
   const setFeatured = (f) => setValue({ ...value, featuredProjects: f })
+  const stats = value.stats || []
+  const setStat = (i, key, v) =>
+    setValue({ ...value, stats: stats.map((s, j) => (j === i ? { ...s, [key]: v } : s)) })
 
   const reorder = (arr, i, dir, setter) => {
     const j = i + dir
@@ -75,9 +78,24 @@ export default function ExperienceEditor() {
   return (
     <EditorShell
       title="Experience"
-      description="Your timeline of roles plus the featured project highlights."
+      description="Your Home-page summary and numbers, your timeline of roles, and the featured project highlights."
       draft={draft}
     >
+      <h3 className="text-white font-semibold mb-3">Home Page Summary</h3>
+      <Card className="mb-10">
+        <Field label="Summary" hint="The short paragraph above the numbers in the Experience section on Home.">
+          <TextArea rows={3} value={value.summary || ''} onChange={(e) => setValue({ ...value, summary: e.target.value })} />
+        </Field>
+        {stats.map((s, i) => (
+          <div key={i} className="grid grid-cols-3 gap-4">
+            <Field label={`Number ${i + 1}`}><TextInput value={s.value || ''} onChange={(e) => setStat(i, 'value', e.target.value)} /></Field>
+            <div className="col-span-2">
+              <Field label="Label" hint="Include the time frame, e.g. Sep–Dec 2025."><TextInput value={s.label || ''} onChange={(e) => setStat(i, 'label', e.target.value)} /></Field>
+            </div>
+          </div>
+        ))}
+      </Card>
+
       <h3 className="text-white font-semibold mb-3">Timeline Entries</h3>
       <div className="space-y-4">
         {items.map((exp, i) => {

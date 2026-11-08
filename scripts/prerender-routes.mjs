@@ -10,7 +10,18 @@ const DIST = 'dist'
 
 const ROUTES = {
   portfolio: 'Portfolio | Deem Creative',
-  services: 'Services | Deem Creative',
+  services: {
+    title: 'Work With Me | Michael Deem Jr.',
+    description: 'Hire me, bring me a project, or put me on set: story films, whole events, social that grows, small tools, and systems.',
+  },
+  story: {
+    title: 'My Story | Michael Deem Jr.',
+    description: 'Where I started, what changed, how I work, and where I’m going: four short stories behind the work.',
+  },
+  'writing/after-the-applause': {
+    title: 'After the Applause | Michael Deem Jr.',
+    description: 'Event storytelling for small nonprofits, from the film to the follow-up. A whitepaper by Michael Deem Jr.',
+  },
   contact: 'Contact | Deem Creative',
   experience: {
     title: 'Experience | Michael Deem Jr.',

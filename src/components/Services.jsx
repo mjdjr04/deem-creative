@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
-import { ChevronDown, Calendar } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ChevronDown, Calendar, ArrowRight } from 'lucide-react'
 import * as Icons from 'lucide-react'
 import { useContent } from '../context/ContentContext'
 import { useBooking } from '../context/BookingContext'
+import { groupServices } from '../data/services'
 
 function ServiceCard({ service }) {
   const [expanded, setExpanded] = useState(false)
@@ -35,6 +37,11 @@ function ServiceCard({ service }) {
           <p className="mt-3 text-brand-light/80 text-xs font-medium">
             Best for: {service.bestFor}
           </p>
+          {service.proof && (
+            <p className="mt-2 text-white/55 text-xs leading-relaxed">
+              <span className="text-white/70 font-semibold">Proof:</span> {service.proof}
+            </p>
+          )}
         </div>
         <ChevronDown
           size={20}
@@ -65,14 +72,23 @@ function ServiceCard({ service }) {
                   </li>
                 ))}
               </ul>
-              <motion.button
-                onClick={e => { e.stopPropagation(); open() }}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.97 }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-navy border border-brand-accent text-white text-sm font-semibold hover:bg-brand-accent transition-colors cursor-pointer"
-              >
-                <Calendar size={15} /> Book a Creative Consult
-              </motion.button>
+              {service.door === 'hire' ? (
+                <Link
+                  to="/hire"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-navy border border-brand-accent text-white text-sm font-semibold hover:bg-brand-accent transition-colors"
+                >
+                  <Calendar size={15} /> Book a call with me <ArrowRight size={15} aria-hidden="true" />
+                </Link>
+              ) : (
+                <motion.button
+                  onClick={e => { e.stopPropagation(); open() }}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-navy border border-brand-accent text-white text-sm font-semibold hover:bg-brand-accent transition-colors cursor-pointer"
+                >
+                  <Calendar size={15} /> Book a Creative Consult
+                </motion.button>
+              )}
             </div>
           </motion.div>
         )}
@@ -82,7 +98,7 @@ function ServiceCard({ service }) {
 }
 
 export default function Services() {
-  const services = useContent().services.items
+  const groups = groupServices(useContent().services.items)
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.1 })
 
@@ -98,21 +114,29 @@ export default function Services() {
           className="mb-14 max-w-2xl"
         >
           <p className="text-brand-light text-sm font-semibold tracking-widest uppercase mb-4">
-            Services
+            Three ways in
           </p>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Services built for small teams with big stories.
+            Hire me, bring me a project, or put me on set.
           </h2>
           <p className="text-white/60 text-lg">
-            Deem Creative helps startups, small businesses, nonprofits, and community-centered
-            organizations build stronger content, clearer digital systems, and more meaningful
-            audience connections.
+            Every offer below comes with the work that proves it. Open one to see what you get.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {services.map(service => (
-            <ServiceCard key={service.id} service={service} />
+        <div className="space-y-14">
+          {groups.map((group) => (
+            <div key={group.door}>
+              <div className="mb-5">
+                <h3 className="text-2xl font-bold text-white">{group.heading}</h3>
+                <p className="text-white/55 text-base mt-1">{group.intro}</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {group.items.map(service => (
+                  <ServiceCard key={service.id} service={service} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>

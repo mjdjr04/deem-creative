@@ -32,11 +32,10 @@ export default function ServicesPage() {
               Deem Creative
             </p>
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Services
+              Ways to work with me
             </h1>
             <p className="text-white/65 text-xl max-w-2xl">
-              Creative strategy, video production, and digital systems — built for small teams
-              with big stories. Click any service to see what's possible.
+              Hire me, bring me a project, or put me on set. Here's what that looks like.
             </p>
           </motion.div>
         </div>

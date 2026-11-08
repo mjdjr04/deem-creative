@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Mail, Phone, FileText, ExternalLink, Download, ChevronDown, Wrench, CheckCircle, Calendar, Check } from 'lucide-react'
+import { Mail, Phone, FileText, ExternalLink, Download, ChevronDown, Wrench, CheckCircle, Calendar, Check, BookOpen } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
 import { DeemCreativeMark } from '../components/DeemCreativeMark'
 import VCardButton from '../components/VCardButton'
@@ -13,6 +13,7 @@ import ContactForm from '../components/ContactForm'
 import defaultHeadshot from '../assets/headshot.jpeg'
 import { fullName } from '../lib/vcard'
 import { aboutDefaults } from '../data/defaults'
+import { WHITEPAPER } from '../data/whitepaper'
 import { trackEvent } from '../lib/analytics'
 import { ANALYTICS_EVENTS } from '../config/analytics'
 
@@ -151,7 +152,7 @@ export default function ProfilePage() {
             </div>
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">{name}</h1>
-              <p className="text-brand-light text-base md:text-lg">{vc.title}</p>
+              <p className="text-brand-light text-base md:text-lg">{intro?.positioning || vc.title}</p>
             </div>
           </motion.div>
 
@@ -173,6 +174,12 @@ export default function ProfilePage() {
               </a>
             )}
             <VCardButton className={`${btn} border border-brand-accent text-white hover:bg-brand-navy`} />
+            <Link to="/story" className={`${btn} border border-brand-border text-white/80 hover:border-brand-accent hover:text-white`}>
+              <BookOpen size={16} /> My story
+            </Link>
+            <Link to={`/writing/${WHITEPAPER.slug}`} className={`${btn} border border-brand-border text-white/80 hover:border-brand-accent hover:text-white`}>
+              <FileText size={16} /> Whitepaper
+            </Link>
             {about.linkedinUrl && (
               <a href={about.linkedinUrl} target="_blank" rel="noopener noreferrer" className={`${btn} border border-brand-border text-white/80 hover:border-brand-accent hover:text-white`}>
                 <LinkedInIcon size={16} /> LinkedIn

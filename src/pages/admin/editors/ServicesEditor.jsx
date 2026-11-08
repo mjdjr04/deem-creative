@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { ChevronDown, GripVertical } from 'lucide-react'
 import * as Icons from 'lucide-react'
 import { EditorShell, useSectionDraft } from '../EditorShell'
-import { Field, TextInput, TextArea, StringListEditor, Card, Button, Trash2, Plus } from '../../../components/admin/ui'
+import { Field, TextInput, TextArea, Select, StringListEditor, Card, Button, Trash2, Plus } from '../../../components/admin/ui'
+import { DOORS } from '../../../data/services'
 
 // Curated, relevant icon suggestions (autocomplete). Any Lucide name still works.
 const ICON_SUGGESTIONS = [
@@ -23,11 +24,13 @@ const makeId = (title) =>
 
 const blank = () => ({
   id: 'service-' + Date.now(),
+  door: 'studio',
   title: '',
   iconName: 'Star',
   description: '',
   bestFor: '',
   deliverables: [],
+  proof: '',
   ctaUrl: '',
 })
 
@@ -61,6 +64,11 @@ function ServiceItem({ service, onChange, onRemove, onMove }) {
           <Field label="Title">
             <TextInput value={service.title} onChange={(e) => set('title', e.target.value)} />
           </Field>
+          <Field label="Group" hint="Which of the three groups on the Work with me page this offer sits in.">
+            <Select value={service.door || 'studio'} onChange={(e) => set('door', e.target.value)}>
+              {DOORS.map((d) => <option key={d.id} value={d.id}>{d.heading}</option>)}
+            </Select>
+          </Field>
           <Field label="Icon name" hint="Start typing for suggestions. The box on the left previews the live icon.">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-brand-navy border border-brand-accent/30 flex items-center justify-center flex-shrink-0">
@@ -79,6 +87,9 @@ function ServiceItem({ service, onChange, onRemove, onMove }) {
           </Field>
           <Field label="Best for">
             <TextArea value={service.bestFor} onChange={(e) => set('bestFor', e.target.value)} rows={2} />
+          </Field>
+          <Field label="Proof" hint="One line of real work that backs this offer up.">
+            <TextArea value={service.proof || ''} onChange={(e) => set('proof', e.target.value)} rows={2} />
           </Field>
           <StringListEditor
             label="Deliverables / What's possible"
@@ -116,7 +127,7 @@ export default function ServicesEditor() {
   const add = () => setItems([...items, blank()])
 
   return (
-    <EditorShell title="Services" description="The service offerings shown on your site." draft={draft}>
+    <EditorShell title="Services" description="The offers on your Work with me page, grouped as Hire me, Work with Deem Creative, and On set and in the room." draft={draft}>
       {/* Shared autocomplete suggestions for every icon-name input below. */}
       <datalist id="lucide-icon-suggestions">
         {ICON_SUGGESTIONS.map((n) => <option key={n} value={n} />)}

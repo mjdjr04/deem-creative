@@ -19,7 +19,11 @@ const stagger = { show: { transition: { staggerChildren: 0.07 } } }
 // highlights, and a link to the full timeline at /experience. Motion is plain
 // framer-motion, so the app-level MotionConfig reducedMotion="user" applies.
 export default function ExperienceHighlights() {
-  const items = useContent().experience.items
+  const experience = useContent().experience
+  const items = experience.items
+  const summary = (experience.summary || '').trim() || EXPERIENCE_SUMMARY
+  const stats = (Array.isArray(experience.stats) ? experience.stats : []).filter((s) => s && s.value)
+  const shownStats = stats.length ? stats : EXPERIENCE_STATS
   const highlights = pickHighlights(items)
 
   return (
@@ -38,7 +42,7 @@ export default function ExperienceHighlights() {
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-5">
             Highlights from the work so far
           </h2>
-          <p className="text-white/70 text-lg leading-relaxed max-w-3xl">{EXPERIENCE_SUMMARY}</p>
+          <p className="text-white/70 text-lg leading-relaxed max-w-3xl">{summary}</p>
         </motion.div>
 
         <motion.dl
@@ -48,7 +52,7 @@ export default function ExperienceHighlights() {
           variants={stagger}
           className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-10 sm:mb-12"
         >
-          {EXPERIENCE_STATS.map((stat) => (
+          {shownStats.map((stat) => (
             <motion.div
               key={stat.value}
               variants={reveal}

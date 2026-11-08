@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import PageHero from '../components/PageHero'
 import { STORIES } from '../data/stories'
@@ -14,9 +14,23 @@ const reveal = {
 }
 
 export default function StoryPage() {
+  const { hash, key } = useLocation()
+
   useEffect(() => {
     document.title = 'My Story | Michael Deem Jr.'
   }, [])
+
+  // /story#origin etc. land on that story (same pattern as /contact#message:
+  // the page transition delays mount, and Navbar resets scroll on route change).
+  useEffect(() => {
+    const id = hash.slice(1)
+    if (!STORIES.some((s) => s.id === id)) return
+    const t = setTimeout(() => {
+      const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+      document.getElementById(id)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+    }, 120)
+    return () => clearTimeout(t)
+  }, [hash, key])
 
   return (
     <>

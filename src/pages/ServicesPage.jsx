@@ -35,7 +35,7 @@ export default function ServicesPage() {
               Ways to work with me
             </h1>
             <p className="text-white/65 text-xl max-w-2xl">
-              Hire me, bring me a project, or put me on set. Here's what that looks like.
+              Film, events, social, and the systems behind them. Here's what each one looks like.
             </p>
           </motion.div>
         </div>

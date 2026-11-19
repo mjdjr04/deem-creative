@@ -30,6 +30,19 @@
     <meta name="twitter:title" content="Hello, stranger." />
     <meta name="twitter:description" content="A little hello from Michael Deem Jr." />
     <meta name="twitter:image" content="https://deemcreative.com/og-image.png" />
+    <!-- Intro animation gate: content is only hidden once JS has confirmed it will
+         animate (WAAPI available, no reduced-motion). If anything goes wrong the
+         guard removes the class and the page falls back to the plain CSS fade. -->
+    <script>
+      (function () {
+        try {
+          if (!window.matchMedia || matchMedia('(prefers-reduced-motion: reduce)').matches || !Element.prototype.animate) return;
+          var d = document.documentElement;
+          d.classList.add('anim');
+          window.__introGuard = setTimeout(function () { d.classList.remove('anim'); }, 4000);
+        } catch (e) {}
+      })();
+    </script>
     <style>
       /* Inter, self-hosted (same @fontsource/inter 5.2.8 files the main site bundles) */
       @font-face {
@@ -233,6 +246,12 @@
       }
       .in { animation: arrive 1.6s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 0.14s + 0.3s); }
 
+      /* Intro (only when html.anim is set by the head script): the Web Animations
+         script in the body drives the timing; until it finishes, everything is
+         transparent and unclickable (still in the accessibility tree). */
+      html.anim .in { animation: none; }
+      html.anim:not(.anim-done) .in { opacity: 0; pointer-events: none; }
+
       @media (prefers-reduced-motion: reduce) {
         .in { animation: none; }
         .link, .link .handle, .cta, .cta .arrow { transition: none; }
@@ -282,5 +301,56 @@
         <p style="margin: 0">made with love, michael <span aria-hidden="true">&#x2661;</span></p>
       </footer>
     </main>
+    <script>
+      /* Intro: "Hello, stranger." fades in centred in the viewport, holds, then
+         glides (FLIP, transform only) to its real spot while the rest fades in. */
+      (function () {
+        var d = document.documentElement;
+        if (!d.classList.contains('anim')) return;
+        var h = document.querySelector('h1');
+        var rest = [].slice.call(document.querySelectorAll('.in')).filter(function (e) { return e !== h; });
+        var links = [].slice.call(document.querySelectorAll('a[href]'));
+        var anims = [], settled = false;
+
+        links.forEach(function (a) { a.setAttribute('tabindex', '-1'); });
+
+        function cleanup(ok) {
+          if (settled) return;
+          settled = true;
+          clearTimeout(window.__introGuard);
+          anims.forEach(function (a) { try { a.cancel(); } catch (e) {} });
+          links.forEach(function (a) { a.removeAttribute('tabindex'); });
+          d.classList.add(ok ? 'anim-done' : 'anim-failed');
+          if (!ok) d.classList.remove('anim');
+        }
+
+        function run() {
+          try {
+            var r = h.getBoundingClientRect();
+            var dx = d.clientWidth / 2 - (r.left + r.width / 2);
+            var dy = d.clientHeight / 2 - (r.top + r.height / 2);
+            clearTimeout(window.__introGuard);
+            anims.push(h.animate([{ opacity: 0 }, { opacity: 1 }],
+              { duration: 900, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'both' }));
+            anims.push(h.animate(
+              [{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'translate(0px,0px)' }],
+              { duration: 800, delay: 1600, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fill: 'both' }));
+            rest.forEach(function (el, i) {
+              anims.push(el.animate(
+                [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'translateY(0)' }],
+                { duration: 700, delay: 2200 + i * 80, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'both' }));
+            });
+            Promise.all(anims.map(function (a) { return a.finished; }))
+              .then(function () { cleanup(true); }, function () { cleanup(true); });
+            window.addEventListener('resize', function () { anims.forEach(function (a) { try { a.finish(); } catch (e) {} }); }, { once: true });
+          } catch (e) { cleanup(false); }
+        }
+
+        try {
+          var fonts = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+          Promise.race([fonts, new Promise(function (res) { setTimeout(res, 1200); })]).then(run, run);
+        } catch (e) { run(); }
+      })();
+    </script>
   </body>
 </html>

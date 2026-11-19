@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- A quiet landing page for the "from one stranger to another" cards.
+         Plain static HTML so GitHub Pages serves /found/ directly with a 200
+         (no SPA fallback). Kept out of search on purpose. -->
+    <meta name="robots" content="noindex" />
+    <title>You found me. | Deem Creative</title>
+    <meta name="description" content="From one stranger to another. A small hello from Michael Deem Jr. of Deem Creative." />
+    <meta name="author" content="Michael Deem Jr." />
+    <meta name="theme-color" content="#0A1628" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" href="/found/fonts/inter-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Deem Creative" />
+    <meta property="og:url" content="https://deemcreative.com/found/" />
+    <meta property="og:title" content="You found me." />
+    <meta property="og:description" content="From one stranger to another." />
+    <meta property="og:image" content="https://deemcreative.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="You found me." />
+    <meta name="twitter:description" content="From one stranger to another." />
+    <meta name="twitter:image" content="https://deemcreative.com/og-image.png" />
+    <style>
+      /* Inter, self-hosted (same @fontsource/inter 5.2.8 files the main site bundles) */
+      @font-face {
+        font-family: 'Inter';
+        font-style: normal;
+        font-weight: 600;
+        font-display: swap;
+        src: url('/found/fonts/inter-latin-600-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Inter';
+        font-style: normal;
+        font-weight: 700;
+        font-display: swap;
+        src: url('/found/fonts/inter-latin-700-normal.woff2') format('woff2');
+      }
+
+      /* Deem Creative brand tokens (tailwind.config.js). The site is dark-only. */
+      :root {
+        --brand-dark: #0A1628;
+        --brand-navy: #0D3472;
+        --brand-accent: #2B5BA8;
+        --brand-light: #4A7EC7;
+        --white: #FFFFFF;
+        --hero-gradient: linear-gradient(135deg, #060f1e 0%, #0D3472 45%, #071122 100%);
+        --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      *, *::before, *::after { box-sizing: border-box; }
+
+      html, body { margin: 0; height: 100%; }
+
+      body {
+        background-color: var(--brand-dark);
+        background-image: var(--hero-gradient);
+        background-attachment: fixed;
+        color: var(--white);
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+
+      ::selection { background: var(--brand-accent); color: var(--white); }
+
+      main {
+        position: relative;
+        min-height: 100vh;
+        min-height: 100svh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem max(1.5rem, env(safe-area-inset-right)) 2rem max(1.5rem, env(safe-area-inset-left));
+        text-align: center;
+        overflow: hidden;
+      }
+
+      /* Faint blueprint grid, as on the homepage hero */
+      main::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(74, 126, 199, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(74, 126, 199, 0.05) 1px, transparent 1px);
+        background-size: 56px 56px;
+        -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 45%, black 30%, transparent 100%);
+        mask-image: radial-gradient(ellipse 80% 60% at 50% 45%, black 30%, transparent 100%);
+      }
+
+      h1 {
+        position: relative;
+        margin: 0 0 2.5rem;
+        font-size: clamp(2.75rem, 12vw, 5.5rem);
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+      }
+
+      .cta {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 3rem;
+        padding: 0.875rem 2rem;
+        border: 2px solid var(--white);
+        border-radius: 0.5rem;
+        color: var(--white);
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.25;
+        text-decoration: none;
+        transition: background-color 0.3s ease, color 0.3s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .cta:hover { background-color: var(--white); color: var(--brand-dark); }
+      .cta:active { background-color: rgba(255, 255, 255, 0.85); color: var(--brand-dark); }
+      .cta:focus-visible {
+        outline: 2px solid var(--brand-light);
+        outline-offset: 3px;
+      }
+      .cta .arrow { transition: transform 0.3s var(--ease-out); }
+      .cta:hover .arrow { transform: translateX(3px); }
+
+      /* Slow, gentle arrival: the line first, the button after it settles */
+      @keyframes arrive {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: none; }
+      }
+      h1   { animation: arrive 2.4s var(--ease-out) 0.3s both; }
+      .cta { animation: arrive 1.8s var(--ease-out) 1.7s both; }
+
+      @media (prefers-reduced-motion: reduce) {
+        h1, .cta { animation: none; }
+        .cta, .cta .arrow { transition: none; }
+        .cta:hover .arrow { transform: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>You found me.</h1>
+      <a class="cta" href="https://deemcreative.com/">See my work <span class="arrow" aria-hidden="true">&rarr;</span></a>
+    </main>
+  </body>
+</html>

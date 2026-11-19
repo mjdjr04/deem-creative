@@ -139,64 +139,14 @@
         letter-spacing: -0.03em;
       }
 
-      /* First screen fills the small viewport below main's 3rem top padding. */
-      .first {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        min-height: calc(100vh - 3rem);
-        min-height: calc(100svh - 3rem);
-      }
-      .first-body {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        margin: auto 0;
-        padding: 0.5rem 0 1rem;
-      }
-      .rest {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        padding-top: 3rem;
-        scroll-margin-top: 1rem;
-      }
-
       .intro {
         max-width: 34ch;
-        margin: 1.25rem 0 0;
+        margin: 1.5rem 0 2.5rem;
         color: rgba(255, 255, 255, 0.86);
         font-size: 1.0625rem;
         font-weight: 400;
         line-height: 1.65;
         text-wrap: pretty;
-      }
-
-      .rest .intro { margin: 0 0 2.5rem; }
-
-      /* Quiet cue at the bottom of the first screen */
-      .more {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        min-height: 2.75rem;
-        padding: 0.5rem 0.75rem;
-        color: rgba(255, 255, 255, 0.68);
-        font-size: 0.8125rem;
-        font-weight: 400;
-        letter-spacing: 0.01em;
-        text-decoration: none;
-        transition: color 0.3s ease;
-        -webkit-tap-highlight-color: transparent;
-      }
-      .more svg { display: block; width: 1rem; height: 1rem; flex: none; transition: transform 0.3s var(--ease-out); }
-      .more:hover { color: var(--white); }
-      .more:hover svg { transform: translateY(2px); }
-      @media (prefers-reduced-motion: no-preference) {
-        html { scroll-behavior: smooth; }
       }
 
       .links {
@@ -268,7 +218,7 @@
         flex-direction: column;
         align-items: center;
         max-width: 34ch;
-        margin-top: 2.5rem;
+        margin-top: 3.5rem;
       }
       .pass h2 {
         margin: 0;
@@ -311,7 +261,6 @@
 
       .link:focus-visible,
       .share:focus-visible,
-      .more:focus-visible,
       .cta:focus-visible {
         outline: 2px solid #8DB2E8; /* lighter than --brand-light so the ring clears 3:1 on the whole gradient */
         outline-offset: 3px;
@@ -354,71 +303,60 @@
 
       @media (prefers-reduced-motion: reduce) {
         .in { animation: none; }
-        .link, .link .handle, .share, .more, .more svg, .cta, .cta .arrow { transition: none; }
-        .cta:hover .arrow, .more:hover svg { transform: none; }
+        .link, .link .handle, .share, .cta, .cta .arrow { transition: none; }
+        .cta:hover .arrow { transform: none; }
       }
     </style>
   </head>
   <body>
     <main>
       <div class="content">
-        <!-- First screen: the hello, a short intro and the ask to pass the card on.
-             Fills the small viewport (Safari with its toolbars showing) so the rest
-             of the page starts below the fold. -->
-        <div class="first">
-          <div class="first-body">
-            <h1 class="in" style="--i: 0">Hello, stranger.</h1>
-            <p class="intro in" style="--i: 2">i&rsquo;m michael deem jr., a filmmaker and storyteller from south jersey.</p>
-            <section class="pass" aria-labelledby="pass-title">
-              <h2 id="pass-title" class="in" style="--i: 3">pass it on</h2>
-              <p class="in" style="--i: 4">that card in your hand isn&rsquo;t done yet. give it to someone else: a stranger, a friend, or whoever needs the words on the front today. from one stranger to another.</p>
-              <!-- Secondary to the physical card. Always shares /found/ (where the QR
-                   points), never /hello/. Shown only once the script below wires it up. -->
-              <button class="share in" style="--i: 5" type="button" hidden>
-                <svg class="i-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 14.5V3.5M8 7.5l4-4 4 4" /><path d="M8.5 10.5H7a2 2 0 0 0-2 2V18.5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V12.5a2 2 0 0 0-2-2h-1.5" /></svg>
-                <svg class="i-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-                <span class="share-label">no card to give? share the link</span>
-              </button>
-              <span class="visually-hidden" role="status" aria-live="polite" id="share-status"></span>
-            </section>
-          </div>
-          <a class="more in" style="--i: 6" href="#more">more about me <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 9.5L12 15l5.5-5.5" /></svg></a>
-        </div>
-        <div class="rest" id="more">
-          <p class="intro in" style="--i: 8">i run deem creative, where i make films and social content, and by day i&rsquo;m director of special projects at the boys &amp; girls clubs of cumberland county. if a little card brought you here, i&rsquo;d love to hear your story too.</p>
-          <h2 class="visually-hidden">Find me online</h2>
-          <ul class="links">
-            <li class="in" style="--i: 9">
-              <a class="link" href="https://www.instagram.com/mjdjr04/" target="_blank" rel="noopener" aria-label="Instagram, @mjdjr04 (opens in a new tab)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none" /></svg>
-                <span>instagram</span>
-                <span class="handle">@mjdjr04</span>
-              </a>
-            </li>
-            <li class="in" style="--i: 10">
-              <a class="link" href="https://www.tiktok.com/@mjdjr04.mp4" target="_blank" rel="noopener" aria-label="TikTok, @mjdjr04.mp4 (opens in a new tab)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M13.5 3.5v11.25a3.75 3.75 0 1 1-3.75-3.75" /><path d="M13.5 3.5c.4 2.9 2.4 4.7 5 4.9" /></svg>
-                <span>tiktok</span>
-                <span class="handle">@mjdjr04.mp4</span>
-              </a>
-            </li>
-            <li class="in" style="--i: 11">
-              <a class="link" href="https://www.linkedin.com/in/michael-deem-jr" target="_blank" rel="noopener" aria-label="LinkedIn, Michael Deem Jr. (opens in a new tab)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="3" /><path d="M8 10.5V16" /><circle cx="8" cy="7.75" r="0.6" fill="currentColor" stroke="none" /><path d="M11.5 16v-5.5M11.5 13a2.5 2.5 0 0 1 5 0v3" /></svg>
-                <span>linkedin</span>
-                <span class="handle">michael deem jr.</span>
-              </a>
-            </li>
-            <li class="in" style="--i: 12">
-              <a class="link" href="https://www.instagram.com/deemcreative/" target="_blank" rel="noopener" aria-label="Instagram, @deemcreative, my work account (opens in a new tab)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none" /></svg>
-                <span>instagram (work)</span>
-                <span class="handle">@deemcreative</span>
-              </a>
-            </li>
-          </ul>
-          <a class="cta in" style="--i: 13" href="https://deemcreative.com/">see my work <span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6.5 17.5L17 7M8.5 6.5H17.5V15.5"/></svg></span></a>
-        </div>
+        <h1 class="in" style="--i: 0">Hello, stranger.</h1>
+        <p class="intro in" style="--i: 2">i&rsquo;m michael deem jr., a filmmaker and storyteller from south jersey. i run deem creative, where i make films and social content, and by day i&rsquo;m director of special projects at the boys &amp; girls clubs of cumberland county. if a little card brought you here, i&rsquo;d love to hear your story too.</p>
+        <h2 class="visually-hidden">Find me online</h2>
+        <ul class="links">
+          <li class="in" style="--i: 4">
+            <a class="link" href="https://www.instagram.com/mjdjr04/" target="_blank" rel="noopener" aria-label="Instagram, @mjdjr04 (opens in a new tab)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none" /></svg>
+              <span>instagram</span>
+              <span class="handle">@mjdjr04</span>
+            </a>
+          </li>
+          <li class="in" style="--i: 5">
+            <a class="link" href="https://www.tiktok.com/@mjdjr04.mp4" target="_blank" rel="noopener" aria-label="TikTok, @mjdjr04.mp4 (opens in a new tab)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M13.5 3.5v11.25a3.75 3.75 0 1 1-3.75-3.75" /><path d="M13.5 3.5c.4 2.9 2.4 4.7 5 4.9" /></svg>
+              <span>tiktok</span>
+              <span class="handle">@mjdjr04.mp4</span>
+            </a>
+          </li>
+          <li class="in" style="--i: 6">
+            <a class="link" href="https://www.linkedin.com/in/michael-deem-jr" target="_blank" rel="noopener" aria-label="LinkedIn, Michael Deem Jr. (opens in a new tab)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="3" /><path d="M8 10.5V16" /><circle cx="8" cy="7.75" r="0.6" fill="currentColor" stroke="none" /><path d="M11.5 16v-5.5M11.5 13a2.5 2.5 0 0 1 5 0v3" /></svg>
+              <span>linkedin</span>
+              <span class="handle">michael deem jr.</span>
+            </a>
+          </li>
+          <li class="in" style="--i: 7">
+            <a class="link" href="https://www.instagram.com/deemcreative/" target="_blank" rel="noopener" aria-label="Instagram, @deemcreative, my work account (opens in a new tab)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none" /></svg>
+              <span>instagram (work)</span>
+              <span class="handle">@deemcreative</span>
+            </a>
+          </li>
+        </ul>
+        <a class="cta in" style="--i: 9" href="https://deemcreative.com/">see my work <span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6.5 17.5L17 7M8.5 6.5H17.5V15.5"/></svg></span></a>
+        <section class="pass" aria-labelledby="pass-title">
+          <h2 id="pass-title" class="in" style="--i: 11">pass it on</h2>
+          <p class="in" style="--i: 12">that card in your hand isn&rsquo;t done yet. give it to someone else: a stranger, a friend, or whoever needs the words on the front today. from one stranger to another.</p>
+          <!-- Secondary to the physical card. Always shares /found/ (where the QR
+               points), never /hello/. Shown only once the script below wires it up. -->
+          <button class="share in" style="--i: 13" type="button" hidden>
+            <svg class="i-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 14.5V3.5M8 7.5l4-4 4 4" /><path d="M8.5 10.5H7a2 2 0 0 0-2 2V18.5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V12.5a2 2 0 0 0-2-2h-1.5" /></svg>
+            <svg class="i-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+            <span class="share-label">no card to give? share the link</span>
+          </button>
+          <span class="visually-hidden" role="status" aria-live="polite" id="share-status"></span>
+        </section>
       </div>
       <footer class="signoff in" style="--i: 15">
         <p style="margin: 0">made with love, michael <span aria-hidden="true">&#x2661;</span></p>

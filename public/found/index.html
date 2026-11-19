@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!-- A quiet landing page for the "from one stranger to another" cards.
          Plain static HTML so GitHub Pages serves /found/ directly with a 200
-         (no SPA fallback). Kept out of search on purpose. -->
+         (no SPA fallback). The printed QR codes point here, so the URL must not
+         move. Kept out of search on purpose. Fonts in /found/fonts/ are shared
+         with /hello/. -->
     <meta name="robots" content="noindex" />
-    <title>You found me. | Deem Creative</title>
-    <meta name="description" content="From one stranger to another. A small hello from Michael Deem Jr. of Deem Creative." />
+    <title>You found me. | Michael Deem Jr.</title>
+    <meta name="description" content="You found me. A small hello from Michael Deem Jr. Come get to know me." />
     <meta name="author" content="Michael Deem Jr." />
     <meta name="theme-color" content="#0A1628" />
     <meta name="color-scheme" content="dark" />
@@ -19,17 +21,24 @@
     <meta property="og:site_name" content="Deem Creative" />
     <meta property="og:url" content="https://deemcreative.com/found/" />
     <meta property="og:title" content="You found me." />
-    <meta property="og:description" content="From one stranger to another." />
+    <meta property="og:description" content="A small hello from Michael Deem Jr. Come get to know me." />
     <meta property="og:image" content="https://deemcreative.com/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="You found me." />
-    <meta name="twitter:description" content="From one stranger to another." />
+    <meta name="twitter:description" content="A small hello from Michael Deem Jr. Come get to know me." />
     <meta name="twitter:image" content="https://deemcreative.com/og-image.png" />
     <style>
       /* Inter, self-hosted (same @fontsource/inter 5.2.8 files the main site bundles) */
+      @font-face {
+        font-family: 'Inter';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url('/found/fonts/inter-latin-400-normal.woff2') format('woff2');
+      }
       @font-face {
         font-family: 'Inter';
         font-style: normal;
@@ -81,7 +90,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 2rem max(1.5rem, env(safe-area-inset-right)) 2rem max(1.5rem, env(safe-area-inset-left));
+        padding: 2rem max(1.5rem, env(safe-area-inset-right)) 5.5rem max(1.5rem, env(safe-area-inset-left));
         text-align: center;
         overflow: hidden;
       }
@@ -129,11 +138,25 @@
       .cta:hover { background-color: var(--white); color: var(--brand-dark); }
       .cta:active { background-color: rgba(255, 255, 255, 0.85); color: var(--brand-dark); }
       .cta:focus-visible {
-        outline: 2px solid var(--brand-light);
+        outline: 2px solid #8DB2E8; /* lighter than --brand-light so the ring clears 3:1 on the whole gradient */
         outline-offset: 3px;
       }
       .cta .arrow { transition: transform 0.3s var(--ease-out); }
-      .cta:hover .arrow { transform: translateX(3px); }
+      .cta:hover .arrow { transform: translate(2px, -2px); }
+
+      /* Quiet sign-off, pinned to the bottom of the screen */
+      .signoff {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: max(1.5rem, env(safe-area-inset-bottom));
+        margin: 0;
+        padding: 0 1.5rem;
+        color: rgba(255, 255, 255, 0.68);
+        font-size: 0.8125rem;
+        font-weight: 400;
+        letter-spacing: 0.01em;
+      }
 
       /* Slow, gentle arrival: the line first, the button after it settles */
       @keyframes arrive {
@@ -142,9 +165,10 @@
       }
       h1   { animation: arrive 2.4s var(--ease-out) 0.3s both; }
       .cta { animation: arrive 1.8s var(--ease-out) 1.7s both; }
+      .signoff { animation: arrive 1.8s var(--ease-out) 2.6s both; }
 
       @media (prefers-reduced-motion: reduce) {
-        h1, .cta { animation: none; }
+        h1, .cta, .signoff { animation: none; }
         .cta, .cta .arrow { transition: none; }
         .cta:hover .arrow { transform: none; }
       }
@@ -153,7 +177,10 @@
   <body>
     <main>
       <h1>You found me.</h1>
-      <a class="cta" href="https://deemcreative.com/">See my work <span class="arrow" aria-hidden="true">&rarr;</span></a>
+      <a class="cta" href="/hello/">get to know me <span class="arrow" aria-hidden="true">&#x2197;&#xFE0E;</span></a>
+      <footer class="signoff">
+        <p style="margin: 0">made with love, michael <span aria-hidden="true">&#x2661;</span></p>
+      </footer>
     </main>
   </body>
 </html>

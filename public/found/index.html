@@ -141,7 +141,8 @@
         outline: 2px solid #8DB2E8; /* lighter than --brand-light so the ring clears 3:1 on the whole gradient */
         outline-offset: 3px;
       }
-      .cta .arrow { transition: transform 0.3s var(--ease-out); }
+      .cta .arrow { display: inline-flex; align-items: center; font-size: 1.0625em; transition: transform 0.3s var(--ease-out); }
+      .cta .arrow svg { display: block; width: 1em; height: 1em; }
       .cta:hover .arrow { transform: translate(2px, -2px); }
 
       /* Quiet sign-off, pinned to the bottom of the screen */
@@ -177,7 +178,7 @@
   <body>
     <main>
       <h1>You found me.</h1>
-      <a class="cta" href="/hello/">get to know me <span class="arrow" aria-hidden="true">&#x2197;&#xFE0E;</span></a>
+      <a class="cta" href="/hello/">get to know me <span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6.5 17.5L17 7M8.5 6.5H17.5V15.5"/></svg></span></a>
       <footer class="signoff">
         <p style="margin: 0">made with love, michael <span aria-hidden="true">&#x2661;</span></p>
       </footer>
